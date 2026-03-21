@@ -30,8 +30,7 @@ export default function BottomNav() {
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center pb-4 pt-2">
       <nav
         className={cn(
-          'pointer-events-auto flex max-w-sm items-center gap-1 rounded-full px-2 py-2',
-          'border border-white/[0.08] bg-[#141414]/85 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-2xl',
+          'pointer-events-auto flex max-w-sm items-center gap-1 rounded-full border border-border bg-card/90 px-2 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-2xl',
         )}
       >
         {navItems.map((item) => {
@@ -44,12 +43,12 @@ export default function BottomNav() {
               className={cn(
                 'flex min-w-[4.5rem] flex-col items-center gap-1 rounded-full px-4 py-2 transition-colors',
                 isActive
-                  ? 'bg-white/[0.12] text-white'
-                  : 'text-white/45 hover:text-white/75',
+                  ? 'bg-secondary text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               <Icon className="size-5" strokeWidth={isActive ? 2.25 : 2} />
-              <span className={cn('text-[10px] font-semibold', isActive && 'text-white')}>
+              <span className={cn('text-[10px] font-semibold', isActive && 'text-foreground')}>
                 {item.label}
               </span>
             </Link>

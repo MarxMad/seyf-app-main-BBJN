@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { AppPageBody } from '@/components/app/app-page-body'
+import { AppBackLink } from '@/components/app/app-back-link'
 
 const CLABE = '646180157000001234'
 const BANCO = 'STP'
@@ -19,33 +19,29 @@ export default function DepositarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-5 py-10">
-      {/* Back */}
-      <Link href="/dashboard" className="mb-8 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-        <span className="text-sm font-medium">Regresar</span>
-      </Link>
+    <AppPageBody>
+      <AppBackLink href="/dashboard" />
 
       <div className="mb-8">
-        <h2 className="text-4xl font-black tracking-tight text-foreground leading-none">
-          Depositar<br />via SPEI.
-        </h2>
+        <h1 className="text-4xl font-black tracking-tight text-foreground leading-none">
+          Depositar
+          <br />
+          vía SPEI
+        </h1>
         <p className="mt-4 text-base text-muted-foreground font-normal">
-          Haz una transferencia desde tu banco con estos datos. Tu saldo se acreditara en minutos.
+          Haz una transferencia desde tu banco con estos datos. Tu saldo se acreditará en minutos.
         </p>
       </div>
 
-      {/* Datos SPEI */}
-      <div className="space-y-3 mb-8">
+      <div className="mb-8 space-y-3">
         <DataRow label="Banco receptor" value={BANCO} />
         <DataRow label="Beneficiario" value={BENEFICIARIO} />
 
-        <div className="rounded-2xl bg-secondary p-4">
-          <p className="text-xs text-muted-foreground font-medium mb-1">CLABE interbancaria</p>
-          <p className="text-xl font-black tracking-widest text-foreground">{CLABE}</p>
+        <div className="rounded-[1.25rem] border border-border bg-secondary p-4">
+          <p className="mb-1 text-xs font-medium text-muted-foreground">CLABE interbancaria</p>
+          <p className="text-xl font-bold tracking-widest text-foreground">{CLABE}</p>
           <button
+            type="button"
             onClick={() => copy(CLABE, 'clabe')}
             className="mt-3 rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background transition-all hover:bg-foreground/90"
           >
@@ -53,10 +49,11 @@ export default function DepositarPage() {
           </button>
         </div>
 
-        <div className="rounded-2xl bg-secondary p-4">
-          <p className="text-xs text-muted-foreground font-medium mb-1">Referencia / Concepto</p>
-          <p className="text-xl font-black tracking-widest text-foreground">{REFERENCIA}</p>
+        <div className="rounded-[1.25rem] border border-border bg-secondary p-4">
+          <p className="mb-1 text-xs font-medium text-muted-foreground">Referencia / concepto</p>
+          <p className="text-xl font-bold tracking-widest text-foreground">{REFERENCIA}</p>
           <button
+            type="button"
             onClick={() => copy(REFERENCIA, 'ref')}
             className="mt-3 rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background transition-all hover:bg-foreground/90"
           >
@@ -65,18 +62,17 @@ export default function DepositarPage() {
         </div>
       </div>
 
-      {/* Instrucciones */}
-      <div className="rounded-2xl border border-border p-5 space-y-3 mb-8">
-        <p className="text-sm font-bold text-foreground">Como hacer la transferencia</p>
+      <div className="mb-8 space-y-3 rounded-[1.5rem] border border-border bg-card/50 p-5">
+        <p className="text-sm font-bold text-foreground">Cómo hacer la transferencia</p>
         {[
           'Abre la app de tu banco.',
-          'Ve a "Transferir" o "Pagar".',
+          'Ve a «Transferir» o «Pagar».',
           'Ingresa la CLABE y la referencia.',
-          'El monto minimo es $500 MXN.',
-          'Tu saldo aparecera en minutos.',
+          'El monto mínimo es $500 MXN.',
+          'Tu saldo aparecerá en minutos.',
         ].map((step, i) => (
           <div key={i} className="flex items-start gap-3">
-            <span className="h-5 w-5 shrink-0 rounded-full bg-secondary flex items-center justify-center text-xs font-black text-foreground">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground ring-1 ring-border">
               {i + 1}
             </span>
             <p className="text-sm text-muted-foreground">{step}</p>
@@ -84,19 +80,19 @@ export default function DepositarPage() {
         ))}
       </div>
 
-      <p className="text-center text-xs text-muted-foreground leading-relaxed">
-        Los depositos SPEI pueden tardar hasta el siguiente dia habil en fines de semana o dias festivos.
+      <p className="text-center text-sm text-muted-foreground">
+        Los depósitos SPEI pueden tardar hasta el siguiente día hábil en fines de semana o días festivos.
       </p>
-    </div>
+    </AppPageBody>
   )
 }
 
 function DataRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-secondary p-4 flex items-center justify-between">
+    <div className="flex items-center justify-between rounded-[1.25rem] border border-border bg-card p-4">
       <div>
-        <p className="text-xs text-muted-foreground font-medium">{label}</p>
-        <p className="text-base font-bold text-foreground">{value}</p>
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <p className="text-base font-semibold text-foreground">{value}</p>
       </div>
     </div>
   )
