@@ -2,17 +2,19 @@
 
 import Link from 'next/link'
 import { Search, BarChart3, CreditCard } from 'lucide-react'
+import { useAccesly } from 'accesly'
 
-/** Mismo mock que el dashboard hasta conectar auth */
-const DISPLAY_NAME = 'Carlos'
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/)
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
-  return name.slice(0, 2).toUpperCase()
+function avatarLabel(wallet: { email?: string; stellarAddress: string } | null, loading: boolean) {
+  if (loading) return '…'
+  if (!wallet) return '?'
+  const local = wallet.email?.split('@')[0]?.trim()
+  if (local && local.length >= 1) return local.slice(0, 2).toUpperCase()
+  return wallet.stellarAddress.slice(0, 2).toUpperCase()
 }
 
 export default function AppTopBar() {
+  const { wallet, loading } = useAccesly()
+
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-lg items-center gap-2 px-6 py-3">
@@ -21,7 +23,7 @@ export default function AppTopBar() {
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold tracking-tight text-foreground ring-1 ring-border"
           aria-label="Inicio"
         >
-          {initials(DISPLAY_NAME)}
+          {avatarLabel(wallet, loading)}
         </Link>
         <div className="relative min-w-0 flex-1">
           <Search
