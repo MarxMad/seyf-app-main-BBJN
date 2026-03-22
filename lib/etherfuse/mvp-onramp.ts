@@ -31,7 +31,7 @@ function depositFromCreateOrderResponse(data: unknown): {
 } | null {
   if (!data || typeof data !== "object") return null;
   const root = data as Record<string, unknown>;
-  const onramp = root.onramp ?? root.onRamp;
+  const onramp = root.onramp ?? root.onRamp ?? root.on_ramp;
   if (!onramp || typeof onramp !== "object") return null;
   const o = onramp as Record<string, unknown>;
   const orderId =

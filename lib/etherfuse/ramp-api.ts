@@ -90,6 +90,114 @@ export function pickCetesTargetIdentifier(
 }
 
 /**
+ * Activo crypto a vender en offramp (preferencia: CETES → MXNe → USDC → .env o primer identifier).
+ * `ETHERFUSE_OFFRAMP_SOURCE_ASSET` solo si coincide con un `identifier` de la lista o la lista está vacía.
+ */
+export function pickOfframpSourceIdentifier(
+  assets: RampableAssetRow[],
+  explicit?: string | null,
+): string | null {
+  const trimmed = explicit?.trim();
+  if (trimmed) return trimmed;
+  const fromEnv = process.env.ETHERFUSE_OFFRAMP_SOURCE_ASSET?.trim();
+  const prefs = ["CETES", "MXNE", "USDC"];
+  for (const sym of prefs) {
+    const row = assets.find(
+      (a) => (a.symbol ?? "").toUpperCase() === sym.toUpperCase(),
+    );
+    if (row?.identifier) return row.identifier;
+  }
+  if (fromEnv && assets.length > 0) {
+    const inList = assets.some(
+      (a) => (a.identifier ?? "").trim() === fromEnv,
+    );
+    if (inList) return fromEnv;
+  }
+  const first = assets.find((a) => a.identifier?.length);
+  if (first?.identifier) return first.identifier;
+  if (fromEnv) return fromEnv;
+  return null;
+}
+
+/**
+ * POST /ramp/quote (offramp: crypto → MXN)
+ * @see https://docs.etherfuse.com/guides/testing-offramps
+ */
+export async function createMxOfframpQuote(params: {
+  customerId: string;
+  /** Monto en el activo fuente (tokens), ej. "10.5" */
+  sourceAmount: string;
+  sourceAssetIdentifier: string;
+  blockchain?: EtherfuseBlockchain;
+  quoteId?: string;
+}): Promise<unknown> {
+  const quoteId = params.quoteId ?? randomUUID();
+  const blockchain = params.blockchain ?? getEtherfuseDefaultBlockchain();
+  const res = await etherfuseFetch("/ramp/quote", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      quoteId,
+      customerId: params.customerId,
+      blockchain,
+      quoteAssets: {
+        type: "offramp",
+        sourceAsset: params.sourceAssetIdentifier,
+        targetAsset: "MXN",
+      },
+      sourceAmount: params.sourceAmount,
+    }),
+  });
+  const { json, text } = await etherfuseReadBody(res);
+  if (!res.ok) {
+    const msg = extractEtherfuseErrorMessage(json, text, 400);
+    throw new Error(`Etherfuse /ramp/quote offramp (${res.status}): ${msg}`);
+  }
+  return json;
+}
+
+/**
+ * POST /ramp/order — offramp (mismo endpoint que onramp; opcional `useAnchor` en Stellar).
+ * @see https://docs.etherfuse.com/guides/testing-offramps
+ */
+export async function createMxOfframpOrder(params: {
+  bankAccountId: string;
+  quoteId: string;
+  publicKey?: string;
+  cryptoWalletId?: string;
+  orderId?: string;
+  memo?: string | null;
+  useAnchor?: boolean;
+}): Promise<unknown> {
+  const hasPk = Boolean(params.publicKey?.trim());
+  const hasWid = Boolean(params.cryptoWalletId?.trim());
+  if (!hasPk && !hasWid) {
+    throw new Error("createMxOfframpOrder: indica publicKey o cryptoWalletId");
+  }
+  const orderId = params.orderId ?? randomUUID();
+  const body: Record<string, unknown> = {
+    orderId,
+    bankAccountId: params.bankAccountId,
+    quoteId: params.quoteId,
+  };
+  if (hasWid) body.cryptoWalletId = params.cryptoWalletId!.trim();
+  if (hasPk) body.publicKey = params.publicKey!.trim();
+  if (params.memo) body.memo = params.memo;
+  if (params.useAnchor === true) body.useAnchor = true;
+  const res = await etherfuseFetch("/ramp/order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const { json, text } = await etherfuseReadBody(res);
+  if (!res.ok) {
+    const msg = extractEtherfuseErrorMessage(json, text, 400);
+    throw new Error(`Etherfuse /ramp/order offramp (${res.status}): ${msg}`);
+  }
+  return json;
+}
+
+/**
  * POST /ramp/quote (onramp MXN → targetAsset)
  * @see https://docs.etherfuse.com/api-reference/quotes/get-quote-for-conversion
  */
