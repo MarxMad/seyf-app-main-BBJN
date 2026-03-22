@@ -2,19 +2,14 @@ import type { InvestmentRun } from "@/lib/seyf/investment-mvp";
 import { listRuns, MOCK_ANNUAL_RATE_PERCENT } from "@/lib/seyf/investment-mvp";
 import { fetchDashboardCetesSaldo, type DashboardCetesSaldo } from "@/lib/seyf/dashboard-cetes-saldo";
 import { getEtherfuseRampContext } from "@/lib/seyf/etherfuse-ramp-context";
-import type { UserMovement } from "@/lib/seyf/user-movements-types";
 import { fetchUserMovements } from "@/lib/seyf/user-movements";
+import {
+  DASHBOARD_MOVEMENTS_PREVIEW_LIMIT,
+  type DashboardViewModel,
+} from "@/lib/seyf/dashboard-view-model-types";
 
-export type DashboardViewModel = {
-  principalMxn: number;
-  rendimientoMxn: number;
-  adelantableMxn: number;
-  puntos: number;
-  tasaAnual: number;
-  saldoGastoMxn: number;
-  saldoNote: string | null;
-  movementsRecent: UserMovement[];
-};
+export type { DashboardViewModel } from "@/lib/seyf/dashboard-view-model-types";
+export { DASHBOARD_MOVEMENTS_PREVIEW_LIMIT } from "@/lib/seyf/dashboard-view-model-types";
 
 function investAllowed(): boolean {
   if (process.env.NODE_ENV !== "production") return true;
@@ -93,7 +88,7 @@ export async function buildDashboardViewModel(): Promise<DashboardViewModel> {
       "Saldo según tus depósitos de prueba. Identidad te da el valor en vivo en pesos.";
   }
 
-  const movementsRecent = movementsAll.slice(0, 8);
+  const movementsRecent = movementsAll.slice(0, DASHBOARD_MOVEMENTS_PREVIEW_LIMIT);
 
   return {
     principalMxn,

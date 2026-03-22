@@ -9,8 +9,15 @@ import { MovementDetailSheet } from '@/components/app/movement-detail-sheet'
 import { iconForMovimientoTipo } from '@/components/app/movement-tipo-icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { DASHBOARD_POLL_MS } from '@/lib/seyf/balance-poll-intervals'
-import type { DashboardViewModel } from '@/lib/seyf/dashboard-view-model'
+import {
+  DASHBOARD_POLL_EXTRA_DELAYS_MS,
+  DASHBOARD_POLL_MS,
+} from '@/lib/seyf/balance-poll-intervals'
+import { POLL_FETCH_INIT, pollBustUrl } from '@/lib/seyf/poll-fetch'
+import {
+  DASHBOARD_MOVEMENTS_PREVIEW_LIMIT,
+  type DashboardViewModel,
+} from '@/lib/seyf/dashboard-view-model-types'
 import { formatMovementListSubtitle, type UserMovement } from '@/lib/seyf/user-movements-types'
 
 function formatMXN(amount: number) {
@@ -46,7 +53,7 @@ export default function DashboardClient({
 
   const refreshDashboard = useCallback(async () => {
     try {
-      const r = await fetch('/api/seyf/dashboard', { cache: 'no-store' })
+      const r = await fetch(pollBustUrl('/api/seyf/dashboard'), POLL_FETCH_INIT)
       if (!r.ok) return
       const next = (await r.json()) as DashboardViewModel
       setLiveVm(next)
@@ -59,17 +66,31 @@ export default function DashboardClient({
     let cancelled = false
     const tick = () => {
       if (cancelled) return
+      if (document.visibilityState !== 'visible') return
       void refreshDashboard()
     }
+    tick()
+    const extraTimers = DASHBOARD_POLL_EXTRA_DELAYS_MS.map((ms) =>
+      setTimeout(tick, ms),
+    )
     const id = setInterval(tick, DASHBOARD_POLL_MS)
     const onVis = () => {
       if (document.visibilityState === 'visible') tick()
     }
+    const onFocus = () => tick()
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) tick()
+    }
     document.addEventListener('visibilitychange', onVis)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('pageshow', onPageShow)
     return () => {
       cancelled = true
+      for (const t of extraTimers) clearTimeout(t)
       clearInterval(id)
       document.removeEventListener('visibilitychange', onVis)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('pageshow', onPageShow)
     }
   }, [refreshDashboard])
 
@@ -99,6 +120,9 @@ export default function DashboardClient({
       <section className="overflow-hidden rounded-[1.5rem] border border-border bg-card">
         <div className="border-b border-border px-4 py-3">
           <h2 className="text-sm font-bold text-foreground">Lo último</h2>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            Últimas {DASHBOARD_MOVEMENTS_PREVIEW_LIMIT} · el resto en historial
+          </p>
         </div>
         <ul className="divide-y divide-border">
           {liveVm.movementsRecent.length === 0 ? (
@@ -130,7 +154,7 @@ export default function DashboardClient({
                         esPositivo ? 'text-[#22C55E]' : 'text-foreground',
                       )}
                     >
-                      {esPositivo ? '+' : ''}
+                      {mov.monto < 0 ? '− ' : mov.monto > 0 ? '+' : ''}
                       {formatMXNFull(Math.abs(mov.monto))}
                     </span>
                   </button>
