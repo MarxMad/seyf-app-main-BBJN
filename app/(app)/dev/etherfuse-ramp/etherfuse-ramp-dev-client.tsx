@@ -1,19 +1,13 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
-import Link from 'next/link'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Input } from '@/components/ui/input'
-import {
-  OrderCreatedDepositCard,
-  OrderTransactionDetailCard,
-  pickQuoteId,
-} from '@/components/app/dev/etherfuse-order-cards'
-import { SpeiTransferReviewDialog } from '@/components/app/dev/spei-transfer-review-dialog'
-import { EtherfuseRampWalletBanner } from '@/components/app/dev/etherfuse-ramp-wallet-banner'
+import { OrderTransactionDetailCard, pickQuoteId } from '@/components/app/dev/etherfuse-order-cards'
+import { SpeiPaymentCard } from '@/components/app/dev/spei-payment-card'
 import { extractOrderIdFromCreateOrderResponse } from '@/lib/etherfuse/order-create-response'
 import {
   speiDetailsFromOnrampOrderApiJson,
@@ -31,7 +25,6 @@ export default function EtherfuseRampDevClient() {
   const [sourceAmount, setSourceAmount] = useState('500')
   const [orderJson, setOrderJson] = useState<string>('')
   const [fiatJson, setFiatJson] = useState<string>('')
-  const [speiDialogOpen, setSpeiDialogOpen] = useState(false)
   const [speiDetails, setSpeiDetails] = useState<SpeiTransferDetails | null>(null)
   const [pendingManualOrderJson, setPendingManualOrderJson] = useState<string | null>(null)
 
@@ -171,10 +164,9 @@ export default function EtherfuseRampDevClient() {
       setFiatJson('')
       setPendingManualOrderJson(o)
       setSpeiDetails(details)
-      setSpeiDialogOpen(true)
     })
 
-  const confirmSpeiDialog = useCallback(async () => {
+  const confirmSpeiPayment = useCallback(async () => {
     if (!speiDetails || !pendingManualOrderJson) return
     await run('spei-manual-confirm', async () => {
       const f = await performFiatSimulation(pendingManualOrderJson)
@@ -182,22 +174,10 @@ export default function EtherfuseRampDevClient() {
       setFiatJson(f)
       setPendingManualOrderJson(null)
       setSpeiDetails(null)
-      setSpeiDialogOpen(false)
     })
   }, [speiDetails, pendingManualOrderJson, performFiatSimulation, run])
 
   const speiConfirmBusy = busy === 'spei-manual-confirm'
-
-  const onSpeiDialogOpenChange = useCallback(
-    (open: boolean) => {
-      setSpeiDialogOpen(open)
-      if (!open && !speiConfirmBusy) {
-        setSpeiDetails(null)
-        setPendingManualOrderJson(null)
-      }
-    },
-    [speiConfirmBusy],
-  )
 
   const onrampTxSignature = useMemo(
     () => extractConfirmedTxSignatureFromOnrampPanelJson(fiatJson),
@@ -221,17 +201,29 @@ export default function EtherfuseRampDevClient() {
     <AppPageBody className="space-y-6 pt-4">
       <AppBackLink href="/dashboard" />
 
-      <EtherfuseRampWalletBanner variant="amber" />
-
-      <p className="text-xs text-muted-foreground">
-        Sandbox ·{' '}
-        <Link href="/identidad" className="font-medium text-foreground underline-offset-2 hover:underline">
-          Identidad
-        </Link>
-        {' · mín. 500 MXN'}
-      </p>
-
       <h1 className="text-xl font-bold text-foreground">Depositar</h1>
+
+      <SpeiPaymentCard
+        details={speiDetails}
+        concept={speiDetails?.orderId ?? null}
+      />
+      {speiDetails && pendingManualOrderJson ? (
+        <Button
+          type="button"
+          className="w-full"
+          disabled={!!busy}
+          onClick={() => void confirmSpeiPayment()}
+        >
+          {speiConfirmBusy ? (
+            <>
+              <Spinner className="size-4 text-background" />
+              Procesando…
+            </>
+          ) : (
+            'Ya transferí por SPEI (sandbox)'
+          )}
+        </Button>
+      ) : null}
 
       <section className="space-y-4 rounded-[1.5rem] border border-border bg-card p-4">
         <h2 className="text-sm font-bold text-foreground">MXN → CETES</h2>
@@ -290,22 +282,11 @@ export default function EtherfuseRampDevClient() {
         </div>
       ) : null}
 
-      {orderJson || fiatJson ? (
+      {fiatJson ? (
         <div className="space-y-4">
-          {orderJson ? <OrderCreatedDepositCard orderApiJson={orderJson} /> : null}
-          {fiatJson ? <OrderTransactionDetailCard payloadJson={fiatJson} /> : null}
+          <OrderTransactionDetailCard payloadJson={fiatJson} />
         </div>
       ) : null}
-      <SpeiTransferReviewDialog
-        open={speiDialogOpen}
-        onOpenChange={(open) => {
-          if (!open && speiConfirmBusy) return
-          onSpeiDialogOpenChange(open)
-        }}
-        details={speiDetails}
-        onConfirm={() => void confirmSpeiDialog()}
-        confirmBusy={speiConfirmBusy}
-      />
     </AppPageBody>
   )
 }
