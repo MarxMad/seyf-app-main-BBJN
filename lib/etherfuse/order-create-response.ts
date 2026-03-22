@@ -73,3 +73,67 @@ export function pickOnrampDepositSummary(order: unknown): {
         : null;
   return { orderId, depositClabe: clabe, depositAmount };
 }
+
+/** Tras POST /ramp/order offramp: burn tx, statusPage o campos anchor (Stellar). */
+export function pickOfframpOrderSummary(order: unknown): {
+  orderId: string | null;
+  statusPage: string | null;
+  burnTransaction: string | null;
+  withdrawAnchorAccount: string | null;
+  withdrawMemo: string | null;
+  withdrawMemoType: string | null;
+} {
+  const orderId = extractOrderIdFromCreateOrderResponse(order);
+  const base = {
+    orderId,
+    statusPage: null as string | null,
+    burnTransaction: null as string | null,
+    withdrawAnchorAccount: null as string | null,
+    withdrawMemo: null as string | null,
+    withdrawMemoType: null as string | null,
+  };
+  if (!order || typeof order !== "object") return base;
+  const root = order as Record<string, unknown>;
+  const leg = root.offramp ?? root.offRamp ?? root.off_ramp;
+  if (!leg || typeof leg !== "object") return base;
+  const o = leg as Record<string, unknown>;
+  const id =
+    typeof o.orderId === "string"
+      ? o.orderId
+      : typeof o.order_id === "string"
+        ? o.order_id
+        : orderId;
+  return {
+    orderId: id,
+    statusPage:
+      typeof o.statusPage === "string"
+        ? o.statusPage
+        : typeof o.status_page === "string"
+          ? o.status_page
+          : null,
+    burnTransaction:
+      typeof o.burnTransaction === "string"
+        ? o.burnTransaction
+        : typeof o.burn_transaction === "string"
+          ? o.burn_transaction
+          : null,
+    withdrawAnchorAccount:
+      typeof o.withdrawAnchorAccount === "string"
+        ? o.withdrawAnchorAccount
+        : typeof o.withdraw_anchor_account === "string"
+          ? o.withdraw_anchor_account
+          : null,
+    withdrawMemo:
+      typeof o.withdrawMemo === "string"
+        ? o.withdrawMemo
+        : typeof o.withdraw_memo === "string"
+          ? o.withdraw_memo
+          : null,
+    withdrawMemoType:
+      typeof o.withdrawMemoType === "string"
+        ? o.withdrawMemoType
+        : typeof o.withdraw_memo_type === "string"
+          ? o.withdraw_memo_type
+          : null,
+  };
+}
