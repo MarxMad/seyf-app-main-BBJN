@@ -85,7 +85,10 @@ export function MovementDetailSheet({
   if (!movement) return null
 
   const sig = movement.stellarTxSignature ?? resolvedSig
-  const stellarUrl = stellarTxExplorerUrl(sig)
+  const stellarUrl = stellarTxExplorerUrl(
+    sig,
+    movement.source === 'stellar' ? movement.stellarNetwork ?? undefined : undefined,
+  )
   const { fecha, hora } = formatMovementFechaHora(movement.createdAt)
 
   return (

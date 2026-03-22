@@ -248,8 +248,8 @@ export default function DashboardClient({
         <div className="border-b border-border px-4 py-3">
           <h2 className="text-sm font-bold text-foreground">Lo último</h2>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Últimas {DASHBOARD_MOVEMENTS_PREVIEW_LIMIT} (Etherfuse, pruebas y{' '}
-            <span className="whitespace-nowrap">Stellar</span>) · historial completo abajo
+            Últimas {DASHBOARD_MOVEMENTS_PREVIEW_LIMIT} (Etherfuse, pruebas, Stellar{' '}
+            <span className="whitespace-nowrap">testnet + mainnet</span>) · historial abajo
           </p>
         </div>
         <ul className="divide-y divide-border">
@@ -274,7 +274,11 @@ export default function DashboardClient({
                       <p className="truncate text-sm font-semibold text-foreground">{mov.titulo}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatMovementListSubtitle(mov.createdAt)}
-                        {mov.source === 'stellar' ? ' · En cadena' : ''}
+                        {mov.source === 'stellar'
+                          ? mov.stellarNetwork === 'mainnet'
+                            ? ' · Mainnet'
+                            : ' · Testnet'
+                          : ''}
                       </p>
                     </div>
                     <span
