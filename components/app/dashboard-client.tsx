@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { AppPageBody } from '@/components/app/app-page-body'
-import AppUserAccountPanel from '@/components/app/app-user-account-panel'
 import { DashboardHeroCarousel } from '@/components/app/dashboard-hero-carousel'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -69,8 +68,6 @@ export default function DashboardClient({
 
   return (
     <AppPageBody className="space-y-6 pt-4">
-      <AppUserAccountPanel />
-
       <DashboardHeroCarousel
         data={{
           principal: data.principal,
@@ -177,13 +174,25 @@ export default function DashboardClient({
       )}
 
       {showEtherfuseRampDev && (
-        <section className="rounded-[1.25rem] border border-dashed border-amber-500/25 bg-amber-500/[0.06] p-4">
-          <p className="text-xs font-bold text-amber-200/90">Herramienta de desarrollo</p>
+        <section className="rounded-[1.25rem] border border-dashed border-amber-500/25 bg-amber-500/[0.06] p-4 space-y-2">
+          <p className="text-xs font-bold text-amber-200/90">Herramientas de desarrollo</p>
           <Link
             href="/dev/etherfuse-ramp"
-            className="mt-2 inline-block text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+            className="block text-sm font-semibold text-foreground underline-offset-4 hover:underline"
           >
-            Panel rampa Etherfuse (sandbox)
+            Panel onramp Etherfuse (sandbox)
+          </Link>
+          <Link
+            href="/dev/etherfuse-offramp"
+            className="block text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+          >
+            Panel offramp Etherfuse (sandbox)
+          </Link>
+          <Link
+            href="/dev/poc-omnibus"
+            className="block text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+          >
+            PoC ledger omnibus (una wallet, saldos en memoria)
           </Link>
         </section>
       )}

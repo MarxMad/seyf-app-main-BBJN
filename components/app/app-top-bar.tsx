@@ -3,6 +3,15 @@
 import Link from 'next/link'
 import { Search, BarChart3, CreditCard } from 'lucide-react'
 import { useAccesly } from 'accesly'
+import AppUserAccountPanel from '@/components/app/app-user-account-panel'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 
 function avatarLabel(wallet: { email?: string; stellarAddress: string } | null, loading: boolean) {
   if (loading) return '…'
@@ -18,13 +27,35 @@ export default function AppTopBar() {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-lg items-center gap-2 px-6 py-3">
-        <Link
-          href="/dashboard"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold tracking-tight text-foreground ring-1 ring-border"
-          aria-label="Inicio"
-        >
-          {avatarLabel(wallet, loading)}
-        </Link>
+        <Sheet>
+          <SheetTrigger asChild>
+            <button
+              type="button"
+              className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-secondary text-sm font-bold tracking-tight text-foreground ring-1 ring-border outline-none transition hover:bg-secondary/80 focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Cuenta de usuario"
+            >
+              {avatarLabel(wallet, loading)}
+            </button>
+          </SheetTrigger>
+          <SheetContent side="right" className="flex flex-col gap-0 overflow-hidden p-0">
+            <SheetHeader className="shrink-0 space-y-1 border-b border-border px-4 py-4 pr-12 text-left">
+              <SheetTitle className="text-lg font-bold tracking-tight">Tu cuenta</SheetTitle>
+              <p className="text-xs text-muted-foreground">Perfil y sesión Accesly</p>
+            </SheetHeader>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+              <SheetClose asChild>
+                <Link
+                  href="/dashboard"
+                  className="mb-4 flex h-11 w-full items-center justify-center rounded-full bg-secondary text-sm font-semibold text-foreground ring-1 ring-border transition hover:bg-secondary/80"
+                >
+                  Inicio
+                </Link>
+              </SheetClose>
+              <AppUserAccountPanel />
+            </div>
+          </SheetContent>
+        </Sheet>
         <div className="relative min-w-0 flex-1">
           <Search
             className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"

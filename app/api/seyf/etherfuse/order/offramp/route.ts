@@ -2,17 +2,19 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { extractOrderIdFromCreateOrderResponse } from "@/lib/etherfuse/order-create-response";
 import { resolveMvpPartnerCryptoWalletId } from "@/lib/etherfuse/partner-accounts";
-import { createMxOnrampOrder } from "@/lib/etherfuse/ramp-api";
+import { createMxOfframpOrder } from "@/lib/etherfuse/ramp-api";
 import { getEtherfuseRampContext } from "@/lib/seyf/etherfuse-ramp-context";
 import { guardEtherfuseRampRoutes } from "@/lib/seyf/etherfuse-ramp-guard";
 
 const bodySchema = z.object({
   quoteId: z.string().uuid(),
+  /** Stellar: flujo anchor (pago + memo) en lugar de burn prearmado. */
+  useAnchor: z.boolean().optional(),
 });
 
 /**
- * POST /api/seyf/etherfuse/order/onramp
- * Cuerpo: { quoteId } — debe ser el quoteId devuelto por Etherfuse en /ramp/quote (caduca en ~2 min).
+ * POST /api/seyf/etherfuse/order/offramp
+ * Cuerpo: { quoteId, useAnchor?: boolean } — quote de offramp (~2 min de validez).
  */
 export async function POST(req: Request) {
   const denied = guardEtherfuseRampRoutes();
@@ -48,12 +50,13 @@ export async function POST(req: Request) {
     } catch {
       cryptoWalletId = undefined;
     }
-    const order = await createMxOnrampOrder({
+    const order = await createMxOfframpOrder({
       bankAccountId: ctx.bankAccountId,
       quoteId: parsed.data.quoteId,
       ...(cryptoWalletId
         ? { cryptoWalletId }
         : { publicKey: ctx.publicKey }),
+      ...(parsed.data.useAnchor === true ? { useAnchor: true } : {}),
     });
     const orderId = extractOrderIdFromCreateOrderResponse(order);
     return NextResponse.json({
@@ -62,8 +65,9 @@ export async function POST(req: Request) {
       contextSource: ctx.source,
     });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Error al crear orden";
-    const conflict = message.includes("409") || message.toLowerCase().includes("pending");
+    const message = e instanceof Error ? e.message : "Error al crear orden offramp";
+    const conflict =
+      message.includes("409") || message.toLowerCase().includes("pending");
     return NextResponse.json(
       { error: message },
       { status: conflict ? 409 : 502 },

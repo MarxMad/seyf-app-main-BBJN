@@ -8,102 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-function pickQuoteId(body: unknown): string | null {
-  if (!body || typeof body !== 'object') return null
-  const o = body as Record<string, unknown>
-  const id = o.quoteId ?? o.quote_id
-  return typeof id === 'string' && id.length > 0 ? id : null
-}
-
-function pickOrderId(body: unknown): string | null {
-  if (!body || typeof body !== 'object') return null
-  const o = body as Record<string, unknown>
-  const id = o.orderId ?? o.order_id
-  return typeof id === 'string' && id.length > 0 ? id : null
-}
-
-type OrderDisplay = {
-  orderId: string | null
-  status: string | null
-  confirmedTxSignature: string | null
-  statusPage: string | null
-  depositClabe: string | null
-}
-
-function OrderTxSummary({ payloadJson }: { payloadJson: string }) {
-  let orderDisplay: OrderDisplay | null = null
-  let orderFetchError: string | null = null
-  try {
-    const root = JSON.parse(payloadJson) as {
-      orderDisplay?: OrderDisplay | null
-      orderFetchError?: string | null
-    }
-    orderDisplay = root.orderDisplay ?? null
-    orderFetchError =
-      typeof root.orderFetchError === 'string' ? root.orderFetchError : null
-  } catch {
-    return null
-  }
-  const tx = orderDisplay?.confirmedTxSignature?.trim()
-  const stellarTxUrl = tx
-    ? `https://stellar.expert/explorer/testnet/tx/${encodeURIComponent(tx)}`
-    : null
-
-  return (
-    <div className="rounded-[1rem] border border-border bg-card/80 p-4 text-sm">
-      <p className="text-xs font-bold text-foreground">Orden y transacción</p>
-      {orderDisplay?.statusPage ? (
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          Vista Etherfuse (como en devnet):{' '}
-          <a
-            href={orderDisplay.statusPage}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-emerald-600 underline underline-offset-2 hover:text-emerald-500"
-          >
-            Abrir orden en Etherfuse
-          </a>
-        </p>
-      ) : null}
-      {orderDisplay?.status ? (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Estado API: <span className="font-mono text-foreground">{orderDisplay.status}</span>
-        </p>
-      ) : null}
-      {tx ? (
-        <p className="mt-2 break-all text-xs leading-relaxed">
-          <span className="text-muted-foreground">confirmedTxSignature: </span>
-          <span className="font-mono text-foreground">{tx}</span>
-          {stellarTxUrl ? (
-            <>
-              {' '}
-              <a
-                href={stellarTxUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-600 underline underline-offset-2 hover:text-emerald-500"
-              >
-                Ver en Stellar Expert (testnet)
-              </a>
-            </>
-          ) : null}
-        </p>
-      ) : (
-        <p className="mt-2 text-xs text-muted-foreground">
-          El hash on-chain (`confirmedTxSignature`) puede aparecer cuando el estado pase a{' '}
-          <span className="font-mono">funded</span>/<span className="font-mono">completed</span> (a veces
-          unos segundos después de simular SPEI).
-        </p>
-      )}
-      {orderFetchError ? (
-        <p className="mt-2 text-xs text-amber-600">
-          No se pudo refrescar GET /ramp/order (reintentos): {orderFetchError}
-        </p>
-      ) : null}
-    </div>
-  )
-}
+import {
+  OrderCreatedDepositCard,
+  OrderTransactionDetailCard,
+  pickQuoteId,
+} from '@/components/app/dev/etherfuse-order-cards'
+import { EtherfuseRampWalletBanner } from '@/components/app/dev/etherfuse-ramp-wallet-banner'
+import { extractOrderIdFromCreateOrderResponse } from '@/lib/etherfuse/order-create-response'
+import { pickRampOrderTransactionDetails } from '@/lib/etherfuse/orders-api'
 
 export default function EtherfuseRampDevClient() {
   const [busy, setBusy] = useState<string | null>(null)
@@ -115,7 +27,8 @@ export default function EtherfuseRampDevClient() {
   const [orderJson, setOrderJson] = useState<string>('')
   const [fiatJson, setFiatJson] = useState<string>('')
   const [cetesAmount, setCetesAmount] = useState('500')
-  const [cetesUseMvp, setCetesUseMvp] = useState(true)
+  /** false = misma prioridad que GET contexto (cookie /identidad primero); true = solo ETHERFUSE_MVP_* */
+  const [cetesUseMvp, setCetesUseMvp] = useState(false)
   const [cetesJson, setCetesJson] = useState<string>('')
 
   const run = useCallback(async (label: string, fn: () => Promise<void>) => {
@@ -240,13 +153,11 @@ export default function EtherfuseRampDevClient() {
       } catch {
         throw new Error('Primero crea una orden con JSON válido')
       }
-      const inner =
-        parsed && typeof parsed === 'object' && 'order' in (parsed as object)
-          ? (parsed as { order: unknown }).order
-          : parsed
-      const orderId = pickOrderId(inner)
+      const orderId = extractOrderIdFromCreateOrderResponse(parsed)
       if (!orderId) {
-        throw new Error('No encuentro orderId en la respuesta de orden')
+        throw new Error(
+          'No encuentro orderId en la respuesta de orden (repite paso 3 o revisa el JSON: hace falta orderId en la raíz o bajo onramp/on_ramp).',
+        )
       }
       const res = await fetch('/api/seyf/etherfuse/sandbox/fiat-received', {
         method: 'POST',
@@ -257,13 +168,51 @@ export default function EtherfuseRampDevClient() {
       if (!res.ok) {
         throw new Error(typeof data.error === 'string' ? data.error : res.statusText)
       }
-      setFiatJson(JSON.stringify(data, null, 2))
+
+      let orderPolled: unknown = null
+      let pollAttempts = 0
+      for (let i = 0; i < 12; i++) {
+        pollAttempts = i + 1
+        if (i > 0) await new Promise((r) => setTimeout(r, 1500))
+        const gr = await fetch(
+          `/api/seyf/etherfuse/prueba/order/${encodeURIComponent(orderId)}`,
+        )
+        if (!gr.ok) continue
+        const gj = (await gr.json().catch(() => ({}))) as { order?: unknown }
+        orderPolled = gj.order ?? null
+        const det = pickRampOrderTransactionDetails(orderPolled)
+        const st = (det.status ?? '').toLowerCase()
+        if (
+          (det.confirmedTxSignature && det.confirmedTxSignature.length > 0) ||
+          st === 'completed' ||
+          st === 'funded' ||
+          st === 'failed' ||
+          st === 'canceled'
+        ) {
+          break
+        }
+      }
+
+      setFiatJson(
+        JSON.stringify(
+          {
+            sandboxFiatReceived: data,
+            orderPolled,
+            orderDisplay: pickRampOrderTransactionDetails(orderPolled),
+            pollAttempts,
+          },
+          null,
+          2,
+        ),
+      )
       setCetesJson('')
     })
 
   return (
     <AppPageBody>
       <AppBackLink href="/dashboard" />
+
+      <EtherfuseRampWalletBanner variant="amber" />
 
       <div className="mb-6 rounded-[1.25rem] border border-dashed border-amber-500/30 bg-amber-500/[0.06] p-4">
         <p className="text-xs font-bold text-amber-200/90">Solo desarrollo</p>
@@ -285,8 +234,9 @@ export default function EtherfuseRampDevClient() {
         <p className="text-xs font-bold text-emerald-200/90">Rápido: MXN → CETES (sandbox)</p>
         <p className="text-xs leading-relaxed text-muted-foreground">
           Un solo paso: cotización + orden con destino CETES y simulación SPEI (<span className="font-mono">fiat_received</span>).
-          Mínimo 500 MXN. Por defecto usa identidad <span className="font-mono">ETHERFUSE_MVP_*</span> (misma que Depositar), no la cookie de{' '}
-          <span className="font-mono">/identidad</span>, para evitar errores de API si el KYC no coincide con la sesión web.
+          Mínimo 500 MXN. Por defecto usa la misma identidad que los pasos 1–4 (cookie{' '}
+          <span className="font-mono">/identidad</span> si existe; si no, <span className="font-mono">ETHERFUSE_MVP_*</span> en dev).
+          Marca la casilla solo si quieres forzar solo variables MVP e ignorar la cookie.
         </p>
         <div className="flex items-start gap-3 rounded-[1rem] border border-border/60 bg-background/40 px-3 py-2">
           <Checkbox
@@ -296,8 +246,8 @@ export default function EtherfuseRampDevClient() {
             className="mt-0.5"
           />
           <Label htmlFor="cetes-mvp" className="cursor-pointer text-xs leading-relaxed font-normal text-muted-foreground">
-            Usar solo <span className="font-mono">ETHERFUSE_MVP_*</span> en <span className="font-mono">.env.local</span> (recomendado).
-            Desactiva para probar la cookie de <span className="font-mono">/identidad</span>.
+            Forzar solo <span className="font-mono">ETHERFUSE_MVP_*</span> (ignorar cookie <span className="font-mono">/identidad</span>).
+            Útil si la sesión web y la API no coinciden; si ya te funcionan los pasos 1–4 con cookie, déjalo desmarcado.
           </Label>
         </div>
         <Input
@@ -390,7 +340,7 @@ export default function EtherfuseRampDevClient() {
       <div className="mt-8 space-y-4">
         {cetesJson && (
           <div className="space-y-3">
-            <OrderTxSummary payloadJson={cetesJson} />
+            <OrderTransactionDetailCard payloadJson={cetesJson} />
             <pre className="max-h-96 overflow-auto rounded-[1rem] border border-emerald-500/25 bg-emerald-500/[0.06] p-3 text-[11px] leading-relaxed text-foreground">
               {cetesJson}
             </pre>
@@ -407,14 +357,20 @@ export default function EtherfuseRampDevClient() {
           </pre>
         )}
         {orderJson && (
-          <pre className="max-h-64 overflow-auto rounded-[1rem] border border-border bg-secondary/40 p-3 text-[11px] leading-relaxed text-foreground">
-            {orderJson}
-          </pre>
+          <div className="space-y-3">
+            <OrderCreatedDepositCard orderApiJson={orderJson} />
+            <pre className="max-h-64 overflow-auto rounded-[1rem] border border-border bg-secondary/40 p-3 text-[11px] leading-relaxed text-foreground">
+              {orderJson}
+            </pre>
+          </div>
         )}
         {fiatJson && (
-          <pre className="max-h-48 overflow-auto rounded-[1rem] border border-emerald-500/20 bg-emerald-500/[0.06] p-3 text-[11px] leading-relaxed text-foreground">
-            {fiatJson}
-          </pre>
+          <div className="space-y-3">
+            <OrderTransactionDetailCard payloadJson={fiatJson} />
+            <pre className="max-h-48 overflow-auto rounded-[1rem] border border-emerald-500/20 bg-emerald-500/[0.06] p-3 text-[11px] leading-relaxed text-foreground">
+              {fiatJson}
+            </pre>
+          </div>
         )}
       </div>
     </AppPageBody>

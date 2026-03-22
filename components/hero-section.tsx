@@ -1,6 +1,16 @@
 'use client'
 
 import ThreeDMarquee from '@/components/ui/3d-marquee'
+import { Button } from '@/components/ui/button'
+
+const LANDING_SESION_ID = 'landing-sesion'
+
+function scrollToSesion() {
+  document.getElementById(LANDING_SESION_ID)?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  })
+}
 
 const fintechImages = [
   'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=300&fit=crop',
@@ -28,42 +38,28 @@ export default function HeroSection() {
         />
       </div>
 
-      {/* Contenido encima */}
+      {/* Contenido encima (pointer-events para clicks sobre el fondo inerte) */}
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        {/* Transparent content box */}
-        <div className="rounded-3xl border border-foreground/10 bg-background/40 px-8 py-10 backdrop-blur-sm">
-          {/* Logo */}
+        <div className="pointer-events-auto rounded-3xl border border-foreground/10 bg-background/40 px-8 py-10 backdrop-blur-sm">
           <h1 className="text-6xl font-black tracking-tight text-foreground sm:text-7xl md:text-8xl">
             Seyf
           </h1>
 
-          {/* Tagline */}
-          <p className="mt-6 max-w-sm text-xl font-bold text-foreground sm:text-2xl md:max-w-md text-balance leading-snug">
-            Tu dinero, tu control.
+          <p className="mt-6 max-w-sm text-xl font-bold text-foreground sm:text-2xl md:max-w-lg text-balance leading-snug">
+            Buy now, Pay never.
           </p>
-          <p className="mt-3 text-base text-muted-foreground sm:text-lg font-normal">
-            Finanzas inteligentes al alcance de tu mano.
+          <p className="mt-3 text-base text-muted-foreground sm:text-lg font-normal text-balance max-w-md mx-auto">
+            Compra cuando quieras; el pago encaja con tu flujo. Ahorro, adelantos y liquidez sin perder el control.
           </p>
-        </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="flex flex-col items-center gap-3 text-muted-foreground">
-            <span className="text-sm font-medium tracking-wide">Desliza</span>
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
-          </div>
+          <Button
+            type="button"
+            size="lg"
+            className="mt-8 h-12 min-w-[11rem] rounded-full px-8 text-base font-bold"
+            onClick={scrollToSesion}
+          >
+            Iniciar
+          </Button>
         </div>
       </div>
     </section>

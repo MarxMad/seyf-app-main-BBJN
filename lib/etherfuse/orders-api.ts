@@ -129,54 +129,126 @@ export async function fetchOrderDetailsWithRetry(
   throw last ?? new Error("fetchOrderDetailsWithRetry: sin respuesta");
 }
 
-/** Campos útiles para UI (OpenAPI Order — ver get-order-details). */
-export function pickOrderDisplayFields(order: unknown): {
+/**
+ * Campos de `Order` (GET /ramp/order/{id}, webhooks) para UI y depuración.
+ * @see https://docs.etherfuse.com/api-reference/orders/get-order-details
+ */
+export type RampOrderTransactionDetails = {
   orderId: string | null;
+  customerId: string | null;
   status: string | null;
-  confirmedTxSignature: string | null;
+  orderType: string | null;
   statusPage: string | null;
   depositClabe: string | null;
-} {
+  confirmedTxSignature: string | null;
+  amountInFiat: string | null;
+  amountInTokens: string | null;
+  exchangeRate: string | null;
+  etherfuseMidMarketRate: string | null;
+  feeBps: number | null;
+  feeAmountInFiat: string | null;
+  sourceAsset: string | null;
+  targetAsset: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  completedAt: string | null;
+  walletId: string | null;
+  bankAccountId: string | null;
+};
+
+function strFrom(
+  o: Record<string, unknown>,
+  ...keys: string[]
+): string | null {
+  for (const k of keys) {
+    const v = o[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+    if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  }
+  return null;
+}
+
+function intFrom(
+  o: Record<string, unknown>,
+  ...keys: string[]
+): number | null {
+  for (const k of keys) {
+    const v = o[k];
+    if (typeof v === "number" && Number.isFinite(v)) return Math.round(v);
+    if (typeof v === "string") {
+      const n = Number.parseInt(v, 10);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
+}
+
+const emptyTxDetails: RampOrderTransactionDetails = {
+  orderId: null,
+  customerId: null,
+  status: null,
+  orderType: null,
+  statusPage: null,
+  depositClabe: null,
+  confirmedTxSignature: null,
+  amountInFiat: null,
+  amountInTokens: null,
+  exchangeRate: null,
+  etherfuseMidMarketRate: null,
+  feeBps: null,
+  feeAmountInFiat: null,
+  sourceAsset: null,
+  targetAsset: null,
+  createdAt: null,
+  updatedAt: null,
+  completedAt: null,
+  walletId: null,
+  bankAccountId: null,
+};
+
+/** Detalle de orden/transacción on-chain (GET /ramp/order/{id}). */
+export function pickRampOrderTransactionDetails(
+  order: unknown,
+): RampOrderTransactionDetails {
   if (!order || typeof order !== "object") {
-    return {
-      orderId: null,
-      status: null,
-      confirmedTxSignature: null,
-      statusPage: null,
-      depositClabe: null,
-    };
+    return { ...emptyTxDetails };
   }
   const o = order as Record<string, unknown>;
-  const orderId =
-    typeof o.orderId === "string"
-      ? o.orderId
-      : typeof o.order_id === "string"
-        ? o.order_id
-        : null;
-  const status = typeof o.status === "string" ? o.status : null;
-  const confirmedTxSignature =
-    typeof o.confirmedTxSignature === "string"
-      ? o.confirmedTxSignature
-      : typeof o.confirmed_tx_signature === "string"
-        ? o.confirmed_tx_signature
-        : null;
-  const statusPage =
-    typeof o.statusPage === "string"
-      ? o.statusPage
-      : typeof o.status_page === "string"
-        ? o.status_page
-        : null;
-  const depositClabe =
-    typeof o.depositClabe === "string"
-      ? o.depositClabe
-      : typeof o.deposit_clabe === "string"
-        ? o.deposit_clabe
-        : null;
   return {
-    orderId,
-    status,
-    confirmedTxSignature,
-    statusPage,
-    depositClabe,
+    orderId: strFrom(o, "orderId", "order_id"),
+    customerId: strFrom(o, "customerId", "customer_id"),
+    status: strFrom(o, "status", "order_status"),
+    orderType: strFrom(o, "orderType", "order_type"),
+    statusPage: strFrom(o, "statusPage", "status_page"),
+    depositClabe: strFrom(o, "depositClabe", "deposit_clabe"),
+    confirmedTxSignature: strFrom(
+      o,
+      "confirmedTxSignature",
+      "confirmed_tx_signature",
+    ),
+    amountInFiat: strFrom(o, "amountInFiat", "amount_in_fiat"),
+    amountInTokens: strFrom(o, "amountInTokens", "amount_in_tokens"),
+    exchangeRate: strFrom(o, "exchangeRate", "exchange_rate"),
+    etherfuseMidMarketRate: strFrom(
+      o,
+      "etherfuseMidMarketRate",
+      "etherfuse_mid_market_rate",
+    ),
+    feeBps: intFrom(o, "feeBps", "fee_bps"),
+    feeAmountInFiat: strFrom(o, "feeAmountInFiat", "fee_amount_in_fiat"),
+    sourceAsset: strFrom(o, "sourceAsset", "source_asset"),
+    targetAsset: strFrom(o, "targetAsset", "target_asset"),
+    createdAt: strFrom(o, "createdAt", "created_at"),
+    updatedAt: strFrom(o, "updatedAt", "updated_at"),
+    completedAt: strFrom(o, "completedAt", "completed_at"),
+    walletId: strFrom(o, "walletId", "wallet_id"),
+    bankAccountId: strFrom(o, "bankAccountId", "bank_account_id"),
   };
+}
+
+/** @deprecated Usar `pickRampOrderTransactionDetails` (mismo comportamiento). */
+export function pickOrderDisplayFields(
+  order: unknown,
+): RampOrderTransactionDetails {
+  return pickRampOrderTransactionDetails(order);
 }

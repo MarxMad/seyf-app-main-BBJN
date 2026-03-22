@@ -9,7 +9,10 @@ export default function Home() {
       <section className="h-screen snap-start">
         <HeroSection />
       </section>
-      <section className="min-h-screen snap-start">
+      <section
+        id="landing-sesion"
+        className="min-h-screen snap-start scroll-mt-0"
+      >
         <AcceslyWalletPanel />
       </section>
     </main>

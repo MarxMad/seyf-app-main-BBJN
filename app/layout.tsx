@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { PublicMobileHistorySeed } from '@/components/app/public-mobile-history-seed'
 import SeyfAcceslyProvider from '@/components/providers/accesly-provider'
 import './globals.css'
 
@@ -12,8 +13,9 @@ const inter = Inter({
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Seyf - Tu dinero, tu control',
-  description: 'Finanzas inteligentes al alcance de tu mano. Gestiona tu dinero de forma simple y segura.',
+  title: 'Seyf — Buy now, Pay never',
+  description:
+    'Compra hoy, paga en tu ritmo. Ahorro, adelantos y liquidez con custodia Stellar vía Accesly.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -42,6 +44,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`dark ${inter.variable}`}>
       <body className="min-h-dvh font-sans antialiased">
+        <PublicMobileHistorySeed />
         <SeyfAcceslyProvider>{children}</SeyfAcceslyProvider>
         <Analytics />
       </body>
