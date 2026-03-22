@@ -30,7 +30,7 @@ function CopyChip({ value, label }: { value: string; label: string }) {
       onClick={copy}
       title={`Copiar ${label}`}
       className={cn(
-        'inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background/80 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
+        'inline-flex size-8 shrink-0 items-center justify-center rounded-none border border-border/80 bg-background/80 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
         done && 'border-emerald-500/40 text-emerald-600',
       )}
       aria-label={`Copiar ${label}`}
@@ -87,75 +87,48 @@ export function SpeiTransferReviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[min(90vh,640px)] overflow-y-auto border-border bg-background p-0 sm:max-w-md"
+        className="max-h-[min(90vh,640px)] gap-0 overflow-y-auto rounded-none border-border p-0 sm:max-w-md"
         showCloseButton={!confirmBusy}
       >
-        <div className="border-b border-border/60 bg-emerald-500/[0.08] px-5 py-3">
-          <DialogHeader className="space-y-0 text-left">
-            <DialogTitle className="text-sm font-black uppercase tracking-wide text-emerald-600">
-              Detalles de transferencia SPEI
-            </DialogTitle>
-          </DialogHeader>
-        </div>
+        <DialogHeader className="border-b border-border px-5 py-4 text-left">
+          <DialogTitle className="text-base font-bold text-foreground">SPEI</DialogTitle>
+        </DialogHeader>
 
-        <div className="px-5 pb-2 pt-4">
+        <div className="px-5 py-4">
           {details ? (
             <>
-              <p className="text-base font-semibold text-foreground">Datos para tu banca</p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Para completar la compra de <span className="font-semibold text-foreground">{details.assetCode}</span>,
-                transfiere por SPEI a la cuenta que indica Etherfuse:
+              <p className="text-xs text-muted-foreground">
+                {details.assetCode}
               </p>
-
-              <div className="mt-4 rounded-[1rem] border border-border bg-card p-4 shadow-sm">
-                <p className="text-xs text-muted-foreground">
-                  Abre tu app bancaria y envía una transferencia SPEI a:
-                </p>
-                <div className="mt-2">
-                  <Row
-                    label="CLABE"
-                    value={details.clabe}
-                    mono
-                    copyValue={details.clabe}
-                  />
-                  <Row label="Nombre" value={details.beneficiaryName} />
-                  <Row
-                    label="Monto"
-                    value={amountLabel}
-                    copyValue={String(details.amountMxn)}
-                  />
-                </div>
+              <div className="mt-3 rounded-none border border-border bg-card p-3">
+                <Row label="CLABE" value={details.clabe} mono copyValue={details.clabe} />
+                <Row label="Nombre" value={details.beneficiaryName} />
+                <Row label="Monto" value={amountLabel} copyValue={String(details.amountMxn)} />
               </div>
-
-              <div className="mt-4 rounded-[0.75rem] border border-amber-500/25 bg-amber-500/[0.06] p-3 text-xs leading-relaxed text-muted-foreground">
-                <span className="font-bold text-amber-900 dark:text-amber-200">Aviso: </span>
-                En producción, si no reciben el monto en el plazo indicado por Etherfuse, la orden puede
-                cancelarse. En este panel de desarrollo, al confirmar se simula el SPEI en sandbox (
-                <span className="font-mono">fiat_received</span>).
-              </div>
+              <p className="mt-3 text-xs text-muted-foreground">Confirmar simula el depósito (sandbox).</p>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">No hay datos de transferencia.</p>
+            <p className="text-sm text-muted-foreground">Sin datos.</p>
           )}
         </div>
 
-        <DialogFooter className="border-t border-border/60 bg-muted/20 px-5 py-4">
+        <DialogFooter className="gap-2 border-t border-border px-5 py-4 sm:justify-stretch">
           <Button
             type="button"
             variant="outline"
-            className="rounded-full"
+            className="flex-1 rounded-none"
             disabled={confirmBusy}
             onClick={() => onOpenChange(false)}
           >
-            Cancelar
+            Cerrar
           </Button>
           <Button
             type="button"
-            className="rounded-full bg-emerald-600 font-bold text-white hover:bg-emerald-700"
+            className="flex-1 rounded-none"
             disabled={!details || confirmBusy}
             onClick={() => void onConfirm()}
           >
-            {confirmBusy ? 'Ejecutando…' : 'Aceptar y ejecutar'}
+            {confirmBusy ? '…' : 'Confirmar'}
           </Button>
         </DialogFooter>
       </DialogContent>
