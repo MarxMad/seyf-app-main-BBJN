@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Copy, LogOut, UserRound } from 'lucide-react'
 import { useAccesly } from 'accesly'
 import { Button } from '@/components/ui/button'
+import { ACCESLY_BALANCE_POLL_MS } from '@/lib/seyf/balance-poll-intervals'
 
 function maskAddress(value?: string | null) {
   if (!value) return '—'
@@ -32,7 +33,7 @@ type AppUserAccountPanelProps = {
 
 export default function AppUserAccountPanel({ embedded = false }: AppUserAccountPanelProps) {
   const router = useRouter()
-  const { wallet, balance, loading, disconnect } = useAccesly()
+  const { wallet, balance, loading, disconnect, refreshBalance } = useAccesly()
   const [addressCopied, setAddressCopied] = useState(false)
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -41,6 +42,25 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
       if (copyResetRef.current) clearTimeout(copyResetRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (!wallet || loading) return
+    let cancelled = false
+    const tick = () => {
+      if (cancelled) return
+      void refreshBalance().catch(() => {})
+    }
+    const id = setInterval(tick, ACCESLY_BALANCE_POLL_MS)
+    const onVis = () => {
+      if (document.visibilityState === 'visible') tick()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [wallet, loading, refreshBalance])
 
   const copyStellarAddress = useCallback(async (address: string) => {
     try {

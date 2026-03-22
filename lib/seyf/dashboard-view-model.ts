@@ -42,21 +42,13 @@ function daysSince(iso: string): number {
 
 function cetesFootnote(s: DashboardCetesSaldo): string | null {
   if (s.kind === "ok") {
-    const c = new Intl.NumberFormat("es-MX", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
-    }).format(s.cetesBalance);
-    const r = new Intl.NumberFormat("es-MX", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    }).format(s.mxnPerCetes);
-    return `${c} CETES × ${r} MXN/CETES (cotización offramp Etherfuse)`;
+    return "Equivalente en pesos según el tipo del día (referencia, puede variar).";
   }
   if (s.kind === "no_context") {
-    return "Vincula tu cuenta en Identidad para ver tu saldo CETES valorado en MXN.";
+    return "Completa Identidad para ver tu saldo en pesos al día.";
   }
   if (s.kind === "disabled") {
-    return "La rampa Etherfuse no está habilitada en este entorno.";
+    return "Consulta de saldo no disponible en este momento.";
   }
   if (s.kind === "error") return s.message;
   return null;
@@ -98,7 +90,7 @@ export async function buildDashboardViewModel(): Promise<DashboardViewModel> {
   let saldoNote = cetesFootnote(cetesSaldo);
   if (cetesSaldo.kind === "no_context" && ledgerPrincipal > 0) {
     saldoNote =
-      "Saldo principal desde depósitos del ledger MVP (activa Identidad + Etherfuse para valor CETES en vivo).";
+      "Saldo según tus depósitos de prueba. Identidad te da el valor en vivo en pesos.";
   }
 
   const movementsRecent = movementsAll.slice(0, 8);

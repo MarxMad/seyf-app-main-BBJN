@@ -46,6 +46,21 @@ function parseAmountFiat(s: string | null): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function detalleEtherfuseAmigable(
+  ot: string,
+  d: ReturnType<typeof pickRampOrderTransactionDetails>,
+): string {
+  if (ot === "onramp") {
+    return d.depositClabe
+      ? "Sigue las instrucciones de transferencia que te dimos (CLABE y monto exacto)."
+      : "Estamos generando los datos de tu depósito.";
+  }
+  if (ot === "offramp") {
+    return "Retiro hacia tu cuenta en pesos mexicanos.";
+  }
+  return "Movimiento registrado en tu cuenta.";
+}
+
 function etherfuseRowToMovement(row: Record<string, unknown>): UserMovement | null {
   const d = pickRampOrderTransactionDetails(row);
   const oid = d.orderId;
@@ -55,27 +70,18 @@ function etherfuseRowToMovement(row: Record<string, unknown>): UserMovement | nu
   let titulo: string;
   if (ot === "onramp") {
     tipo = "deposito";
-    titulo = "Depósito onramp (MXN → crypto)";
+    titulo = "Depósito desde tu banco";
   } else if (ot === "offramp") {
     tipo = "retiro";
-    titulo = "Retiro offramp (crypto → MXN)";
+    titulo = "Retiro a tu cuenta";
   } else {
     tipo = "deposito";
-    titulo = `Orden ${d.orderType ?? "Etherfuse"}`;
+    titulo = "Movimiento";
   }
   const monto = parseAmountFiat(d.amountInFiat);
   const createdAt =
     d.createdAt ?? d.completedAt ?? d.updatedAt ?? new Date().toISOString();
   const estado = mapEstado(d.status);
-  const parts = [
-    `Orden ${oid}`,
-    d.status ? `Estado: ${d.status}` : null,
-    d.amountInTokens ? `Tokens: ${d.amountInTokens}` : null,
-    d.depositClabe ? `CLABE: ${d.depositClabe}` : null,
-    d.sourceAsset || d.targetAsset
-      ? `Activos: ${d.sourceAsset ?? "—"} → ${d.targetAsset ?? "—"}`
-      : null,
-  ].filter(Boolean);
   return {
     id: `ef-${oid}`,
     source: "etherfuse",
@@ -84,7 +90,7 @@ function etherfuseRowToMovement(row: Record<string, unknown>): UserMovement | nu
     monto,
     createdAt,
     estado,
-    detalle: parts.join(" · "),
+    detalle: detalleEtherfuseAmigable(ot, d),
     orderId: oid,
     stellarTxSignature: d.confirmedTxSignature,
   };
@@ -101,13 +107,13 @@ function ledgerRunToMovement(r: InvestmentRun): UserMovement {
     id: `ledger-${r.id}`,
     source: "ledger",
     tipo: "inversion",
-    titulo: "Inversión Stablebond (MVP)",
+    titulo: "Ahorro invertido (prueba)",
     monto: r.status === "completed" ? r.amountMxn : 0,
     createdAt: r.createdAt,
     estado,
     detalle:
       r.errorMessage ??
-      `Simulación ledger · tasa ref. ${r.rateSnapshotAnnualPercent}% anual`,
+      `Solo en entorno de prueba · tasa de referencia ${r.rateSnapshotAnnualPercent}% anual`,
     orderId: null,
     stellarTxSignature: r.stellarTxHash?.trim() || null,
   };
