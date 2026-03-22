@@ -136,7 +136,7 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
           onDragEnd={onDragEnd}
         >
           <div className="w-1/3 shrink-0 px-4 pb-4 pt-10 text-center">
-            <p className="text-[13px] font-medium text-muted-foreground">Rendimientos diarios</p>
+            <p className="text-[13px] font-medium text-muted-foreground">Tu saldo</p>
             <p className="mt-1 inline-flex flex-wrap items-baseline justify-center gap-0.5 leading-none tracking-tight text-foreground">
               <span className="text-[2.35rem] font-black tabular-nums sm:text-[2.65rem]">{balanceMain}</span>
               {balanceCents ? (
@@ -173,11 +173,11 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
           </div>
 
           <div className="w-1/3 shrink-0 px-6 pb-2 pt-10 text-center">
-            <p className="text-[13px] font-medium text-muted-foreground">Adelanto de rendimiento</p>
+            <p className="text-[13px] font-medium text-muted-foreground">Adelanto</p>
             <p className="mt-1 text-[2.75rem] font-black leading-none tracking-tight tabular-nums text-foreground">
               {formatMXNFull(data.adelantable)}
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">Disponible sin tocar tu ahorro</p>
+            <p className="mt-2 text-xs text-muted-foreground">Sin usar tu ahorro principal</p>
             <Link
               href="/adelanto"
               className="mt-4 inline-block text-xs font-bold text-foreground underline-offset-4 hover:underline"
@@ -193,8 +193,8 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
             <p className="mt-1 text-[2.75rem] font-black leading-none tracking-tight tabular-nums text-foreground">
               {formatPuntos(data.puntos)}
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">Por depositar, usar tu cuenta y referir</p>
-            <p className="mt-4 text-xs font-medium text-muted-foreground">Próximamente canjes y beneficios</p>
+            <p className="mt-2 text-xs text-muted-foreground">Por usar Seyf y referir amigos</p>
+            <p className="mt-4 text-xs font-medium text-muted-foreground">Canjes próximamente</p>
           </div>
         </motion.div>
       </div>

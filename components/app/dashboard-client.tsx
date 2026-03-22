@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -9,7 +9,15 @@ import { MovementDetailSheet } from '@/components/app/movement-detail-sheet'
 import { iconForMovimientoTipo } from '@/components/app/movement-tipo-icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import type { DashboardViewModel } from '@/lib/seyf/dashboard-view-model'
+import {
+  DASHBOARD_POLL_EXTRA_DELAYS_MS,
+  DASHBOARD_POLL_MS,
+} from '@/lib/seyf/balance-poll-intervals'
+import { POLL_FETCH_INIT, pollBustUrl } from '@/lib/seyf/poll-fetch'
+import {
+  DASHBOARD_MOVEMENTS_PREVIEW_LIMIT,
+  type DashboardViewModel,
+} from '@/lib/seyf/dashboard-view-model-types'
 import { formatMovementListSubtitle, type UserMovement } from '@/lib/seyf/user-movements-types'
 
 function formatMXN(amount: number) {
@@ -37,33 +45,92 @@ export default function DashboardClient({
   vm: DashboardViewModel
 }) {
   const [selected, setSelected] = useState<UserMovement | null>(null)
+  const [liveVm, setLiveVm] = useState(vm)
+
+  useEffect(() => {
+    setLiveVm(vm)
+  }, [vm])
+
+  const refreshDashboard = useCallback(async () => {
+    try {
+      const r = await fetch(pollBustUrl('/api/seyf/dashboard'), POLL_FETCH_INIT)
+      if (!r.ok) return
+      const next = (await r.json()) as DashboardViewModel
+      setLiveVm(next)
+    } catch {
+      /* mantener último valor válido */
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const tick = () => {
+      if (cancelled) return
+      if (document.visibilityState !== 'visible') return
+      void refreshDashboard()
+    }
+    tick()
+    const extraTimers = DASHBOARD_POLL_EXTRA_DELAYS_MS.map((ms) =>
+      setTimeout(tick, ms),
+    )
+    const id = setInterval(tick, DASHBOARD_POLL_MS)
+    const onVis = () => {
+      if (document.visibilityState === 'visible') tick()
+    }
+    const onFocus = () => tick()
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) tick()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('pageshow', onPageShow)
+    return () => {
+      cancelled = true
+      for (const t of extraTimers) clearTimeout(t)
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVis)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('pageshow', onPageShow)
+    }
+  }, [refreshDashboard])
+
+  useEffect(() => {
+    if (!selected) return
+    const next = liveVm.movementsRecent.find((m) => m.id === selected.id)
+    if (next) setSelected(next)
+  }, [liveVm.movementsRecent, selected])
 
   return (
     <AppPageBody className="space-y-6 pt-4">
       <DashboardHeroCarousel
         data={{
-          principal: vm.principalMxn,
-          adelantable: vm.adelantableMxn,
-          puntos: vm.puntos,
-          tasaAnual: vm.tasaAnual,
+          principal: liveVm.principalMxn,
+          adelantable: liveVm.adelantableMxn,
+          puntos: liveVm.puntos,
+          tasaAnual: liveVm.tasaAnual,
         }}
       />
-      {vm.saldoNote ? (
-        <p className="-mt-2 px-1 text-center text-[11px] leading-snug text-muted-foreground">{vm.saldoNote}</p>
+      {liveVm.saldoNote ? (
+        <p className="-mt-2 px-1 text-center text-[11px] leading-snug text-muted-foreground">
+          {liveVm.saldoNote}
+        </p>
       ) : null}
 
       {/* Actividad reciente */}
       <section className="overflow-hidden rounded-[1.5rem] border border-border bg-card">
         <div className="border-b border-border px-4 py-3">
-          <h2 className="text-sm font-bold text-foreground">Actividad reciente</h2>
+          <h2 className="text-sm font-bold text-foreground">Lo último</h2>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            Últimas {DASHBOARD_MOVEMENTS_PREVIEW_LIMIT} · el resto en historial
+          </p>
         </div>
         <ul className="divide-y divide-border">
-          {vm.movementsRecent.length === 0 ? (
+          {liveVm.movementsRecent.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-muted-foreground">
-              Sin movimientos. Órdenes Etherfuse e inversiones MVP aparecerán aquí.
+              Aquí aparecerán depósitos, retiros y demás movimientos.
             </li>
           ) : (
-            vm.movementsRecent.map((mov) => {
+            liveVm.movementsRecent.map((mov) => {
               const esPositivo = mov.monto >= 0
               return (
                 <li key={mov.id} className="px-2">
@@ -87,7 +154,7 @@ export default function DashboardClient({
                         esPositivo ? 'text-[#22C55E]' : 'text-foreground',
                       )}
                     >
-                      {esPositivo ? '+' : ''}
+                      {mov.monto < 0 ? '− ' : mov.monto > 0 ? '+' : ''}
                       {formatMXNFull(Math.abs(mov.monto))}
                     </span>
                   </button>
@@ -101,7 +168,7 @@ export default function DashboardClient({
             href="/historial"
             className="flex w-full items-center justify-center rounded-xl py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
           >
-            Ver todo
+            Ver historial
           </Link>
         </div>
       </section>
@@ -109,14 +176,18 @@ export default function DashboardClient({
       {/* Tarjetas / productos */}
       <section className="rounded-[1.5rem] border border-border bg-card/50 p-4">
         <Link href="/dashboard" className="flex items-center justify-between text-sm font-bold text-foreground">
-          <span>Tus productos</span>
+          <span>Resumen</span>
           <ChevronRight className="size-4 text-muted-foreground" />
         </Link>
         <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[
-            { label: 'Ahorro', sub: formatMXNFull(vm.principalMxn), tone: 'from-violet-600/90 to-indigo-800/90' },
-            { label: 'Rendimiento', sub: formatMXNFull(vm.rendimientoMxn), tone: 'from-zinc-600/90 to-zinc-800/90' },
-            { label: 'Adelanto', sub: formatMXNFull(vm.adelantableMxn), tone: 'from-slate-600/90 to-slate-800/90' },
+            { label: 'Ahorro', sub: formatMXNFull(liveVm.principalMxn), tone: 'from-violet-600/90 to-indigo-800/90' },
+            {
+              label: 'Rendimiento',
+              sub: formatMXNFull(liveVm.rendimientoMxn),
+              tone: 'from-zinc-600/90 to-zinc-800/90',
+            },
+            { label: 'Adelanto', sub: formatMXNFull(liveVm.adelantableMxn), tone: 'from-slate-600/90 to-slate-800/90' },
           ].map((card) => (
             <div
               key={card.label}
@@ -134,12 +205,12 @@ export default function DashboardClient({
 
       {/* Adelanto destacado */}
       <section className="rounded-[1.5rem] border border-border bg-secondary/40 p-5">
-        <p className="text-xs font-medium text-muted-foreground">Puedes pedir adelantado</p>
+        <p className="text-xs font-medium text-muted-foreground">Adelanto disponible</p>
         <p className="mt-1 text-2xl font-black tabular-nums tracking-tight text-foreground">
-          {formatMXNFull(vm.adelantableMxn)}
+          {formatMXNFull(liveVm.adelantableMxn)}
         </p>
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          Sin tocar tu ahorro. Solo parte de lo que ya generaste.
+          Usa solo lo que ya ganaste, sin tocar tu ahorro principal.
         </p>
         <Link href="/adelanto" className="mt-4 block">
           <Button className="h-12 w-full rounded-full bg-foreground text-base font-bold text-background hover:bg-foreground/90">
@@ -148,11 +219,13 @@ export default function DashboardClient({
         </Link>
       </section>
 
-      {vm.saldoGastoMxn > 0 && (
+      {liveVm.saldoGastoMxn > 0 && (
         <section className="flex items-center justify-between rounded-[1.5rem] border border-border bg-card px-4 py-4">
           <div>
             <p className="text-xs font-medium text-muted-foreground">Saldo para gastar</p>
-            <p className="text-xl font-black tabular-nums text-foreground">{formatMXNFull(vm.saldoGastoMxn)}</p>
+            <p className="text-xl font-black tabular-nums text-foreground">
+              {formatMXNFull(liveVm.saldoGastoMxn)}
+            </p>
           </div>
           <Link href="/gastar">
             <Button
@@ -167,24 +240,24 @@ export default function DashboardClient({
 
       {showEtherfuseRampDev && (
         <section className="rounded-[1.25rem] border border-dashed border-amber-500/25 bg-amber-500/[0.06] p-4 space-y-2">
-          <p className="text-xs font-bold text-amber-200/90">Herramientas de desarrollo</p>
+          <p className="text-xs font-bold text-amber-200/90">Solo desarrollo</p>
           <Link
             href="/anadir"
             className="block text-sm font-semibold text-foreground underline-offset-4 hover:underline"
           >
-            Panel onramp Etherfuse (sandbox)
+            Probar depósito (sandbox)
           </Link>
           <Link
             href="/retirar"
             className="block text-sm font-semibold text-foreground underline-offset-4 hover:underline"
           >
-            Panel offramp Etherfuse (sandbox)
+            Probar retiro (sandbox)
           </Link>
           <Link
             href="/dev/poc-omnibus"
             className="block text-sm font-semibold text-foreground underline-offset-4 hover:underline"
           >
-            PoC ledger omnibus (una wallet, saldos en memoria)
+            Wallet de prueba
           </Link>
         </section>
       )}
@@ -195,9 +268,9 @@ export default function DashboardClient({
           <span className="text-sm font-bold">!</span>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground">Completa tu verificación</p>
+          <p className="text-sm font-bold text-foreground">Verifica tu identidad</p>
           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-            Para depositar más, verifica tu identidad.
+            Así podrás depositar más y ver tu saldo completo.
           </p>
           <Link
             href="/identidad"
