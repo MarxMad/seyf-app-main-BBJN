@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { extractOrderIdFromCreateOrderResponse } from "@/lib/etherfuse/order-create-response";
 import { resolveMvpPartnerCryptoWalletId } from "@/lib/etherfuse/partner-accounts";
 import { createMxOnrampOrder } from "@/lib/etherfuse/ramp-api";
 import { getEtherfuseRampContext } from "@/lib/seyf/etherfuse-ramp-context";
@@ -54,7 +55,12 @@ export async function POST(req: Request) {
         ? { cryptoWalletId }
         : { publicKey: ctx.publicKey }),
     });
-    return NextResponse.json({ order, contextSource: ctx.source });
+    const orderId = extractOrderIdFromCreateOrderResponse(order);
+    return NextResponse.json({
+      order,
+      ...(orderId ? { orderId } : {}),
+      contextSource: ctx.source,
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Error al crear orden";
     const conflict = message.includes("409") || message.toLowerCase().includes("pending");

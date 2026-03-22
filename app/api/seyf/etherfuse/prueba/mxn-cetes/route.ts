@@ -31,10 +31,10 @@ const bodySchema = z.object({
   /** Si true y entorno dev/panel, llama POST sandbox fiat_received tras crear la orden. */
   simulateFiat: z.boolean().optional(),
   /**
-   * Por defecto true: ignora la cookie de /identidad y usa solo `ETHERFUSE_MVP_*` + GET /ramp/wallets.
-   * La web devnet puede funcionar con sesión KYC distinta; la API con cookie a veces falla (términos, cliente).
+   * Por defecto false: misma prioridad que `getEtherfuseRampContext` (cookie /identidad, luego MVP en dev).
+   * Pon true para ignorar la cookie y usar solo `ETHERFUSE_MVP_*` (útil si KYC/sesión web no coinciden con la API).
    */
-  useMvpIdentity: z.boolean().optional().default(true),
+  useMvpIdentity: z.boolean().optional().default(false),
 });
 
 export async function POST(req: Request) {
