@@ -16,5 +16,6 @@ export function AppBackLink({
       <ChevronLeft className="size-4 shrink-0" strokeWidth={2.25} />
       {children}
     </Link>
+    
   )
 }
