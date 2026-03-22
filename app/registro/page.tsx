@@ -22,7 +22,7 @@ export default function RegistroPage() {
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
-      router.push('/verificacion')
+      router.push('/identidad')
     }, 1200)
   }
 

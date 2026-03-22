@@ -55,7 +55,7 @@ const saldosQuickActions = [
   { href: '/depositar', label: 'Añadir', icon: Plus },
   { href: '/gastar', label: 'Retirar', icon: ArrowDownToLine },
   { href: '/historial', label: 'Historial', icon: Clock },
-  { href: '/verificacion', label: 'Información', icon: Info },
+  { href: '/identidad', label: 'Identidad', icon: Info },
 ] as const
 
 function formatPuntos(n: number) {

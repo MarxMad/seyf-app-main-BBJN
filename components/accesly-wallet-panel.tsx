@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ConnectButton, useAccesly } from 'accesly'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAccesly } from 'accesly'
 import { Button } from '@/components/ui/button'
 
 function maskAddress(value?: string | null) {
@@ -13,6 +13,7 @@ function maskAddress(value?: string | null) {
 
 export default function AcceslyWalletPanel() {
   const router = useRouter()
+  const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
   const {
     wallet,
@@ -22,6 +23,7 @@ export default function AcceslyWalletPanel() {
     creating,
     error,
     disconnect,
+    connect,
     refreshBalance,
     refreshWallet,
   } = useAccesly()
@@ -34,9 +36,12 @@ export default function AcceslyWalletPanel() {
     if (!mounted || loading || creating) return
     const addr = wallet?.stellarAddress
     if (typeof addr === 'string' && addr.length > 0) {
-      router.replace('/dashboard')
+      // push (no replace): deja / en el historial para que "atrás" vuelva al landing
+      if (pathname === '/') {
+        router.push('/dashboard')
+      }
     }
-  }, [mounted, loading, creating, wallet?.stellarAddress, router])
+  }, [mounted, loading, creating, wallet?.stellarAddress, router, pathname])
 
   const mxneAssets = useMemo(() => {
     if (!assetBalances) return []
@@ -47,17 +52,38 @@ export default function AcceslyWalletPanel() {
   }, [assetBalances])
 
   return (
-    <section className="min-h-screen w-full bg-background px-6 py-20">
-      <div className="mx-auto w-full max-w-3xl space-y-5">
-        <div>
-          <h2 className="text-4xl font-black tracking-tight text-foreground">Acceso con Accesly</h2>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Verificacion de wallet custodial para XLM, MXNe y firma XDR (flujo Etherfuse/CETES).
+    <div className="min-h-screen w-full bg-background px-6 pb-24 pt-16 sm:pt-20">
+      <div className="mx-auto w-full max-w-3xl space-y-8">
+        <header className="space-y-4 text-center sm:text-left">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Qué es Seyf
           </p>
-        </div>
+          <h2 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl text-balance">
+            Tu dinero que trabaja antes de que pagues.
+          </h2>
+          <div className="space-y-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+            <p className="text-balance">
+              <strong className="text-foreground">Seyf</strong> es tu capa financiera: separa comprar de pagar,
+              genera rendimiento sobre tu ahorro y te da adelantos cuando ya ganaste — sin sacrificar claridad ni
+              seguridad.
+            </p>
+          </div>
+        </header>
 
-        <div className="rounded-3xl border border-border bg-card p-6 space-y-4">
-          <ConnectButton />
+        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-4">
+          <h3 className="text-lg font-bold text-foreground">Iniciar sesión</h3>
+
+          {!wallet ? (
+            <Button
+              type="button"
+              size="lg"
+              className="h-12 w-full rounded-full text-base font-bold sm:w-auto sm:min-w-[14rem]"
+              disabled={!mounted || loading || creating}
+              onClick={() => void connect()}
+            >
+              {creating ? 'Preparando wallet…' : loading ? 'Cargando…' : 'Iniciar sesión'}
+            </Button>
+          ) : null}
 
           {!mounted || loading ? (
             <p className="text-sm text-muted-foreground">Cargando estado de wallet...</p>
@@ -101,21 +127,21 @@ export default function AcceslyWalletPanel() {
                 </Button>
               </div>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Conecta para validar direccion Stellar, XLM y assets (ej. MXNe).
-            </p>
-          )}
+          ) : null}
         </div>
 
-        <div className="rounded-3xl border border-border p-5 text-sm text-muted-foreground space-y-2">
-          <p className="font-bold text-foreground">Checklist tecnico para tu uso</p>
-          <p>1) XLM: usa `balance` y `sendPayment` para fondeo/comisiones.</p>
-          <p>2) MXNe: detecta asset code `MXNE` en `assetBalances` antes de flujo de inversión.</p>
-          <p>3) Etherfuse/CETES: construye TX con Stellar SDK, firma con `signTransaction` o `signAndSubmit`.</p>
-          <p>4) Restricciones Accesly: source account debe ser `wallet.stellarAddress`; sin `accountMerge`, sin `FeeBump`.</p>
-        </div>
+        <details className="rounded-3xl border border-border p-5 text-sm text-muted-foreground">
+          <summary className="cursor-pointer font-bold text-foreground">
+            Detalles técnicos (dev)
+          </summary>
+          <div className="mt-4 space-y-2">
+            <p>1) XLM: usa `balance` y `sendPayment` para fondeo/comisiones.</p>
+            <p>2) MXNe: detecta asset code `MXNE` en `assetBalances` antes de flujo de inversión.</p>
+            <p>3) Etherfuse/CETES: construye TX con Stellar SDK, firma con `signTransaction` o `signAndSubmit`.</p>
+            <p>4) Restricciones Accesly: source account debe ser `wallet.stellarAddress`; sin `accountMerge`, sin `FeeBump`.</p>
+          </div>
+        </details>
       </div>
-    </section>
+    </div>
   )
 }

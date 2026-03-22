@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { LogOut, UserRound } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Check, Copy, LogOut, UserRound } from 'lucide-react'
 import { useAccesly } from 'accesly'
 import { Button } from '@/components/ui/button'
 
@@ -24,9 +25,40 @@ function formatNetwork() {
   return 'testnet'
 }
 
-export default function AppUserAccountPanel() {
+type AppUserAccountPanelProps = {
+  /** Dentro del menú del avatar: bordes/ radio más compactos */
+  embedded?: boolean
+}
+
+export default function AppUserAccountPanel({ embedded = false }: AppUserAccountPanelProps) {
   const router = useRouter()
   const { wallet, balance, loading, disconnect } = useAccesly()
+  const [addressCopied, setAddressCopied] = useState(false)
+  const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copyResetRef.current) clearTimeout(copyResetRef.current)
+    }
+  }, [])
+
+  const copyStellarAddress = useCallback(async (address: string) => {
+    try {
+      await navigator.clipboard.writeText(address)
+      if (copyResetRef.current) clearTimeout(copyResetRef.current)
+      setAddressCopied(true)
+      copyResetRef.current = setTimeout(() => {
+        setAddressCopied(false)
+        copyResetRef.current = null
+      }, 2000)
+    } catch {
+      setAddressCopied(false)
+    }
+  }, [])
+
+  const shell = embedded
+    ? 'rounded-xl border border-border bg-card shadow-sm'
+    : 'rounded-[1.5rem] border border-border bg-card'
 
   function handleLogout() {
     disconnect()
@@ -36,7 +68,7 @@ export default function AppUserAccountPanel() {
   if (loading) {
     return (
       <section
-        className="animate-pulse rounded-[1.5rem] border border-border bg-card"
+        className={`animate-pulse border border-border bg-card ${embedded ? 'rounded-xl' : 'rounded-[1.5rem]'}`}
         aria-hidden
       >
         <div className="h-12 border-b border-border bg-secondary/50" />
@@ -52,7 +84,9 @@ export default function AppUserAccountPanel() {
 
   if (!wallet) {
     return (
-      <section className="rounded-[1.5rem] border border-border bg-card px-4 py-5 text-center">
+      <section
+        className={`border border-border bg-card px-4 py-5 text-center ${embedded ? 'rounded-xl' : 'rounded-[1.5rem]'}`}
+      >
         <UserRound className="mx-auto size-10 text-muted-foreground" strokeWidth={1.5} />
         <p className="mt-3 text-sm font-semibold text-foreground">Sin sesión Accesly</p>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -65,10 +99,21 @@ export default function AppUserAccountPanel() {
     )
   }
 
-  const rows: { label: string; value: string; mono?: boolean }[] = [
+  const rows: {
+    label: string
+    value: string
+    mono?: boolean
+    /** Si existe, botón copiar pega este texto (dirección completa) */
+    copyFullText?: string
+  }[] = [
     { label: 'Correo', value: wallet.email?.trim() || '—' },
     { label: 'Red', value: formatNetwork() },
-    { label: 'Cuenta Stellar', value: maskAddress(wallet.stellarAddress), mono: true },
+    {
+      label: 'Cuenta Stellar',
+      value: maskAddress(wallet.stellarAddress),
+      mono: true,
+      copyFullText: wallet.stellarAddress,
+    },
     { label: 'Clave pública', value: shortKey(wallet.publicKey), mono: true },
     { label: 'Contrato', value: shortKey(wallet.contractId), mono: true },
     {
@@ -95,7 +140,7 @@ export default function AppUserAccountPanel() {
   }
 
   return (
-    <section className="overflow-hidden rounded-[1.5rem] border border-border bg-card">
+    <section className={`overflow-hidden ${shell}`}>
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-xs font-black text-foreground ring-1 ring-border">
           {(wallet.email?.split('@')[0]?.slice(0, 2) ?? wallet.stellarAddress.slice(0, 2)).toUpperCase()}
@@ -107,13 +152,30 @@ export default function AppUserAccountPanel() {
       </div>
 
       <dl className="divide-y divide-border px-4">
-        {rows.map(({ label, value, mono }) => (
-          <div key={label} className="grid gap-0.5 py-3 sm:grid-cols-[7.5rem_1fr] sm:items-baseline sm:gap-3">
-            <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+        {rows.map(({ label, value, mono, copyFullText }) => (
+          <div key={label} className="grid gap-0.5 py-3 sm:grid-cols-[7.5rem_1fr] sm:items-start sm:gap-3">
+            <dt className="text-xs font-medium text-muted-foreground pt-0.5">{label}</dt>
             <dd
-              className={`text-sm font-semibold text-foreground break-all sm:break-normal ${mono ? 'font-mono text-[13px] font-medium tracking-tight' : ''}`}
+              className={`flex min-w-0 items-start gap-2 text-sm font-semibold text-foreground ${mono ? 'font-mono text-[13px] font-medium tracking-tight' : ''}`}
             >
-              {value}
+              <span className="min-w-0 flex-1 break-all sm:break-normal">{value}</span>
+              {copyFullText ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
+                  aria-label={addressCopied ? 'Copiado' : 'Copiar dirección Stellar'}
+                  title={addressCopied ? 'Copiado' : 'Copiar dirección'}
+                  onClick={() => void copyStellarAddress(copyFullText)}
+                >
+                  {addressCopied ? (
+                    <Check className="size-4 text-emerald-500" strokeWidth={2.5} />
+                  ) : (
+                    <Copy className="size-4" strokeWidth={2} />
+                  )}
+                </Button>
+              ) : null}
             </dd>
           </div>
         ))}

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { AppPageBody } from '@/components/app/app-page-body'
-import AppUserAccountPanel from '@/components/app/app-user-account-panel'
 import { DashboardHeroCarousel } from '@/components/app/dashboard-hero-carousel'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -69,8 +68,6 @@ export default function DashboardClient({
 
   return (
     <AppPageBody className="space-y-6 pt-4">
-      <AppUserAccountPanel />
-
       <DashboardHeroCarousel
         data={{
           principal: data.principal,
