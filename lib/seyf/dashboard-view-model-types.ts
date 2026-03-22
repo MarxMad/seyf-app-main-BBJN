@@ -1,7 +1,7 @@
 import type { UserMovement } from "@/lib/seyf/user-movements-types";
 
 /** Cuántas filas de actividad se muestran en inicio (el historial completo sigue en /historial). */
-export const DASHBOARD_MOVEMENTS_PREVIEW_LIMIT = 3;
+export const DASHBOARD_MOVEMENTS_PREVIEW_LIMIT = 8;
 
 export type DashboardViewModel = {
   principalMxn: number;

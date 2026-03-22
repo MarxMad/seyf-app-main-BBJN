@@ -12,7 +12,7 @@ export type MovimientoEstado = "completado" | "pendiente" | "fallido";
 
 export type UserMovement = {
   id: string;
-  source: "etherfuse" | "ledger";
+  source: "etherfuse" | "ledger" | "stellar";
   tipo: MovimientoTipo;
   titulo: string;
   monto: number;
@@ -21,6 +21,8 @@ export type UserMovement = {
   detalle: string;
   orderId: string | null;
   stellarTxSignature: string | null;
+  /** Si existe, el monto es en esta unidad on-chain (no MXN). */
+  chainAssetCode?: string | null;
 };
 
 export function formatMovementListSubtitle(iso: string): string {

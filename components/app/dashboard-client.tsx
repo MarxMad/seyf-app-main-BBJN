@@ -32,6 +32,18 @@ function formatMXNFull(amount: number) {
   }).format(amount)
 }
 
+/** Fila «Lo último»: MXN vs cantidad on-chain. */
+function formatLoUltimoMonto(mov: UserMovement): string {
+  const code = mov.chainAssetCode?.trim()
+  const sign = mov.monto < 0 ? '− ' : mov.monto > 0 ? '+' : ''
+  if (code) {
+    const abs = Math.abs(mov.monto)
+    const n = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 7 }).format(abs)
+    return `${sign}${n} ${code}`
+  }
+  return `${sign}${formatMXNFull(Math.abs(mov.monto))}`
+}
+
 export default function DashboardClient({
   showEtherfuseRampDev = false,
   vm,
@@ -48,6 +60,7 @@ export default function DashboardClient({
     priceMx: number | null
     calculatedAt?: string
   }>({ loading: false, annualPercent: null, priceMx: null })
+  const [stellarMovements, setStellarMovements] = useState<UserMovement[]>([])
 
   useEffect(() => {
     setLiveVm(vm)
@@ -104,6 +117,41 @@ export default function DashboardClient({
       cancelled = true
     }
   }, [wallet?.stellarAddress])
+
+  useEffect(() => {
+    const addr = wallet?.stellarAddress?.trim()
+    if (!addr) {
+      setStellarMovements([])
+      return
+    }
+    let cancelled = false
+    void fetch(`/api/seyf/stellar-movements?account=${encodeURIComponent(addr)}`)
+      .then(async (r) => {
+        if (!r.ok) return [] as UserMovement[]
+        const data = (await r.json()) as unknown
+        if (!Array.isArray(data)) return []
+        return data as UserMovement[]
+      })
+      .then((rows) => {
+        if (!cancelled) setStellarMovements(rows)
+      })
+      .catch(() => {
+        if (!cancelled) setStellarMovements([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [wallet?.stellarAddress])
+
+  const loUltimoMovements = useMemo(() => {
+    const byId = new Map<string, UserMovement>()
+    for (const m of liveVm.movementsRecent) byId.set(m.id, m)
+    for (const m of stellarMovements) byId.set(m.id, m)
+    const merged = [...byId.values()].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    return merged.slice(0, DASHBOARD_MOVEMENTS_PREVIEW_LIMIT)
+  }, [liveVm.movementsRecent, stellarMovements])
 
   const refreshDashboard = useCallback(async () => {
     try {
@@ -200,16 +248,17 @@ export default function DashboardClient({
         <div className="border-b border-border px-4 py-3">
           <h2 className="text-sm font-bold text-foreground">Lo último</h2>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Últimas {DASHBOARD_MOVEMENTS_PREVIEW_LIMIT} · el resto en historial
+            Últimas {DASHBOARD_MOVEMENTS_PREVIEW_LIMIT} (Etherfuse, pruebas y{' '}
+            <span className="whitespace-nowrap">Stellar</span>) · historial completo abajo
           </p>
         </div>
         <ul className="divide-y divide-border">
-          {liveVm.movementsRecent.length === 0 ? (
+          {loUltimoMovements.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-muted-foreground">
-              Aquí aparecerán depósitos, retiros y demás movimientos.
+              Aquí aparecerán depósitos, retiros, transferencias en Stellar y demás movimientos.
             </li>
           ) : (
-            liveVm.movementsRecent.map((mov) => {
+            loUltimoMovements.map((mov) => {
               const esPositivo = mov.monto >= 0
               return (
                 <li key={mov.id} className="px-2">
@@ -225,16 +274,16 @@ export default function DashboardClient({
                       <p className="truncate text-sm font-semibold text-foreground">{mov.titulo}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatMovementListSubtitle(mov.createdAt)}
+                        {mov.source === 'stellar' ? ' · En cadena' : ''}
                       </p>
                     </div>
                     <span
                       className={cn(
-                        'shrink-0 text-sm font-bold tabular-nums',
+                        'max-w-[42%] shrink-0 text-right text-sm font-bold tabular-nums',
                         esPositivo ? 'text-[#22C55E]' : 'text-foreground',
                       )}
                     >
-                      {mov.monto < 0 ? '− ' : mov.monto > 0 ? '+' : ''}
-                      {formatMXNFull(Math.abs(mov.monto))}
+                      {formatLoUltimoMonto(mov)}
                     </span>
                   </button>
                 </li>

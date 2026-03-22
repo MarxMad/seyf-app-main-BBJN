@@ -25,6 +25,16 @@ function formatMXNMovement(amount: number) {
   return amount < 0 ? `− ${formatted}` : `+ ${formatted}`
 }
 
+function formatMovementAmountLabel(movement: UserMovement): string {
+  const code = movement.chainAssetCode?.trim()
+  if (code) {
+    const abs = Math.abs(movement.monto)
+    const n = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 7 }).format(abs)
+    return movement.monto < 0 ? `− ${n} ${code}` : `+ ${n} ${code}`
+  }
+  return formatMXNMovement(movement.monto)
+}
+
 export function MovementDetailSheet({
   movement,
   onClose,
@@ -107,7 +117,7 @@ export function MovementDetailSheet({
           </div>
         </div>
         <div className="mb-6 space-y-3">
-          <DetailRow label="Monto" value={formatMXNMovement(movement.monto)} />
+          <DetailRow label="Monto" value={formatMovementAmountLabel(movement)} />
           <DetailRow
             label="Estado"
             value={movement.estado.charAt(0).toUpperCase() + movement.estado.slice(1)}
@@ -139,6 +149,8 @@ export function MovementDetailSheet({
               <p className="text-xs text-muted-foreground">
                 En pruebas internas el comprobante solo existe si se guardó al crear el movimiento.
               </p>
+            ) : !txLoading && movement.source === 'stellar' && !stellarUrl ? (
+              <p className="text-xs text-muted-foreground">No hay hash de transacción para enlazar.</p>
             ) : null}
             {sig ? (
               <p className="break-all font-mono text-[10px] text-muted-foreground">{sig}</p>
