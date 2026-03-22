@@ -10,6 +10,7 @@ import { MovementDetailSheet } from '@/components/app/movement-detail-sheet'
 import { iconForMovimientoTipo } from '@/components/app/movement-tipo-icons'
 import { Button } from '@/components/ui/button'
 import { balanceForAssetCode } from '@/lib/seyf/accesly-balances'
+import { cetesBalanceEquivMxne } from '@/lib/seyf/cetes-mxne-equiv'
 import { cetesStablebondDisplayFromRow } from '@/lib/seyf/stablebond-cetes-display'
 import type { EtherfuseStablebondInfo } from '@/lib/etherfuse/stablebonds-lookup'
 import {
@@ -201,6 +202,11 @@ export default function DashboardClient({
   }, [liveVm.movementsRecent, selected])
 
   const mxne = useMemo(() => balanceForAssetCode(assetBalances, 'MXNE'), [assetBalances])
+  const cetesBalance = useMemo(() => balanceForAssetCode(assetBalances, 'CETES'), [assetBalances])
+  const cetesEquivMxne = useMemo(
+    () => cetesBalanceEquivMxne(cetesBalance, stablebondCetes.priceMx),
+    [cetesBalance, stablebondCetes.priceMx],
+  )
 
   if (loading && !wallet) {
     return (
@@ -236,6 +242,11 @@ export default function DashboardClient({
           puntos: liveVm.puntos,
           tasaAnual: liveVm.tasaAnual,
           stablebondCetes,
+          cetesWallet: {
+            balance: cetesBalance,
+            equivMxne: cetesEquivMxne,
+            priceLoading: stablebondCetes.loading,
+          },
         }}
       />
       {liveVm.saldoNote ? (

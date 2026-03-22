@@ -19,6 +19,12 @@ type HeroData = {
     priceMx: number | null
     calculatedAt?: string
   }
+  /** Saldo CETES on-chain + equivalente MXNe (ref. precio stablebond). */
+  cetesWallet?: {
+    balance: number
+    equivMxne: number | null
+    priceLoading: boolean
+  }
 }
 
 const TABS = ['Saldos', 'Adelanto', 'Puntos'] as const
@@ -85,9 +91,17 @@ function formatStablebondUpdatedAt(iso?: string) {
   }
 }
 
+function formatCetesUnits(n: number) {
+  return new Intl.NumberFormat('es-MX', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 6,
+  }).format(n)
+}
+
 export function DashboardHeroCarousel({ data }: { data: HeroData }) {
   const { main: balanceMain, cents: balanceCents } = splitCurrencyForDisplay(data.principal)
   const sb = data.stablebondCetes
+  const cw = data.cetesWallet
   const stablebondUpdatedLabel =
     sb && !sb.loading ? formatStablebondUpdatedAt(sb.calculatedAt) : null
   const containerRef = useRef<HTMLDivElement>(null)
@@ -216,6 +230,36 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
                 <Info className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2.25} aria-hidden />
               </p>
             )}
+
+            {cw && cw.balance > 0 ? (
+              <div className="mx-auto mt-4 max-w-[19rem] rounded-xl border border-violet-500/25 bg-violet-500/[0.08] px-3 py-2.5 text-center ring-1 ring-border/50">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  CETES en tu wallet
+                </p>
+                <p className="mt-1 text-xl font-black tabular-nums leading-tight text-foreground">
+                  {formatCetesUnits(cw.balance)}{' '}
+                  <span className="text-sm font-bold text-muted-foreground">CETES</span>
+                </p>
+                {cw.priceLoading ? (
+                  <div
+                    className="mx-auto mt-2 h-5 max-w-[12rem] animate-pulse rounded-md bg-secondary/70"
+                    aria-hidden
+                  />
+                ) : cw.equivMxne != null ? (
+                  <p className="mt-2 text-sm font-bold leading-tight text-emerald-200/95">
+                    ≈ {formatMXNFull(cw.equivMxne)}{' '}
+                    <span className="text-xs font-semibold text-muted-foreground">MXNe</span>
+                  </p>
+                ) : (
+                  <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+                    Sin cotización CETES→MXN ahora. Reintenta en un momento.
+                  </p>
+                )}
+                <p className="mt-1.5 text-[9px] leading-tight text-muted-foreground/80">
+                  Referencia tipo de cambio Etherfuse (stablebond), no precio de swap on-chain.
+                </p>
+              </div>
+            ) : null}
 
             <div
               className="mt-6 grid grid-cols-4 gap-x-1 gap-y-2"
