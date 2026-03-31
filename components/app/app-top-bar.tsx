@@ -65,20 +65,20 @@ export default function AppTopBar() {
             <span className="text-sm text-muted-foreground">Buscar</span>
           </div>
         </div>
-        <button
-          type="button"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary ring-1 ring-border"
-          aria-label="Analíticas"
+        <Link
+          href="/estadisticas"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary ring-1 ring-border transition hover:bg-secondary/80"
+          aria-label="Estadísticas y tipo de cambio"
         >
           <BarChart3 className="size-[1.15rem] text-foreground" strokeWidth={2} />
-        </button>
-        <button
-          type="button"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary ring-1 ring-border"
-          aria-label="Tarjetas"
+        </Link>
+        <Link
+          href="/tarjeta"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary ring-1 ring-border transition hover:bg-secondary/80"
+          aria-label="Tarjeta virtual"
         >
           <CreditCard className="size-[1.15rem] text-foreground" strokeWidth={2} />
-        </button>
+        </Link>
       </div>
     </header>
   )

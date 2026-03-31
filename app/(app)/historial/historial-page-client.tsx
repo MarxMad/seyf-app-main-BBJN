@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAccesly } from 'accesly'
+import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { MovementDetailSheet } from '@/components/app/movement-detail-sheet'
 import { iconForMovimientoTipo } from '@/components/app/movement-tipo-icons'
@@ -212,12 +213,20 @@ export default function HistorialPageClient() {
   if (!wallet) {
     return (
       <AppPageBody>
-        <div className="mb-8">
-          <h1 className="text-4xl font-black tracking-tight text-foreground leading-none">Historial</h1>
-          <p className="mt-4 text-base text-muted-foreground font-normal">
-            Conecta tu wallet para ver Stellar (testnet + mainnet) y tus órdenes Etherfuse.
-          </p>
-        </div>
+        <AppBackLink href="/dashboard" />
+        <section className="relative mb-8 overflow-hidden rounded-[1.5rem] border border-sky-400/25 bg-gradient-to-br from-sky-700/25 via-indigo-700/20 to-violet-700/15 p-5">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sky-300/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-violet-300/15 blur-3xl" />
+          <div className="relative">
+            <p className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-sky-100/90">
+              Estado de cuenta
+            </p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-white">Historial</h1>
+            <p className="mt-2 text-sm text-sky-100/80">
+              Conecta tu wallet para ver Stellar (testnet + mainnet) y tus órdenes Etherfuse.
+            </p>
+          </div>
+        </section>
         <Button asChild className="h-11 rounded-full font-bold">
           <Link href="/">Ir a conectar</Link>
         </Button>
@@ -227,13 +236,20 @@ export default function HistorialPageClient() {
 
   return (
     <AppPageBody>
-      <div className="mb-8">
-        <h1 className="text-4xl font-black tracking-tight text-foreground leading-none">Historial</h1>
-        <p className="mt-4 text-base text-muted-foreground font-normal">
-          Pagos en cadena (Stellar testnet y mainnet) y movimientos reales de ramp (Etherfuse). Sin datos de
-          prueba del ledger interno.
-        </p>
-      </div>
+      <AppBackLink href="/dashboard" />
+      <section className="relative mb-8 overflow-hidden rounded-[1.5rem] border border-sky-400/25 bg-gradient-to-br from-sky-700/25 via-indigo-700/20 to-violet-700/15 p-5">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sky-300/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-violet-300/15 blur-3xl" />
+        <div className="relative">
+          <p className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-sky-100/90">
+            Estado de cuenta
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-white">Historial</h1>
+          <p className="mt-2 text-sm text-sky-100/80">
+            Pagos en cadena (Stellar testnet y mainnet) y movimientos reales de ramp (Etherfuse).
+          </p>
+        </div>
+      </section>
 
       <div className="mb-6 flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {filtros.map((f) => (
