@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Eye, EyeOff } from 'lucide-react'
 import { useAccesly } from 'accesly'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { DashboardHeroCarousel } from '@/components/app/dashboard-hero-carousel'
@@ -45,6 +45,28 @@ function formatLoUltimoMonto(mov: UserMovement): string {
   return `${sign}${formatMXNFull(Math.abs(mov.monto))}`
 }
 
+function formatMontoOculto() {
+  return '••••'
+}
+
+function movementEstadoBadgeClass(estado: UserMovement['estado']): string {
+  if (estado === 'completado') return 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/25'
+  if (estado === 'fallido') return 'bg-rose-500/15 text-rose-300 ring-rose-500/25'
+  return 'bg-amber-500/15 text-amber-200 ring-amber-500/25'
+}
+
+function formatMovementMeta(mov: UserMovement): string {
+  const d = new Date(mov.createdAt)
+  const hora = d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+  const red =
+    mov.source === 'stellar'
+      ? mov.stellarNetwork === 'mainnet'
+        ? 'Mainnet'
+        : 'Testnet'
+      : null
+  return [hora, red].filter(Boolean).join(' · ')
+}
+
 export default function DashboardClient({
   showEtherfuseRampDev = false,
   vm,
@@ -55,6 +77,8 @@ export default function DashboardClient({
   const { wallet, assetBalances, loading, refreshBalance } = useAccesly()
   const [selected, setSelected] = useState<UserMovement | null>(null)
   const [liveVm, setLiveVm] = useState(vm)
+  const [hideBalances, setHideBalances] = useState(false)
+  const [lastUpdateAt, setLastUpdateAt] = useState<Date>(new Date())
   const [stablebondCetes, setStablebondCetes] = useState<{
     loading: boolean
     annualPercent: number | null
@@ -65,7 +89,15 @@ export default function DashboardClient({
 
   useEffect(() => {
     setLiveVm(vm)
+    setLastUpdateAt(new Date())
   }, [vm])
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('seyf-hide-balances')
+      setHideBalances(raw === '1')
+    } catch {}
+  }, [])
 
   useEffect(() => {
     if (wallet?.stellarAddress) void refreshBalance()
@@ -160,6 +192,7 @@ export default function DashboardClient({
       if (!r.ok) return
       const next = (await r.json()) as DashboardViewModel
       setLiveVm(next)
+      setLastUpdateAt(new Date())
     } catch {
       /* mantener último valor válido */
     }
@@ -235,20 +268,56 @@ export default function DashboardClient({
 
   return (
     <AppPageBody className="space-y-6 pt-4">
-      <DashboardHeroCarousel
-        data={{
-          principal: mxne,
-          adelantable: liveVm.adelantableMxn,
-          puntos: liveVm.puntos,
-          tasaAnual: liveVm.tasaAnual,
-          stablebondCetes,
-          cetesWallet: {
-            balance: cetesBalance,
-            equivMxne: cetesEquivMxne,
-            priceLoading: stablebondCetes.loading,
-          },
-        }}
-      />
+      <section className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-bold text-foreground">Cuenta principal</p>
+          <p className="text-[11px] text-muted-foreground">
+            Última actualización{' '}
+            {lastUpdateAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-9 rounded-full border-border bg-transparent px-3 text-xs font-semibold"
+          onClick={() => {
+            setHideBalances((prev) => {
+              const next = !prev
+              try {
+                window.localStorage.setItem('seyf-hide-balances', next ? '1' : '0')
+              } catch {}
+              return next
+            })
+          }}
+        >
+          {hideBalances ? <Eye className="mr-1.5 size-4" /> : <EyeOff className="mr-1.5 size-4" />}
+          {hideBalances ? 'Mostrar saldos' : 'Ocultar saldos'}
+        </Button>
+      </section>
+
+      <div className="relative">
+        <DashboardHeroCarousel
+          data={{
+            principal: hideBalances ? 0 : mxne,
+            adelantable: hideBalances ? 0 : liveVm.adelantableMxn,
+            puntos: liveVm.puntos,
+            tasaAnual: liveVm.tasaAnual,
+            stablebondCetes,
+            cetesWallet: {
+              balance: hideBalances ? 0 : cetesBalance,
+              equivMxne: hideBalances ? null : cetesEquivMxne,
+              priceLoading: stablebondCetes.loading,
+            },
+          }}
+        />
+        {hideBalances ? (
+          <div className="pointer-events-none absolute inset-0 grid place-items-center rounded-[1.75rem] bg-background/35 backdrop-blur-[2px]">
+            <span className="rounded-full border border-border bg-card/90 px-3 py-1 text-xs font-bold text-foreground">
+              Saldos ocultos
+            </span>
+          </div>
+        ) : null}
+      </div>
       {liveVm.saldoNote ? (
         <p className="-mt-2 px-1 text-center text-[11px] leading-snug text-muted-foreground">
           {liveVm.saldoNote}
@@ -259,8 +328,8 @@ export default function DashboardClient({
         <div className="border-b border-border px-4 py-3">
           <h2 className="text-sm font-bold text-foreground">Lo último</h2>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Últimas {DASHBOARD_MOVEMENTS_PREVIEW_LIMIT} (Etherfuse, pruebas, Stellar{' '}
-            <span className="whitespace-nowrap">testnet + mainnet</span>) · historial abajo
+            Últimos {DASHBOARD_MOVEMENTS_PREVIEW_LIMIT} movimientos de tu cuenta · toca para ver
+            detalle
           </p>
         </div>
         <ul className="divide-y divide-border">
@@ -282,14 +351,19 @@ export default function DashboardClient({
                       {iconForMovimientoTipo(mov.tipo)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">{mov.titulo}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-foreground">{mov.titulo}</p>
+                        <span
+                          className={cn(
+                            'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ring-1',
+                            movementEstadoBadgeClass(mov.estado),
+                          )}
+                        >
+                          {mov.estado}
+                        </span>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        {formatMovementListSubtitle(mov.createdAt)}
-                        {mov.source === 'stellar'
-                          ? mov.stellarNetwork === 'mainnet'
-                            ? ' · Mainnet'
-                            : ' · Testnet'
-                          : ''}
+                        {formatMovementListSubtitle(mov.createdAt)} · {formatMovementMeta(mov)}
                       </p>
                     </div>
                     <span
@@ -298,7 +372,7 @@ export default function DashboardClient({
                         esPositivo ? 'text-[#22C55E]' : 'text-foreground',
                       )}
                     >
-                      {formatLoUltimoMonto(mov)}
+                      {hideBalances ? formatMontoOculto() : formatLoUltimoMonto(mov)}
                     </span>
                   </button>
                 </li>
@@ -323,13 +397,21 @@ export default function DashboardClient({
         </Link>
         <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[
-            { label: 'Ahorro (MXNe)', sub: formatMXNFull(mxne), tone: 'from-violet-600/90 to-indigo-800/90' },
+            {
+              label: 'Ahorro (MXNe)',
+              sub: hideBalances ? formatMontoOculto() : formatMXNFull(mxne),
+              tone: 'from-violet-600/90 to-indigo-800/90',
+            },
             {
               label: 'Rendimiento',
-              sub: formatMXNFull(liveVm.rendimientoMxn),
+              sub: hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.rendimientoMxn),
               tone: 'from-zinc-600/90 to-zinc-800/90',
             },
-            { label: 'Adelanto', sub: formatMXNFull(liveVm.adelantableMxn), tone: 'from-slate-600/90 to-slate-800/90' },
+            {
+              label: 'Adelanto',
+              sub: hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.adelantableMxn),
+              tone: 'from-slate-600/90 to-slate-800/90',
+            },
           ].map((card) => (
             <div
               key={card.label}
@@ -345,19 +427,43 @@ export default function DashboardClient({
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-border bg-secondary/40 p-5">
-        <p className="text-xs font-medium text-muted-foreground">Adelanto disponible</p>
-        <p className="mt-1 text-2xl font-black tabular-nums tracking-tight text-foreground">
-          {formatMXNFull(liveVm.adelantableMxn)}
-        </p>
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          Usa solo lo que ya ganaste, sin tocar tu ahorro principal.
-        </p>
-        <Link href="/adelanto" className="mt-4 block">
-          <Button className="h-12 w-full rounded-full bg-foreground text-base font-bold text-background hover:bg-foreground/90">
-            Pedir adelanto
-          </Button>
-        </Link>
+      <section className="relative overflow-hidden rounded-[1.6rem] border border-violet-400/25 bg-gradient-to-br from-violet-700/35 via-indigo-700/25 to-sky-700/20 p-5 shadow-[0_16px_45px_rgba(76,29,149,0.35)]">
+        <div className="pointer-events-none absolute -right-14 -top-20 h-44 w-44 rounded-full bg-violet-400/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-12 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
+        <div className="relative">
+          <div className="inline-flex items-center rounded-full border border-violet-200/25 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-100/90">
+            Adelanto disponible
+          </div>
+          <p className="mt-2 text-3xl font-black tabular-nums tracking-tight text-white">
+          {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.adelantableMxn)}
+          </p>
+          <p className="mt-1.5 text-xs leading-relaxed text-violet-100/80">
+            Recibe parte de tu rendimiento hoy, sin retirar tu ahorro.
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {[
+              { label: 'Sin papeleo', value: '100%' },
+              { label: 'Respuesta', value: 'Inmediata' },
+              { label: 'Plazo', value: '12 meses' },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl border border-white/15 bg-black/20 px-2.5 py-2 text-center backdrop-blur-[2px]"
+              >
+                <p className="text-[10px] text-violet-100/75">{item.label}</p>
+                <p className="mt-0.5 text-[11px] font-bold text-white">{item.value}</p>
+              </div>
+            ))}
+          </div>
+          <Link href="/adelanto" className="mt-4 block">
+            <Button className="h-12 w-full rounded-full bg-white text-base font-black text-violet-950 shadow-[0_12px_30px_rgba(255,255,255,0.22)] hover:bg-white/90">
+              Pedir adelanto
+            </Button>
+          </Link>
+          <p className="mt-2 text-center text-[11px] text-violet-100/70">
+            Simula monto, tasa y plazo en el siguiente paso.
+          </p>
+        </div>
       </section>
 
       {liveVm.saldoGastoMxn > 0 && (
@@ -365,7 +471,7 @@ export default function DashboardClient({
           <div>
             <p className="text-xs font-medium text-muted-foreground">Saldo para gastar</p>
             <p className="text-xl font-black tabular-nums text-foreground">
-              {formatMXNFull(liveVm.saldoGastoMxn)}
+              {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.saldoGastoMxn)}
             </p>
           </div>
           <Link href="/gastar">

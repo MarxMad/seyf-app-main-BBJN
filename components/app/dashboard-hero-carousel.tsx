@@ -65,10 +65,10 @@ function splitCurrencyForDisplay(amount: number) {
 }
 
 const saldosQuickActions = [
-  { href: '/anadir', label: 'Añadir', icon: Plus },
-  { href: '/retirar', label: 'Retirar', icon: ArrowDownToLine },
-  { href: '/historial', label: 'Historial', icon: Clock },
-  { href: '/identidad', label: 'Identidad', icon: Info },
+  { href: '/anadir', label: 'Depositar', icon: Plus },
+  { href: '/retirar', label: 'Transferir', icon: ArrowDownToLine },
+  { href: '/historial', label: 'Movimientos', icon: Clock },
+  { href: '/identidad', label: 'Verificar', icon: Info },
 ] as const
 
 function formatPuntos(n: number) {
@@ -174,54 +174,37 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
           onDragEnd={onDragEnd}
         >
           <div className="w-1/3 shrink-0 px-4 pb-4 pt-10 text-center">
-            <p className="text-[13px] font-medium text-muted-foreground">Saldo MXNe</p>
-            <p className="mt-1 inline-flex flex-wrap items-baseline justify-center gap-0.5 leading-none tracking-tight text-foreground">
-              <span className="text-[2.35rem] font-black tabular-nums sm:text-[2.65rem]">{balanceMain}</span>
-              {balanceCents ? (
-                <span className="text-[1.25rem] font-black tabular-nums text-muted-foreground sm:text-[1.4rem]">
-                  {balanceCents}
-                </span>
-              ) : null}
-            </p>
+            <p className="text-[13px] font-medium text-muted-foreground">Saldo disponible</p>
+            <div className="mt-1 flex justify-center">
+              <p className="inline-flex flex-wrap items-baseline justify-center gap-0.5 leading-none tracking-tight text-foreground">
+                <span className="text-[2.35rem] font-black tabular-nums sm:text-[2.65rem]">{balanceMain}</span>
+                {balanceCents ? (
+                  <span className="text-[1.25rem] font-black tabular-nums text-muted-foreground sm:text-[1.4rem]">
+                    {balanceCents}
+                  </span>
+                ) : null}
+              </p>
+            </div>
 
             {sb?.loading ? (
-              <div
-                className="mx-auto mt-3 h-[3.25rem] max-w-[16rem] animate-pulse rounded-xl bg-secondary/60 ring-1 ring-border/50"
-                aria-hidden
-              />
+              <div className="mx-auto mt-3 h-5 max-w-[13rem] animate-pulse rounded-md bg-secondary/60 ring-1 ring-border/50" />
             ) : sb && (sb.annualPercent != null || sb.priceMx != null) ? (
-              <div className="mx-auto mt-3 max-w-[18rem] rounded-xl bg-secondary/55 px-3 py-2.5 text-center ring-1 ring-border/60">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  Stablebond CETES · Etherfuse
-                </p>
-                {sb.annualPercent != null ? (
-                  <p className="mt-1 text-2xl font-black tabular-nums leading-none text-emerald-300/95">
-                    {sb.annualPercent.toFixed(2)}%
-                    <span className="ml-1 text-xs font-bold text-muted-foreground">anual</span>
-                  </p>
-                ) : sb.priceMx != null ? (
-                  <p className="mt-1 text-lg font-black tabular-nums text-foreground">
-                    {new Intl.NumberFormat('es-MX', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 6,
-                    }).format(sb.priceMx)}{' '}
-                    <span className="text-xs font-semibold text-muted-foreground">MXN / CETES</span>
-                  </p>
-                ) : null}
-                {sb.priceMx != null && sb.annualPercent != null ? (
-                  <p className="mt-1 text-[11px] tabular-nums text-muted-foreground">
-                    Precio CETES{' '}
-                    {new Intl.NumberFormat('es-MX', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 6,
-                    }).format(sb.priceMx)}{' '}
-                    MXN
-                  </p>
-                ) : null}
+              <div className="mx-auto mt-3 flex w-fit max-w-[19rem] items-center gap-1.5 rounded-full border border-border bg-secondary/55 px-3 py-1.5 text-[11px] text-muted-foreground">
+                <Info className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2.25} aria-hidden />
+                <span className="truncate">
+                  Referencia CETES:
+                  {sb.annualPercent != null ? ` ${sb.annualPercent.toFixed(2)}% anual` : ''}
+                  {sb.priceMx != null
+                    ? ` · ${new Intl.NumberFormat('es-MX', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 6,
+                      }).format(sb.priceMx)} MXN/CETES`
+                    : ''}
+                </span>
                 {stablebondUpdatedLabel ? (
-                  <p className="mt-1 text-[9px] text-muted-foreground/70">
-                    Actualizado {stablebondUpdatedLabel}
-                  </p>
+                  <span className="hidden shrink-0 text-[10px] text-muted-foreground/80 sm:inline">
+                    ({stablebondUpdatedLabel})
+                  </span>
                 ) : null}
               </div>
             ) : (

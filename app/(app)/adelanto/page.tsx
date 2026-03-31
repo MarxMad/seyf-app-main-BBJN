@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 
-const MAX_ADELANTO = 98.5
-const COMISION_RATE = 0.08
+const MIN_AHORRO = 1_000
+const MAX_AHORRO = 250_000
+const ADELANTO_FACTOR = 0.75
 
 function formatMXN(amount: number) {
   return new Intl.NumberFormat('es-MX', {
@@ -22,12 +23,26 @@ function formatMXN(amount: number) {
 
 export default function AdelantoPage() {
   const router = useRouter()
-  const [monto, setMonto] = useState(MAX_ADELANTO)
+  const [ahorro, setAhorro] = useState(10_000)
+  const [tasaAnual, setTasaAnual] = useState(8)
+  const [periodoMeses, setPeriodoMeses] = useState(12)
   const [loading, setLoading] = useState(false)
   const [exito, setExito] = useState(false)
 
-  const comision = parseFloat((monto * COMISION_RATE).toFixed(2))
-  const neto = parseFloat((monto - comision).toFixed(2))
+  const { rendimientoEstimado, adelantoInstantaneo, totalEstimadoAlVencimiento, fechaLiberacion } =
+    useMemo(() => {
+      const rendimiento = ahorro * (tasaAnual / 100) * (periodoMeses / 12)
+      const adelanto = rendimiento * ADELANTO_FACTOR
+      const totalAlVencimiento = ahorro + rendimiento
+      const d = new Date()
+      d.setMonth(d.getMonth() + periodoMeses)
+      return {
+        rendimientoEstimado: rendimiento,
+        adelantoInstantaneo: adelanto,
+        totalEstimadoAlVencimiento: totalAlVencimiento,
+        fechaLiberacion: d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }),
+      }
+    }, [ahorro, tasaAnual, periodoMeses])
 
   const handleConfirmar = () => {
     setLoading(true)
@@ -61,10 +76,10 @@ export default function AdelantoPage() {
         </div>
 
         <div className="mb-8 w-full max-w-sm space-y-3 rounded-[1.5rem] border border-border bg-secondary p-6 text-left">
-          <SummaryRow label="Monto adelantado" value={formatMXN(monto)} />
-          <SummaryRow label="Comisión Seyf" value={formatMXN(comision)} dim />
+          <SummaryRow label="Capital bloqueado" value={formatMXN(ahorro)} />
+          <SummaryRow label="Adelanto recibido hoy" value={formatMXN(adelantoInstantaneo)} />
           <div className="border-t border-border pt-3">
-            <SummaryRow label="Recibiste" value={formatMXN(neto)} bold />
+            <SummaryRow label="Fecha estimada de liberación" value={fechaLiberacion} bold />
           </div>
         </div>
 
@@ -90,37 +105,66 @@ export default function AdelantoPage() {
 
       <div className="mb-8">
         <h1 className="text-4xl font-black tracking-tight text-foreground leading-none">
-          Pedir adelanto
+          Simular y pedir
           <br />
-          de rendimiento
+          adelanto
         </h1>
         <p className="mt-4 text-base text-muted-foreground font-normal">
-          No tocamos tu ahorro. Solo adelantamos parte de lo que ya generaste.
+          El capital queda bloqueado durante el periodo y te adelantamos hasta 75% del
+          rendimiento estimado.
         </p>
       </div>
 
       <div className="mb-6 rounded-[1.5rem] border border-border bg-secondary p-6">
-        <p className="mb-1 text-xs font-medium text-muted-foreground">Monto a adelantar</p>
-        <p className="mb-6 text-4xl font-black tabular-nums tracking-tight text-foreground">{formatMXN(monto)}</p>
+        <p className="mb-1 text-xs font-medium text-muted-foreground">Capital a bloquear</p>
+        <p className="mb-4 text-4xl font-black tabular-nums tracking-tight text-foreground">{formatMXN(ahorro)}</p>
         <Slider
-          min={10}
-          max={MAX_ADELANTO}
-          step={0.5}
-          value={[monto]}
-          onValueChange={([val]) => setMonto(val)}
+          min={MIN_AHORRO}
+          max={MAX_AHORRO}
+          step={500}
+          value={[ahorro]}
+          onValueChange={([val]) => setAhorro(val)}
           className="w-full [&_[data-slot=slider-track]]:bg-muted [&_[data-slot=slider-range]]:bg-foreground"
         />
         <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-          <span>$10.00</span>
-          <span>Max {formatMXN(MAX_ADELANTO)}</span>
+          <span>{formatMXN(MIN_AHORRO)}</span>
+          <span>Max {formatMXN(MAX_AHORRO)}</span>
+        </div>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-3">
+        <div className="rounded-[1.25rem] border border-border bg-card/50 p-4">
+          <p className="text-xs font-medium text-muted-foreground">Tasa anual</p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-foreground">{tasaAnual.toFixed(1)}%</p>
+          <Slider
+            min={4}
+            max={15}
+            step={0.5}
+            value={[tasaAnual]}
+            onValueChange={([val]) => setTasaAnual(val)}
+            className="mt-3 w-full [&_[data-slot=slider-track]]:bg-muted [&_[data-slot=slider-range]]:bg-foreground"
+          />
+        </div>
+        <div className="rounded-[1.25rem] border border-border bg-card/50 p-4">
+          <p className="text-xs font-medium text-muted-foreground">Periodo</p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-foreground">{periodoMeses} meses</p>
+          <Slider
+            min={3}
+            max={24}
+            step={1}
+            value={[periodoMeses]}
+            onValueChange={([val]) => setPeriodoMeses(val)}
+            className="mt-3 w-full [&_[data-slot=slider-track]]:bg-muted [&_[data-slot=slider-range]]:bg-foreground"
+          />
         </div>
       </div>
 
       <div className="mb-8 space-y-3 rounded-[1.5rem] border border-border bg-card/50 p-5">
-        <SummaryRow label="Monto adelantado" value={formatMXN(monto)} />
-        <SummaryRow label="Comisión Seyf" value={`− ${formatMXN(comision)}`} dim />
+        <SummaryRow label="Rendimiento estimado del periodo" value={formatMXN(rendimientoEstimado)} />
+        <SummaryRow label="Adelanto inmediato (75%)" value={formatMXN(adelantoInstantaneo)} bold />
+        <SummaryRow label="Total estimado al vencimiento" value={formatMXN(totalEstimadoAlVencimiento)} dim />
         <div className="border-t border-border pt-3">
-          <SummaryRow label="Monto neto a recibir" value={formatMXN(neto)} bold />
+          <SummaryRow label="Capital liberado estimado" value={`${formatMXN(ahorro)} · ${fechaLiberacion}`} bold />
         </div>
       </div>
 
@@ -133,7 +177,7 @@ export default function AdelantoPage() {
       </Button>
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        Solo puedes tener un adelanto activo por ciclo de inversión (28 días).
+        Si liquidas el adelanto antes, puedes liberar capital anticipadamente.
       </p>
     </AppPageBody>
   )
