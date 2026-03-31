@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ChevronRight, Eye, EyeOff } from 'lucide-react'
+import { ChevronRight, Eye, EyeOff, TrendingUp, Wallet, Zap } from 'lucide-react'
 import { useAccesly } from 'accesly'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { DashboardHeroCarousel } from '@/components/app/dashboard-hero-carousel'
@@ -390,40 +390,65 @@ export default function DashboardClient({
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-border bg-card/50 p-4">
-        <Link href="/dashboard" className="flex items-center justify-between text-sm font-bold text-foreground">
-          <span>Resumen</span>
-          <ChevronRight className="size-4 text-muted-foreground" />
-        </Link>
-        <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {[
-            {
-              label: 'Ahorro (MXNe)',
-              sub: hideBalances ? formatMontoOculto() : formatMXNFull(mxne),
-              tone: 'from-violet-600/90 to-indigo-800/90',
-            },
-            {
-              label: 'Rendimiento',
-              sub: hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.rendimientoMxn),
-              tone: 'from-zinc-600/90 to-zinc-800/90',
-            },
-            {
-              label: 'Adelanto',
-              sub: hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.adelantableMxn),
-              tone: 'from-slate-600/90 to-slate-800/90',
-            },
-          ].map((card) => (
-            <div
-              key={card.label}
-              className={cn(
-                'min-w-[8.5rem] shrink-0 rounded-2xl bg-gradient-to-br p-4 ring-1 ring-border',
-                card.tone,
-              )}
-            >
-              <p className="text-[11px] font-medium text-white/80">{card.label}</p>
-              <p className="mt-1 text-sm font-black tabular-nums text-white">{card.sub}</p>
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-border bg-card">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-violet-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
+
+        <div className="relative space-y-4 p-4">
+          <Link
+            href="/historial"
+            className="flex items-center justify-between rounded-xl py-1 transition hover:opacity-90"
+          >
+            <div>
+              <p className="text-sm font-bold text-foreground">Resumen visual</p>
+              <p className="text-[11px] text-muted-foreground">Ver detalle en historial</p>
             </div>
-          ))}
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary ring-1 ring-border">
+              <ChevronRight className="size-4 text-foreground" />
+            </span>
+          </Link>
+
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-violet-600/25 via-indigo-900/20 to-card p-4 shadow-inner ring-1 ring-violet-500/10">
+            <div className="flex items-center gap-3">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm">
+                <Wallet className="size-6 text-violet-100" strokeWidth={2} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-200/90">
+                  Saldo MXNe
+                </p>
+                <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-white">
+                  {hideBalances ? formatMontoOculto() : formatMXNFull(mxne)}
+                </p>
+                <p className="mt-1 text-[11px] text-violet-100/75">Tu posición principal</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
+                <TrendingUp className="size-4 text-foreground" strokeWidth={2.25} />
+              </div>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                Rendimiento
+              </p>
+              <p className="mt-1 text-base font-black tabular-nums text-foreground">
+                {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.rendimientoMxn)}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
+                <Zap className="size-4 text-amber-200/90" strokeWidth={2.25} />
+              </div>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                Adelanto
+              </p>
+              <p className="mt-1 text-base font-black tabular-nums text-foreground">
+                {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.adelantableMxn)}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

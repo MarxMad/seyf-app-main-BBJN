@@ -201,7 +201,19 @@ export default function EtherfuseRampDevClient() {
     <AppPageBody className="space-y-6 pt-4">
       <AppBackLink href="/dashboard" />
 
-      <h1 className="text-xl font-bold text-foreground">Añadir fondos</h1>
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-violet-400/25 bg-gradient-to-br from-violet-700/30 via-indigo-700/20 to-blue-700/15 p-5">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-400/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-cyan-400/15 blur-3xl" />
+        <div className="relative">
+          <p className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-100/90">
+            Depósito SPEI
+          </p>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-white">Añadir fondos</h1>
+          <p className="mt-1.5 text-sm text-violet-100/80">
+            Genera tu CLABE y realiza la transferencia desde tu banca móvil.
+          </p>
+        </div>
+      </section>
 
       <SpeiPaymentCard
         details={speiDetails}
@@ -225,7 +237,7 @@ export default function EtherfuseRampDevClient() {
         </Button>
       ) : null}
 
-      <section className="space-y-4 rounded-[1.5rem] border border-border bg-card p-4">
+      <section className="space-y-4 rounded-[1.5rem] border border-border bg-card/80 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
         <h2 className="text-sm font-bold text-foreground">Monto en pesos</h2>
         <Input
           id="manual-amount"
@@ -246,7 +258,7 @@ export default function EtherfuseRampDevClient() {
         />
         <Button
           type="button"
-          className="w-full"
+          className="w-full rounded-full bg-foreground text-background"
           disabled={!!busy}
           onClick={() => void openManualSpeiReview()}
         >
@@ -256,7 +268,7 @@ export default function EtherfuseRampDevClient() {
               Cargando…
             </>
           ) : (
-            'Continuar'
+            'Generar datos de depósito'
           )}
         </Button>
       </section>
