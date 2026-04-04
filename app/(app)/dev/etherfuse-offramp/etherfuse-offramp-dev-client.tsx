@@ -189,7 +189,19 @@ export default function EtherfuseOfframpDevClient() {
     <AppPageBody className="space-y-6 pt-4">
       <AppBackLink href="/dashboard" />
 
-      <h1 className="text-xl font-bold text-foreground">Retirar fondos</h1>
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-emerald-400/25 bg-gradient-to-br from-emerald-700/25 via-teal-700/20 to-cyan-700/15 p-5">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-emerald-300/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-teal-300/15 blur-3xl" />
+        <div className="relative">
+          <p className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-100/90">
+            Retiro a cuenta
+          </p>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-white">Retirar fondos</h1>
+          <p className="mt-1.5 text-sm text-emerald-100/80">
+            Convierte tus activos a pesos y retira a tu cuenta bancaria.
+          </p>
+        </div>
+      </section>
 
       <OfframpActionCard summary={offrampSummary} />
 
@@ -212,7 +224,7 @@ export default function EtherfuseOfframpDevClient() {
         </Button>
       ) : null}
 
-      <section className="space-y-4 rounded-[1.5rem] border border-border bg-card p-4">
+      <section className="space-y-4 rounded-[1.5rem] border border-border bg-card/80 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
         <h2 className="text-sm font-bold text-foreground">Cuánto retiras</h2>
         <Input
           inputMode="decimal"
@@ -253,7 +265,7 @@ export default function EtherfuseOfframpDevClient() {
         </div>
         <Button
           type="button"
-          className="w-full"
+          className="w-full rounded-full bg-foreground text-background"
           disabled={!!busy}
           onClick={() => void continueOfframp()}
         >
@@ -263,7 +275,7 @@ export default function EtherfuseOfframpDevClient() {
               Procesando…
             </>
           ) : (
-            'Continuar'
+            'Generar retiro'
           )}
         </Button>
       </section>

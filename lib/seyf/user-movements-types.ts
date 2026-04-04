@@ -23,6 +23,8 @@ export type UserMovement = {
   stellarTxSignature: string | null;
   /** Si existe, el monto es en esta unidad on-chain (no MXN). */
   chainAssetCode?: string | null;
+  /** Red Stellar del movimiento (solo `source === 'stellar'`). */
+  stellarNetwork?: "testnet" | "mainnet" | null;
 };
 
 export function formatMovementListSubtitle(iso: string): string {
