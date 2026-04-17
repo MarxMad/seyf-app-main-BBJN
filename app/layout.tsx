@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { PublicMobileHistorySeed } from '@/components/app/public-mobile-history-seed'
-import SeyfPollarProvider from '@/components/providers/pollar-provider'
+import PollarProviderClient from '@/components/providers/pollar-provider-client'
 import './globals.css'
 
 const inter = Inter({
@@ -32,7 +32,7 @@ export default function RootLayout({
     <html lang="es" className={`dark ${inter.variable}`}>
       <body className="min-h-dvh font-sans antialiased">
         <PublicMobileHistorySeed />
-        <SeyfPollarProvider>{children}</SeyfPollarProvider>
+        <PollarProviderClient>{children}</PollarProviderClient>
         <Analytics />
       </body>
     </html>
