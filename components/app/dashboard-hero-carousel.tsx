@@ -65,7 +65,7 @@ function splitCurrencyForDisplay(amount: number) {
 }
 
 const saldosQuickActions = [
-  { href: '/anadir', label: 'Depositar', icon: Plus },
+  { href: '/depositar', label: 'Depositar', icon: Plus },
   { href: '/retirar', label: 'Transferir', icon: ArrowDownToLine },
   { href: '/historial', label: 'Movimientos', icon: Clock },
   { href: '/identidad', label: 'Verificar', icon: Info },

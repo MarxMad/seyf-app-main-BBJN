@@ -514,7 +514,7 @@ export default function DashboardClient({
         <section className="rounded-[1.25rem] border border-dashed border-amber-500/25 bg-amber-500/[0.06] p-4 space-y-2">
           <p className="text-xs font-bold text-amber-200/90">Solo desarrollo</p>
           <Link
-            href="/anadir"
+            href="/depositar"
             className="block text-sm font-semibold text-foreground underline-offset-4 hover:underline"
           >
             Probar depósito (sandbox)
