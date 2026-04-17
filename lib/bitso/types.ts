@@ -3,12 +3,12 @@ export interface CLABEDetails {
   type: "AUTO_PAYMENT";
   status: "ENABLED" | "DISABLED";
   deposit_minimum_amount: number | null;
-  deposit_maximum_amounts: {
+  deposit_maximum_amounts?: {
     operation: number | null;
     daily: number | null;
     weekly: number | null;
     monthly: number | null;
-  };
+  } | null;
   created_at: string;
   updated_at: string | null;
 }

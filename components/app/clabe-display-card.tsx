@@ -126,6 +126,7 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
 
   const stellarAddress = wallet?.stellarAddress ?? null
   const isValid = clabe ? validateCLABE(clabe.clabe) : false
+  const maxAmounts = clabe?.deposit_maximum_amounts
 
   async function handleCopy() {
     if (!clabe) return
@@ -287,26 +288,26 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
                 </div>
 
                 {/* límites si existen */}
-                {clabe.deposit_maximum_amounts.daily != null && (
+                {maxAmounts?.daily != null && (
                   <div className="rounded-xl border border-border/60 bg-secondary/40 px-3.5 py-2.5">
                     <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
                       Límites de depósito
                     </p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[12px]">
-                      {clabe.deposit_maximum_amounts.operation != null && (
+                      {maxAmounts.operation != null && (
                         <LimitRow
                           label="Por operación"
-                          value={clabe.deposit_maximum_amounts.operation}
+                          value={maxAmounts.operation}
                         />
                       )}
-                      {clabe.deposit_maximum_amounts.daily != null && (
-                        <LimitRow label="Diario" value={clabe.deposit_maximum_amounts.daily} />
+                      {maxAmounts.daily != null && (
+                        <LimitRow label="Diario" value={maxAmounts.daily} />
                       )}
-                      {clabe.deposit_maximum_amounts.weekly != null && (
-                        <LimitRow label="Semanal" value={clabe.deposit_maximum_amounts.weekly} />
+                      {maxAmounts.weekly != null && (
+                        <LimitRow label="Semanal" value={maxAmounts.weekly} />
                       )}
-                      {clabe.deposit_maximum_amounts.monthly != null && (
-                        <LimitRow label="Mensual" value={clabe.deposit_maximum_amounts.monthly} />
+                      {maxAmounts.monthly != null && (
+                        <LimitRow label="Mensual" value={maxAmounts.monthly} />
                       )}
                     </div>
                   </div>
