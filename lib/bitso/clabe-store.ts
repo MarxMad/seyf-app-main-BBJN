@@ -13,8 +13,10 @@
  * qué wallet acreditar.
  */
 
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
 import type { CLABEDetails } from './types'
+
+const redis = Redis.fromEnv()
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -39,7 +41,7 @@ export async function getClabeForWallet(
   stellarAddress: string,
 ): Promise<ClabeRecord | null> {
   if (!stellarAddress) return null
-  return kv.get<ClabeRecord>(walletKey(stellarAddress))
+  return redis.get<ClabeRecord>(walletKey(stellarAddress))
 }
 
 /**
@@ -48,7 +50,7 @@ export async function getClabeForWallet(
  */
 export async function getWalletForClabe(clabe: string): Promise<string | null> {
   if (!clabe) return null
-  return kv.get<string>(reverseKey(clabe))
+  return redis.get<string>(reverseKey(clabe))
 }
 
 // ─── escritura ────────────────────────────────────────────────────────────────
@@ -70,9 +72,9 @@ export async function saveClabeMapping(
 
   await Promise.all([
     // wallet → CLABE
-    kv.set(walletKey(stellarAddress), record),
+    redis.set(walletKey(stellarAddress), record),
     // CLABE → wallet  (para webhooks)
-    kv.set(reverseKey(clabe.clabe), stellarAddress),
+    redis.set(reverseKey(clabe.clabe), stellarAddress),
   ])
 
   return record
@@ -83,5 +85,5 @@ export async function saveClabeMapping(
  * No borra el índice inverso para mantener trazabilidad histórica.
  */
 export async function deleteClabeMapping(stellarAddress: string): Promise<void> {
-  await kv.del(walletKey(stellarAddress))
+  await redis.del(walletKey(stellarAddress))
 }
