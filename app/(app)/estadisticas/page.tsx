@@ -34,7 +34,9 @@ export default function EstadisticasPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('https://api.frankfurter.app/latest?from=MXN&to=USD,EUR')
+      const res = await fetch(
+        '/api/seyf/fx/frankfurter-latest?from=MXN&to=USD,EUR',
+      )
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = (await res.json()) as FxResponse
       const usd = data.rates.USD
