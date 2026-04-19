@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Search, BarChart3, CreditCard } from 'lucide-react'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import AppUserAccountPanel from '@/components/app/app-user-account-panel'
+import { ThemeToggle } from '@/components/app/theme-toggle'
 import {
   Sheet,
   SheetClose,
@@ -56,6 +57,7 @@ export default function AppTopBar() {
                   Inicio
                 </Link>
               </SheetClose>
+              <ThemeToggle />
               <AppUserAccountPanel />
             </div>
           </SheetContent>
