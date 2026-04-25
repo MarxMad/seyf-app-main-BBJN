@@ -4,6 +4,7 @@ import {
   etherfuseReadBody,
   extractEtherfuseErrorMessage,
 } from "./client";
+import { mapEtherfuseHttpError } from "./errors";
 import {
   getEtherfuseDefaultBlockchain,
   type EtherfuseBlockchain,
@@ -35,12 +36,15 @@ export async function fetchRampableAssetsForWallet(params: {
     wallet: params.walletPublicKey,
   });
   const res = await etherfuseFetch(`/ramp/assets?${q}`, { method: "GET" });
-  const { json, text } = await etherfuseReadBody<{ assets?: RampableAssetRow[] }>(
-    res,
-  );
+  const { json, text } = await etherfuseReadBody<{
+    assets?: RampableAssetRow[];
+  }>(res);
   if (!res.ok) {
     const msg = extractEtherfuseErrorMessage(json, text, 400);
-    throw new Error(`Etherfuse /ramp/assets (${res.status}): ${msg}`);
+    throw mapEtherfuseHttpError(
+      res.status,
+      `Etherfuse /ramp/assets (${res.status}): ${msg}`,
+    );
   }
   const assets = json?.assets;
   return { assets: Array.isArray(assets) ? assets : [] };
@@ -68,9 +72,7 @@ export function pickOnrampTargetIdentifier(
     if (row?.identifier) return row.identifier;
   }
   if (fromEnv && assets.length > 0) {
-    const inList = assets.some(
-      (a) => (a.identifier ?? "").trim() === fromEnv,
-    );
+    const inList = assets.some((a) => (a.identifier ?? "").trim() === fromEnv);
     if (inList) return fromEnv;
   }
   const first = assets.find((a) => a.identifier?.length);
@@ -83,9 +85,7 @@ export function pickOnrampTargetIdentifier(
 export function pickCetesTargetIdentifier(
   assets: RampableAssetRow[],
 ): string | null {
-  const row = assets.find(
-    (a) => (a.symbol ?? "").toUpperCase() === "CETES",
-  );
+  const row = assets.find((a) => (a.symbol ?? "").toUpperCase() === "CETES");
   return row?.identifier?.trim() ? row.identifier.trim() : null;
 }
 
@@ -108,9 +108,7 @@ export function pickOfframpSourceIdentifier(
     if (row?.identifier) return row.identifier;
   }
   if (fromEnv && assets.length > 0) {
-    const inList = assets.some(
-      (a) => (a.identifier ?? "").trim() === fromEnv,
-    );
+    const inList = assets.some((a) => (a.identifier ?? "").trim() === fromEnv);
     if (inList) return fromEnv;
   }
   const first = assets.find((a) => a.identifier?.length);
@@ -151,7 +149,10 @@ export async function createMxOfframpQuote(params: {
   const { json, text } = await etherfuseReadBody(res);
   if (!res.ok) {
     const msg = extractEtherfuseErrorMessage(json, text, 400);
-    throw new Error(`Etherfuse /ramp/quote offramp (${res.status}): ${msg}`);
+    throw mapEtherfuseHttpError(
+      res.status,
+      `Etherfuse /ramp/quote offramp (${res.status}): ${msg}`,
+    );
   }
   return json;
 }
@@ -192,7 +193,10 @@ export async function createMxOfframpOrder(params: {
   const { json, text } = await etherfuseReadBody(res);
   if (!res.ok) {
     const msg = extractEtherfuseErrorMessage(json, text, 400);
-    throw new Error(`Etherfuse /ramp/order offramp (${res.status}): ${msg}`);
+    throw mapEtherfuseHttpError(
+      res.status,
+      `Etherfuse /ramp/order offramp (${res.status}): ${msg}`,
+    );
   }
   return json;
 }
@@ -228,7 +232,10 @@ export async function createMxOnrampQuote(params: {
   const { json, text } = await etherfuseReadBody(res);
   if (!res.ok) {
     const msg = extractEtherfuseErrorMessage(json, text, 400);
-    throw new Error(`Etherfuse /ramp/quote (${res.status}): ${msg}`);
+    throw mapEtherfuseHttpError(
+      res.status,
+      `Etherfuse /ramp/quote (${res.status}): ${msg}`,
+    );
   }
   return json;
 }
@@ -271,7 +278,10 @@ export async function createMxOnrampOrder(params: {
   const { json, text } = await etherfuseReadBody(res);
   if (!res.ok) {
     const msg = extractEtherfuseErrorMessage(json, text, 400);
-    throw new Error(`Etherfuse /ramp/order (${res.status}): ${msg}`);
+    throw mapEtherfuseHttpError(
+      res.status,
+      `Etherfuse /ramp/order (${res.status}): ${msg}`,
+    );
   }
   return json;
 }
