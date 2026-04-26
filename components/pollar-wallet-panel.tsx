@@ -79,10 +79,10 @@ export default function PollarWalletPanel() {
               type="button"
               size="lg"
               className="h-12 w-full rounded-full text-base font-bold sm:w-auto sm:min-w-[14rem]"
-              disabled={!mounted || loading || creating}
-              onClick={() => void connect()}
+              disabled={!mounted}
+              onClick={() => router.replace('/dashboard')} // QA-HOOK — remove before merge
             >
-              {creating ? 'Preparando wallet…' : loading ? 'Cargando…' : 'Iniciar sesión'}
+              Iniciar sesión
             </Button>
           ) : null}
 

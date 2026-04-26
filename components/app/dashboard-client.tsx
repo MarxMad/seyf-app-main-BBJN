@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import useSWR from 'swr'
 import { ChevronRight, Eye, EyeOff, TrendingUp, Wallet, Zap } from 'lucide-react'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -13,37 +14,15 @@ import { balanceForAssetCode } from '@/lib/seyf/accesly-balances'
 import { cetesBalanceEquivMxne } from '@/lib/seyf/cetes-mxne-equiv'
 import { cetesStablebondDisplayFromRow } from '@/lib/seyf/stablebond-cetes-display'
 import type { EtherfuseStablebondInfo } from '@/lib/etherfuse/stablebonds-lookup'
-import {
-  DASHBOARD_POLL_EXTRA_DELAYS_MS,
-  DASHBOARD_POLL_MS,
-} from '@/lib/seyf/balance-poll-intervals'
-import { POLL_FETCH_INIT, pollBustUrl } from '@/lib/seyf/poll-fetch'
+import { DASHBOARD_POLL_EXTRA_DELAYS_MS } from '@/lib/seyf/balance-poll-intervals'
+import { POLL_FETCH_INIT } from '@/lib/seyf/poll-fetch'
 import {
   DASHBOARD_MOVEMENTS_PREVIEW_LIMIT,
   type DashboardViewModel,
 } from '@/lib/seyf/dashboard-view-model-types'
 import { formatMovementListSubtitle, type UserMovement } from '@/lib/seyf/user-movements-types'
+import { formatMXN, formatLoUltimoMonto } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
-
-function formatMXNFull(amount: number) {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    minimumFractionDigits: 2,
-  }).format(amount)
-}
-
-/** Fila «Lo último»: MXN vs cantidad on-chain. */
-function formatLoUltimoMonto(mov: UserMovement): string {
-  const code = mov.chainAssetCode?.trim()
-  const sign = mov.monto < 0 ? '− ' : mov.monto > 0 ? '+' : ''
-  if (code) {
-    const abs = Math.abs(mov.monto)
-    const n = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 7 }).format(abs)
-    return `${sign}${n} ${code}`
-  }
-  return `${sign}${formatMXNFull(Math.abs(mov.monto))}`
-}
 
 function formatMontoOculto() {
   return '••••'
@@ -67,6 +46,12 @@ function formatMovementMeta(mov: UserMovement): string {
   return [hora, red].filter(Boolean).join(' · ')
 }
 
+const dashboardFetcher = (url: string): Promise<DashboardViewModel> =>
+  fetch(url, POLL_FETCH_INIT).then((r) => {
+    if (!r.ok) throw new Error(`${r.status}`)
+    return r.json() as Promise<DashboardViewModel>
+  })
+
 export default function DashboardClient({
   showEtherfuseRampDev = false,
   vm,
@@ -76,7 +61,6 @@ export default function DashboardClient({
 }) {
   const { wallet, assetBalances, loading, refreshBalance } = useSeyfWallet()
   const [selected, setSelected] = useState<UserMovement | null>(null)
-  const [liveVm, setLiveVm] = useState(vm)
   const [hideBalances, setHideBalances] = useState(false)
   const [lastUpdateAt, setLastUpdateAt] = useState<Date>(new Date())
   const [stablebondCetes, setStablebondCetes] = useState<{
@@ -87,10 +71,37 @@ export default function DashboardClient({
   }>({ loading: false, annualPercent: null, priceMx: null })
   const [stellarMovements, setStellarMovements] = useState<UserMovement[]>([])
 
+  const { data = vm, error, mutate } = useSWR<DashboardViewModel>(
+    '/api/seyf/dashboard',
+    dashboardFetcher,
+    {
+      fallbackData: vm,
+      refreshInterval: 15_000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2_000,
+      onSuccess: () => setLastUpdateAt(new Date()),
+    },
+  )
+
+  // Push updated SSR prop into SWR cache on navigation (vm prop identity change).
+  const prevVmRef = useRef(vm)
   useEffect(() => {
-    setLiveVm(vm)
+    if (vm === prevVmRef.current) return
+    prevVmRef.current = vm
+    void mutate(vm, { revalidate: false })
     setLastUpdateAt(new Date())
-  }, [vm])
+  }, [vm, mutate])
+
+  // Burst revalidations after mount to catch slow Etherfuse propagation.
+  useEffect(() => {
+    const timers = DASHBOARD_POLL_EXTRA_DELAYS_MS.map((ms) =>
+      setTimeout(() => void mutate(), ms),
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [mutate])
+
+  const activeCycle = data.principalMxn > 0
 
   useEffect(() => {
     try {
@@ -105,50 +116,36 @@ export default function DashboardClient({
 
   useEffect(() => {
     if (!wallet) {
-      setStablebondCetes({
-        loading: false,
-        annualPercent: null,
-        priceMx: null,
-      })
+      setStablebondCetes({ loading: false, annualPercent: null, priceMx: null })
       return
     }
     let cancelled = false
     setStablebondCetes((s) => ({ ...s, loading: true }))
     void fetch('/api/seyf/etherfuse/lookup/stablebonds?cetesOnly=1')
       .then(async (r) => {
-        const data = (await r.json().catch(() => ({}))) as {
+        const payload = (await r.json().catch(() => ({}))) as {
           cetes?: EtherfuseStablebondInfo | null
           calculatedAt?: string
           error?: string
         }
         if (cancelled) return
         if (!r.ok) {
-          setStablebondCetes({
-            loading: false,
-            annualPercent: null,
-            priceMx: null,
-          })
+          setStablebondCetes({ loading: false, annualPercent: null, priceMx: null })
           return
         }
-        const parsed = cetesStablebondDisplayFromRow(data.cetes ?? null)
+        const parsed = cetesStablebondDisplayFromRow(payload.cetes ?? null)
         setStablebondCetes({
           loading: false,
           annualPercent: parsed.annualPercent,
           priceMx: parsed.priceMx,
-          calculatedAt: data.calculatedAt,
+          calculatedAt: payload.calculatedAt,
         })
       })
       .catch(() => {
         if (cancelled) return
-        setStablebondCetes({
-          loading: false,
-          annualPercent: null,
-          priceMx: null,
-        })
+        setStablebondCetes({ loading: false, annualPercent: null, priceMx: null })
       })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [wallet?.stellarAddress])
 
   useEffect(() => {
@@ -161,9 +158,9 @@ export default function DashboardClient({
     void fetch(`/api/seyf/stellar-movements?account=${encodeURIComponent(addr)}`)
       .then(async (r) => {
         if (!r.ok) return [] as UserMovement[]
-        const data = (await r.json()) as unknown
-        if (!Array.isArray(data)) return []
-        return data as UserMovement[]
+        const rows = (await r.json()) as unknown
+        if (!Array.isArray(rows)) return []
+        return rows as UserMovement[]
       })
       .then((rows) => {
         if (!cancelled) setStellarMovements(rows)
@@ -171,68 +168,24 @@ export default function DashboardClient({
       .catch(() => {
         if (!cancelled) setStellarMovements([])
       })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [wallet?.stellarAddress])
 
   const loUltimoMovements = useMemo(() => {
     const byId = new Map<string, UserMovement>()
-    for (const m of liveVm.movementsRecent) byId.set(m.id, m)
+    for (const m of data.movementsRecent) byId.set(m.id, m)
     for (const m of stellarMovements) byId.set(m.id, m)
     const merged = [...byId.values()].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
     return merged.slice(0, DASHBOARD_MOVEMENTS_PREVIEW_LIMIT)
-  }, [liveVm.movementsRecent, stellarMovements])
-
-  const refreshDashboard = useCallback(async () => {
-    try {
-      const r = await fetch(pollBustUrl('/api/seyf/dashboard'), POLL_FETCH_INIT)
-      if (!r.ok) return
-      const next = (await r.json()) as DashboardViewModel
-      setLiveVm(next)
-      setLastUpdateAt(new Date())
-    } catch {
-      /* mantener último valor válido */
-    }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    const tick = () => {
-      if (cancelled) return
-      if (document.visibilityState !== 'visible') return
-      void refreshDashboard()
-    }
-    tick()
-    const extraTimers = DASHBOARD_POLL_EXTRA_DELAYS_MS.map((ms) => setTimeout(tick, ms))
-    const id = setInterval(tick, DASHBOARD_POLL_MS)
-    const onVis = () => {
-      if (document.visibilityState === 'visible') tick()
-    }
-    const onFocus = () => tick()
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) tick()
-    }
-    document.addEventListener('visibilitychange', onVis)
-    window.addEventListener('focus', onFocus)
-    window.addEventListener('pageshow', onPageShow)
-    return () => {
-      cancelled = true
-      for (const t of extraTimers) clearTimeout(t)
-      clearInterval(id)
-      document.removeEventListener('visibilitychange', onVis)
-      window.removeEventListener('focus', onFocus)
-      window.removeEventListener('pageshow', onPageShow)
-    }
-  }, [refreshDashboard])
+  }, [data.movementsRecent, stellarMovements])
 
   useEffect(() => {
     if (!selected) return
-    const next = liveVm.movementsRecent.find((m) => m.id === selected.id)
+    const next = data.movementsRecent.find((m) => m.id === selected.id)
     if (next) setSelected(next)
-  }, [liveVm.movementsRecent, selected])
+  }, [data.movementsRecent, selected])
 
   const mxne = useMemo(() => balanceForAssetCode(assetBalances, 'MXNE'), [assetBalances])
   const cetesBalance = useMemo(() => balanceForAssetCode(assetBalances, 'CETES'), [assetBalances])
@@ -246,6 +199,7 @@ export default function DashboardClient({
       <AppPageBody className="space-y-6 pt-4">
         <div className="h-[22rem] animate-pulse rounded-[1.75rem] border border-border bg-secondary/40" />
         <div className="h-48 animate-pulse rounded-[1.5rem] border border-border bg-secondary/30" />
+        <div className="h-40 animate-pulse rounded-[1.5rem] border border-border bg-secondary/30" />
       </AppPageBody>
     )
   }
@@ -256,7 +210,7 @@ export default function DashboardClient({
         <div className="rounded-[1.5rem] border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm font-bold text-foreground">Conecta tu wallet</p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Para ver tu saldo MXNe en el tablero, inicia sesión con Pollar desde el inicio.
+            Para ver tu saldo en el tablero, inicia sesión desde el inicio.
           </p>
           <Button asChild className="mt-6 h-11 w-full max-w-xs rounded-full font-bold">
             <Link href="/">Ir a conectar</Link>
@@ -276,32 +230,43 @@ export default function DashboardClient({
             {lastUpdateAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          className="h-9 rounded-full border-border bg-transparent px-3 text-xs font-semibold"
-          onClick={() => {
-            setHideBalances((prev) => {
-              const next = !prev
-              try {
-                window.localStorage.setItem('seyf-hide-balances', next ? '1' : '0')
-              } catch {}
-              return next
-            })
-          }}
-        >
-          {hideBalances ? <Eye className="mr-1.5 size-4" /> : <EyeOff className="mr-1.5 size-4" />}
-          {hideBalances ? 'Mostrar saldos' : 'Ocultar saldos'}
-        </Button>
+        {error ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 rounded-full border-border bg-transparent px-3 text-xs font-semibold text-amber-400"
+            onClick={() => void mutate()}
+          >
+            Reintentar
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 rounded-full border-border bg-transparent px-3 text-xs font-semibold"
+            onClick={() => {
+              setHideBalances((prev) => {
+                const next = !prev
+                try {
+                  window.localStorage.setItem('seyf-hide-balances', next ? '1' : '0')
+                } catch {}
+                return next
+              })
+            }}
+          >
+            {hideBalances ? <Eye className="mr-1.5 size-4" /> : <EyeOff className="mr-1.5 size-4" />}
+            {hideBalances ? 'Mostrar saldos' : 'Ocultar saldos'}
+          </Button>
+        )}
       </section>
 
       <div className="relative">
         <DashboardHeroCarousel
           data={{
             principal: hideBalances ? 0 : mxne,
-            adelantable: hideBalances ? 0 : liveVm.adelantableMxn,
-            puntos: liveVm.puntos,
-            tasaAnual: liveVm.tasaAnual,
+            adelantable: hideBalances ? 0 : data.adelantableMxn,
+            puntos: data.puntos,
+            tasaAnual: data.tasaAnual,
             stablebondCetes,
             cetesWallet: {
               balance: hideBalances ? 0 : cetesBalance,
@@ -318,9 +283,10 @@ export default function DashboardClient({
           </div>
         ) : null}
       </div>
-      {liveVm.saldoNote ? (
+
+      {data.saldoNote ? (
         <p className="-mt-2 px-1 text-center text-[11px] leading-snug text-muted-foreground">
-          {liveVm.saldoNote}
+          {data.saldoNote}
         </p>
       ) : null}
 
@@ -335,7 +301,7 @@ export default function DashboardClient({
         <ul className="divide-y divide-border">
           {loUltimoMovements.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-muted-foreground">
-              Aquí aparecerán depósitos, retiros, transferencias en Stellar y demás movimientos.
+              Aquí aparecerán depósitos, retiros, transferencias y demás movimientos.
             </li>
           ) : (
             loUltimoMovements.map((mov) => {
@@ -418,7 +384,7 @@ export default function DashboardClient({
                   Saldo MXNe
                 </p>
                 <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-white">
-                  {hideBalances ? formatMontoOculto() : formatMXNFull(mxne)}
+                  {hideBalances ? formatMontoOculto() : formatMXN(mxne)}
                 </p>
                 <p className="mt-1 text-[11px] text-violet-100/75">Tu posición principal</p>
               </div>
@@ -434,7 +400,7 @@ export default function DashboardClient({
                 Rendimiento
               </p>
               <p className="mt-1 text-base font-black tabular-nums text-foreground">
-                {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.rendimientoMxn)}
+                {hideBalances ? formatMontoOculto() : formatMXN(data.rendimientoMxn)}
               </p>
             </div>
             <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
@@ -445,58 +411,60 @@ export default function DashboardClient({
                 Adelanto
               </p>
               <p className="mt-1 text-base font-black tabular-nums text-foreground">
-                {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.adelantableMxn)}
+                {hideBalances ? formatMontoOculto() : formatMXN(data.adelantableMxn)}
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[1.6rem] border border-violet-400/25 bg-gradient-to-br from-violet-700/35 via-indigo-700/25 to-sky-700/20 p-5 shadow-[0_16px_45px_rgba(76,29,149,0.35)]">
-        <div className="pointer-events-none absolute -right-14 -top-20 h-44 w-44 rounded-full bg-violet-400/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-12 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
-        <div className="relative">
-          <div className="inline-flex items-center rounded-full border border-violet-200/25 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-100/90">
-            Adelanto disponible
+      {activeCycle && (
+        <section className="relative overflow-hidden rounded-[1.6rem] border border-violet-400/25 bg-gradient-to-br from-violet-700/35 via-indigo-700/25 to-sky-700/20 p-5 shadow-[0_16px_45px_rgba(76,29,149,0.35)]">
+          <div className="pointer-events-none absolute -right-14 -top-20 h-44 w-44 rounded-full bg-violet-400/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-12 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="relative">
+            <div className="inline-flex items-center rounded-full border border-violet-200/25 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-100/90">
+              Adelanto disponible
+            </div>
+            <p className="mt-2 text-3xl font-black tabular-nums tracking-tight text-white">
+              {hideBalances ? formatMontoOculto() : formatMXN(data.adelantableMxn)}
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-violet-100/80">
+              Recibe parte de tu rendimiento hoy, sin retirar tu ahorro.
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[
+                { label: 'Sin papeleo', value: '100%' },
+                { label: 'Respuesta', value: 'Inmediata' },
+                { label: 'Plazo', value: '12 meses' },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-xl border border-white/15 bg-black/20 px-2.5 py-2 text-center backdrop-blur-[2px]"
+                >
+                  <p className="text-[10px] text-violet-100/75">{item.label}</p>
+                  <p className="mt-0.5 text-[11px] font-bold text-white">{item.value}</p>
+                </div>
+              ))}
+            </div>
+            <Link href="/adelanto" className="mt-4 block">
+              <Button className="h-12 w-full rounded-full bg-white text-base font-black text-violet-950 shadow-[0_12px_30px_rgba(255,255,255,0.22)] hover:bg-white/90">
+                Pedir adelanto
+              </Button>
+            </Link>
+            <p className="mt-2 text-center text-[11px] text-violet-100/70">
+              Simula monto, tasa y plazo en el siguiente paso.
+            </p>
           </div>
-          <p className="mt-2 text-3xl font-black tabular-nums tracking-tight text-white">
-          {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.adelantableMxn)}
-          </p>
-          <p className="mt-1.5 text-xs leading-relaxed text-violet-100/80">
-            Recibe parte de tu rendimiento hoy, sin retirar tu ahorro.
-          </p>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {[
-              { label: 'Sin papeleo', value: '100%' },
-              { label: 'Respuesta', value: 'Inmediata' },
-              { label: 'Plazo', value: '12 meses' },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border border-white/15 bg-black/20 px-2.5 py-2 text-center backdrop-blur-[2px]"
-              >
-                <p className="text-[10px] text-violet-100/75">{item.label}</p>
-                <p className="mt-0.5 text-[11px] font-bold text-white">{item.value}</p>
-              </div>
-            ))}
-          </div>
-          <Link href="/adelanto" className="mt-4 block">
-            <Button className="h-12 w-full rounded-full bg-white text-base font-black text-violet-950 shadow-[0_12px_30px_rgba(255,255,255,0.22)] hover:bg-white/90">
-              Pedir adelanto
-            </Button>
-          </Link>
-          <p className="mt-2 text-center text-[11px] text-violet-100/70">
-            Simula monto, tasa y plazo en el siguiente paso.
-          </p>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {liveVm.saldoGastoMxn > 0 && (
+      {data.saldoGastoMxn > 0 && (
         <section className="flex items-center justify-between rounded-[1.5rem] border border-border bg-card px-4 py-4">
           <div>
             <p className="text-xs font-medium text-muted-foreground">Saldo para gastar</p>
             <p className="text-xl font-black tabular-nums text-foreground">
-              {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.saldoGastoMxn)}
+              {hideBalances ? formatMontoOculto() : formatMXN(data.saldoGastoMxn)}
             </p>
           </div>
           <Link href="/gastar">
@@ -511,7 +479,7 @@ export default function DashboardClient({
       )}
 
       {showEtherfuseRampDev && (
-        <section className="rounded-[1.25rem] border border-dashed border-amber-500/25 bg-amber-500/[0.06] p-4 space-y-2">
+        <section className="space-y-2 rounded-[1.25rem] border border-dashed border-amber-500/25 bg-amber-500/[0.06] p-4">
           <p className="text-xs font-bold text-amber-200/90">Solo desarrollo</p>
           <Link
             href="/anadir"
