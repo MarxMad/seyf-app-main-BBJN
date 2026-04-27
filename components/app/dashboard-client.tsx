@@ -420,13 +420,13 @@ export default function DashboardClient({
                 <Wallet className="size-6 text-violet-100" strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-200/90">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-200/90">
                   Saldo disponible
                 </p>
-                <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-white">
+                <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-foreground dark:text-white">
                   {hideBalances ? formatMontoOculto() : formatMXN(mxne)}
                 </p>
-                <p className="mt-1 text-[11px] text-violet-100/75">Tu posición principal</p>
+                <p className="mt-1 text-[11px] text-muted-foreground dark:text-violet-100/75">Tu posición principal</p>
               </div>
             </div>
           </div>
@@ -459,17 +459,17 @@ export default function DashboardClient({
       </section>
 
       {activeCycle && (
-        <section className="relative overflow-hidden rounded-[1.6rem] border border-violet-400/25 bg-gradient-to-br from-violet-700/35 via-indigo-700/25 to-sky-700/20 p-5 shadow-[0_16px_45px_rgba(76,29,149,0.35)]">
+        <section className="relative overflow-hidden rounded-[1.6rem] border border-violet-500/20 bg-gradient-to-br from-violet-100 via-indigo-100 to-sky-100 p-5 shadow-[0_16px_45px_rgba(76,29,149,0.16)] dark:border-violet-400/25 dark:from-violet-700/35 dark:via-indigo-700/25 dark:to-sky-700/20 dark:shadow-[0_16px_45px_rgba(76,29,149,0.35)]">
           <div className="pointer-events-none absolute -right-14 -top-20 h-44 w-44 rounded-full bg-violet-400/25 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -left-12 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
           <div className="relative">
-            <div className="inline-flex items-center rounded-full border border-violet-200/25 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-100/90">
+            <div className="inline-flex items-center rounded-full border border-violet-500/20 bg-background/65 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:border-violet-200/25 dark:bg-black/20 dark:text-violet-100/90">
               Adelanto disponible
             </div>
-            <p className="mt-2 text-3xl font-black tabular-nums tracking-tight text-white">
+            <p className="mt-2 text-3xl font-black tabular-nums tracking-tight text-foreground dark:text-white">
               {hideBalances ? formatMontoOculto() : formatMXN(data.adelantableMxn)}
             </p>
-            <p className="mt-1.5 text-xs leading-relaxed text-violet-100/80">
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground dark:text-violet-100/80">
               Recibe parte de tu rendimiento hoy, sin retirar tu ahorro.
             </p>
             <div className="mt-3 grid grid-cols-3 gap-2">
@@ -480,28 +480,28 @@ export default function DashboardClient({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-xl border border-white/15 bg-black/20 px-2.5 py-2 text-center backdrop-blur-[2px]"
+                  className="rounded-xl border border-violet-500/15 bg-background/55 px-2.5 py-2 text-center backdrop-blur-[2px] dark:border-white/15 dark:bg-black/20"
                 >
-                  <p className="text-[10px] text-violet-100/75">{item.label}</p>
-                  <p className="mt-0.5 text-[11px] font-bold text-white">{item.value}</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-violet-100/75">{item.label}</p>
+                  <p className="mt-0.5 text-[11px] font-bold text-foreground dark:text-white">{item.value}</p>
                 </div>
               ))}
             </div>
             {data.adelantableMxn > 0 ? (
               <Link href="/adelanto" className="mt-4 block">
-                <Button className="h-12 w-full rounded-full bg-white text-base font-black text-violet-950 shadow-[0_12px_30px_rgba(255,255,255,0.22)] hover:bg-white/90">
+                <Button className="h-12 w-full rounded-full text-base font-black">
                   Pedir adelanto
                 </Button>
               </Link>
             ) : (
               <Button
                 disabled
-                className="mt-4 h-12 w-full rounded-full bg-white/40 text-base font-black text-violet-950/50 cursor-not-allowed"
+                className="mt-4 h-12 w-full rounded-full bg-secondary text-base font-black text-muted-foreground cursor-not-allowed"
               >
                 Pedir adelanto
               </Button>
             )}
-            <p className="mt-2 text-center text-[11px] text-violet-100/70">
+            <p className="mt-2 text-center text-[11px] text-muted-foreground dark:text-violet-100/70">
               Simula monto, tasa y plazo en el siguiente paso.
             </p>
           </div>
