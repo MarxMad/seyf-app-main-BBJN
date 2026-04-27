@@ -96,6 +96,10 @@ export async function buildDashboardViewModel(): Promise<DashboardViewModel> {
 
   const movementsRecent = movementsAll.slice(0, DASHBOARD_MOVEMENTS_PREVIEW_LIMIT);
 
+  // advanceUsed: Etherfuse loan-status endpoint not yet available.
+  // Returns false until the ledger exposes an active-advance flag.
+  const advanceUsed = false;
+
   return {
     principalMxn,
     rendimientoMxn,
@@ -105,5 +109,6 @@ export async function buildDashboardViewModel(): Promise<DashboardViewModel> {
     saldoGastoMxn: 0,
     saldoNote,
     movementsRecent,
+    advanceUsed,
   };
 }

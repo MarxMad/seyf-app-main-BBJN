@@ -13,6 +13,7 @@ type HeroData = {
   adelantable: number
   puntos: number
   tasaAnual: number
+  advanceUsed?: boolean
   /** CETES desde Etherfuse /lookup/stablebonds */
   stablebondCetes?: {
     loading: boolean
@@ -160,13 +161,12 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
               <div className="mx-auto mt-3 flex w-fit max-w-[19rem] items-center gap-1.5 rounded-full border border-border bg-secondary/55 px-3 py-1.5 text-[11px] text-muted-foreground">
                 <Info className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2.25} aria-hidden />
                 <span className="truncate">
-                  Referencia CETES:
-                  {sb.annualPercent != null ? ` ${sb.annualPercent.toFixed(2)}% anual` : ''}
+                  {sb.annualPercent != null ? `${sb.annualPercent.toFixed(2)}% anual` : ''}
                   {sb.priceMx != null
                     ? ` · ${new Intl.NumberFormat('es-MX', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 6,
-                      }).format(sb.priceMx)} MXN/CETES`
+                      }).format(sb.priceMx)} MXN`
                     : ''}
                 </span>
                 {stablebondUpdatedLabel ? (
@@ -198,8 +198,7 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
                   />
                 ) : cw.equivMxne != null ? (
                   <p className="mt-2 text-sm font-bold leading-tight text-emerald-200/95">
-                    ≈ {formatMXN(cw.equivMxne)}{' '}
-                    <span className="text-xs font-semibold text-muted-foreground">MXNe</span>
+                    ≈ {formatMXN(cw.equivMxne)}
                   </p>
                 ) : (
                   <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
@@ -207,7 +206,7 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
                   </p>
                 )}
                 <p className="mt-1.5 text-[9px] leading-tight text-muted-foreground/80">
-                  Referencia tipo de cambio (stablebond), no precio de swap on-chain.
+                  Tipo de cambio de referencia. Puede variar.
                 </p>
               </div>
             ) : null}
@@ -235,12 +234,23 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
             </div>
           </div>
 
-          <div className="w-1/3 shrink-0 px-6 pb-2 pt-10 text-center">
+          <div
+            className={cn(
+              'w-1/3 shrink-0 px-6 pb-2 pt-10 text-center transition-opacity',
+              data.advanceUsed && 'pointer-events-none opacity-40 grayscale',
+            )}
+          >
             <p className="text-[13px] font-medium text-muted-foreground">Adelanto</p>
             <p className="mt-1 text-[2.75rem] font-black leading-none tracking-tight tabular-nums text-foreground">
               {formatMXN(data.adelantable)}
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">Sin usar tu ahorro principal</p>
+            {data.advanceUsed ? (
+              <span className="mt-2 inline-block rounded-full border border-border bg-secondary/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                Adelanto ya solicitado
+              </span>
+            ) : (
+              <p className="mt-2 text-xs text-muted-foreground">Sin usar tu ahorro principal</p>
+            )}
             <Link
               href="/adelanto"
               className="mt-4 inline-block text-xs font-bold text-foreground underline-offset-4 hover:underline"
@@ -292,11 +302,20 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
 
         {index === 1 && (
           <div className="mt-4 flex justify-center px-2">
-            <Link href="/adelanto" className="w-full max-w-xs">
-              <Button className="h-11 w-full rounded-full bg-foreground text-sm font-bold text-background hover:bg-foreground/90">
+            {data.adelantable > 0 ? (
+              <Link href="/adelanto" className="w-full max-w-xs">
+                <Button className="h-11 w-full rounded-full bg-foreground text-sm font-bold text-background hover:bg-foreground/90">
+                  Pedir adelanto
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                disabled
+                className="h-11 w-full max-w-xs rounded-full bg-foreground/40 text-sm font-bold text-background/60 cursor-not-allowed"
+              >
                 Pedir adelanto
               </Button>
-            </Link>
+            )}
           </div>
         )}
         {index === 2 && (

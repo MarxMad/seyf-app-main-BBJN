@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import useSWR from 'swr'
+import { animate, useMotionValue, useReducedMotion } from 'framer-motion'
 import { ChevronRight, Eye, EyeOff, TrendingUp, Wallet, Zap } from 'lucide-react'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -46,6 +47,27 @@ function formatMovementMeta(mov: UserMovement): string {
   return [hora, red].filter(Boolean).join(' · ')
 }
 
+function RendimientoCounter({ value }: { value: number }) {
+  const shouldReduce = useReducedMotion()
+  const motionVal = useMotionValue(value)
+  const [display, setDisplay] = useState(() => formatMXN(value))
+
+  useEffect(() => {
+    if (shouldReduce) {
+      setDisplay(formatMXN(value))
+      return
+    }
+    const controls = animate(motionVal, value, {
+      duration: 0.8,
+      ease: 'easeOut',
+      onUpdate: (v) => setDisplay(formatMXN(v)),
+    })
+    return controls.stop
+  }, [value, shouldReduce, motionVal])
+
+  return <>{display}</>
+}
+
 const dashboardFetcher = (url: string): Promise<DashboardViewModel> =>
   fetch(url, POLL_FETCH_INIT).then((r) => {
     if (!r.ok) throw new Error(`${r.status}`)
@@ -76,7 +98,7 @@ export default function DashboardClient({
     dashboardFetcher,
     {
       fallbackData: vm,
-      refreshInterval: 15_000,
+      refreshInterval: 60_000,
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
       dedupingInterval: 2_000,
@@ -230,35 +252,40 @@ export default function DashboardClient({
             {lastUpdateAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
-        {error ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="h-9 rounded-full border-border bg-transparent px-3 text-xs font-semibold"
+          onClick={() => {
+            setHideBalances((prev) => {
+              const next = !prev
+              try {
+                window.localStorage.setItem('seyf-hide-balances', next ? '1' : '0')
+              } catch {}
+              return next
+            })
+          }}
+        >
+          {hideBalances ? <Eye className="mr-1.5 size-4" /> : <EyeOff className="mr-1.5 size-4" />}
+          {hideBalances ? 'Mostrar saldos' : 'Ocultar saldos'}
+        </Button>
+      </section>
+
+      {error && (
+        <section className="flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/[0.08] px-4 py-3">
+          <p className="text-xs font-medium text-amber-200">
+            No pudimos cargar tu información. Intenta de nuevo.
+          </p>
           <Button
             type="button"
             variant="outline"
-            className="h-9 rounded-full border-border bg-transparent px-3 text-xs font-semibold text-amber-400"
+            className="ml-3 h-8 shrink-0 rounded-full border-amber-500/30 bg-transparent px-3 text-xs font-semibold text-amber-300 hover:bg-amber-500/10"
             onClick={() => void mutate()}
           >
             Reintentar
           </Button>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            className="h-9 rounded-full border-border bg-transparent px-3 text-xs font-semibold"
-            onClick={() => {
-              setHideBalances((prev) => {
-                const next = !prev
-                try {
-                  window.localStorage.setItem('seyf-hide-balances', next ? '1' : '0')
-                } catch {}
-                return next
-              })
-            }}
-          >
-            {hideBalances ? <Eye className="mr-1.5 size-4" /> : <EyeOff className="mr-1.5 size-4" />}
-            {hideBalances ? 'Mostrar saldos' : 'Ocultar saldos'}
-          </Button>
-        )}
-      </section>
+        </section>
+      )}
 
       <div className="relative">
         <DashboardHeroCarousel
@@ -267,6 +294,7 @@ export default function DashboardClient({
             adelantable: hideBalances ? 0 : data.adelantableMxn,
             puntos: data.puntos,
             tasaAnual: data.tasaAnual,
+            advanceUsed: data.advanceUsed,
             stablebondCetes,
             cetesWallet: {
               balance: hideBalances ? 0 : cetesBalance,
@@ -289,6 +317,18 @@ export default function DashboardClient({
           {data.saldoNote}
         </p>
       ) : null}
+
+      {!activeCycle && (
+        <section className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-border bg-card px-6 py-10 text-center">
+          <p className="text-sm font-bold text-foreground">Deposita tu capital para empezar</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Tu rendimiento y adelantos disponibles aparecerán aquí una vez que hagas tu primer depósito.
+          </p>
+          <Button asChild className="mt-2 h-11 w-full max-w-xs rounded-full font-bold">
+            <Link href="/depositar">Depositar ahora</Link>
+          </Button>
+        </section>
+      )}
 
       <section className="overflow-hidden rounded-[1.5rem] border border-border bg-card">
         <div className="border-b border-border px-4 py-3">
@@ -381,7 +421,7 @@ export default function DashboardClient({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-200/90">
-                  Saldo MXNe
+                  Saldo disponible
                 </p>
                 <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-white">
                   {hideBalances ? formatMontoOculto() : formatMXN(mxne)}
@@ -400,7 +440,7 @@ export default function DashboardClient({
                 Rendimiento
               </p>
               <p className="mt-1 text-base font-black tabular-nums text-foreground">
-                {hideBalances ? formatMontoOculto() : formatMXN(data.rendimientoMxn)}
+                {hideBalances ? formatMontoOculto() : <RendimientoCounter value={data.rendimientoMxn} />}
               </p>
             </div>
             <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
@@ -447,11 +487,20 @@ export default function DashboardClient({
                 </div>
               ))}
             </div>
-            <Link href="/adelanto" className="mt-4 block">
-              <Button className="h-12 w-full rounded-full bg-white text-base font-black text-violet-950 shadow-[0_12px_30px_rgba(255,255,255,0.22)] hover:bg-white/90">
+            {data.adelantableMxn > 0 ? (
+              <Link href="/adelanto" className="mt-4 block">
+                <Button className="h-12 w-full rounded-full bg-white text-base font-black text-violet-950 shadow-[0_12px_30px_rgba(255,255,255,0.22)] hover:bg-white/90">
+                  Pedir adelanto
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                disabled
+                className="mt-4 h-12 w-full rounded-full bg-white/40 text-base font-black text-violet-950/50 cursor-not-allowed"
+              >
                 Pedir adelanto
               </Button>
-            </Link>
+            )}
             <p className="mt-2 text-center text-[11px] text-violet-100/70">
               Simula monto, tasa y plazo en el siguiente paso.
             </p>
