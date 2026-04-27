@@ -2,6 +2,7 @@ import { SorobanAdvanceClient } from './soroban'
 import { createAdvanceRecord, getAdvanceByCycle, updateAdvanceRecord } from './store'
 import { getPocLedgerSnapshot, pocLedgerDebit, pocLedgerCredit } from '../poc-omnibus-ledger'
 import { getLedgerMeta } from '../investment-mvp'
+import { AppError } from '../api-error'
 
 const soroban = new SorobanAdvanceClient()
 
@@ -58,17 +59,18 @@ export async function simulateAdvance(userId: string): Promise<SimulationResult>
 
 export async function confirmAdvance(userId: string, amountMxn: number, idempotencyKey?: string) {
   const { activeCycleId } = await getLedgerMeta()
-  if (!activeCycleId) throw new Error("No active cycle")
+  if (!activeCycleId) throw new AppError("generic_error", { message: "No active cycle" })
 
   const existing = await getAdvanceByCycle(userId, activeCycleId)
   if (existing) return existing
 
-  if (amountMxn < 100) throw new Error("Monto mínimo 100 MXN")
+  if (amountMxn < 100) throw new AppError("validation_error", { message: "Monto mínimo 100 MXN" })
 
   const simulation = await simulateAdvance(userId)
-  if (simulation.error) throw new Error(simulation.error)
+  if (simulation.error) throw new AppError("validation_error", { message: simulation.error })
+  
   if (!simulation.max_advance_mxn || amountMxn > simulation.max_advance_mxn) {
-    throw new Error("Monto excede el límite permitido")
+    throw new AppError("validation_error", { message: "Monto excede el límite permitido" })
   }
 
   const { balanceMxn } = getPocLedgerSnapshot(userId)
