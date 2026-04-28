@@ -34,6 +34,7 @@ const bodySchema = z.object({
     idNumbers: z
       .array(
         z.object({
+          id: z.string().trim().min(1).optional(),
           type: z.string().trim().min(1),
           value: z.string().trim().min(1),
         }),
@@ -77,6 +78,11 @@ export async function POST(req: Request) {
       pubkey: publicKey,
       identity: {
         ...parsed.data.identity,
+        idNumbers: parsed.data.identity.idNumbers.map((x) => ({
+          id: x.id?.trim() || `${x.type.trim().toUpperCase()}-${x.value.trim()}`,
+          type: x.type.trim(),
+          value: x.value.trim(),
+        })),
         address: {
           ...parsed.data.identity.address,
           country: parsed.data.identity.address.country.toUpperCase(),

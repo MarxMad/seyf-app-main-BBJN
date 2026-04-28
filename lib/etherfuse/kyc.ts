@@ -44,7 +44,7 @@ export type EtherfuseKycSubmitIdentity = {
     postalCode: string;
     country: string;
   };
-  idNumbers: Array<{ value: string; type: string }>;
+  idNumbers: Array<{ id?: string; value: string; type: string }>;
 };
 
 function parseVerifiedProfileFromKycJson(
