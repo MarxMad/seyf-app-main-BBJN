@@ -130,7 +130,7 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
         }}
       />
       <div className="absolute right-4 top-4 z-20 rounded-full border border-[#d9e7e0] bg-white px-3 py-1.5 shadow-sm">
-        <Image src="/SEYF.png" alt="Seyf" width={62} height={22} className="h-5 w-auto" />
+        <Image src="/SEYF.png" alt="Seyf" width={62} height={22} />
       </div>
 
       <div ref={containerRef} className="relative overflow-hidden">

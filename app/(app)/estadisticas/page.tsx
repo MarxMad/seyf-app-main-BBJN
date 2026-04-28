@@ -73,7 +73,7 @@ export default function EstadisticasPage() {
             Mercados
             </p>
             <span className="rounded-full border border-[#d9e7e0] bg-white px-3 py-1.5 shadow-sm">
-              <Image src="/SEYF.png" alt="Seyf" width={56} height={20} className="h-5 w-auto" />
+              <Image src="/SEYF.png" alt="Seyf" width={56} height={20} />
             </span>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-[#41534b]">Estadísticas</h1>
