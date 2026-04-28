@@ -34,6 +34,19 @@ type KycApiBody = {
   currentKycInfo?: unknown;
 };
 
+export type EtherfuseKycSubmitIdentity = {
+  name: { givenName: string; familyName: string };
+  dateOfBirth: string;
+  address: {
+    street: string;
+    city: string;
+    region: string;
+    postalCode: string;
+    country: string;
+  };
+  idNumbers: Array<{ value: string; type: string }>;
+};
+
 function parseVerifiedProfileFromKycJson(
   json: Record<string, unknown>,
 ): EtherfuseKycVerifiedProfile | null {
@@ -133,5 +146,45 @@ export async function fetchEtherfuseKycStatus(
           : String(json.currentRejectionReason),
       verifiedProfile: parseVerifiedProfileFromKycJson(asRecord),
     },
+  };
+}
+
+/**
+ * POST /ramp/customer/{customer_id}/kyc
+ * @see https://docs.etherfuse.com/api-reference/kyc/submit-kyc-identity-data
+ */
+export async function submitEtherfuseKycIdentityData(params: {
+  customerId: string;
+  pubkey?: string;
+  identity: EtherfuseKycSubmitIdentity;
+}): Promise<{ status: EtherfuseKycStatus; message: string | null }> {
+  const path = `/ramp/customer/${encodeURIComponent(params.customerId)}/kyc`;
+  const body = {
+    ...(params.pubkey ? { pubkey: params.pubkey } : {}),
+    identity: params.identity,
+  };
+  const res = await etherfuseFetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    retryable: false,
+  });
+  const { json, text } = await etherfuseReadBody<{
+    status?: string;
+    message?: string;
+  }>(res);
+
+  if (!json || typeof json !== "object") {
+    throw new Error(
+      `Etherfuse KYC submit respondió sin JSON (${res.status}): ${text.slice(0, 400)}`,
+    );
+  }
+  const statusRaw = json.status;
+  if (typeof statusRaw !== "string" || !isKycStatus(statusRaw)) {
+    throw new Error(`Etherfuse KYC submit devolvió status inválido: ${text.slice(0, 400)}`);
+  }
+  return {
+    status: statusRaw,
+    message: typeof json.message === "string" ? json.message : null,
   };
 }

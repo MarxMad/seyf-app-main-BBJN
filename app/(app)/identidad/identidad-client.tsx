@@ -1,14 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useTransition } from 'react'
+import { type FormEvent, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import type { EtherfuseKycSnapshot } from '@/lib/etherfuse/kyc'
 import type { EtherfuseOnboardingSession } from '@/lib/etherfuse/onboarding-session'
-import { resetKycTestSession, startHostedEtherfuseOnboarding } from './actions'
+import { resetKycTestSession } from './actions'
 import { cn } from '@/lib/utils'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 
@@ -95,28 +96,64 @@ export default function IdentidadClient({
 }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [refreshing, setRefreshing] = useState(false)
   const { wallet, loading, connect } = useSeyfWallet()
 
   const approved =
     initialKyc?.status === 'approved' || initialKyc?.status === 'approved_chain_deploying'
+  const inReview = initialKyc?.status === 'proposed'
+  const canSubmitForm = !inReview
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     setError(null)
+    setSuccess(null)
     startTransition(async () => {
       const connectedPublicKey = wallet?.publicKey?.trim() ?? ''
       if (!connectedPublicKey) {
         setError('Primero inicia sesion con tu wallet para continuar con la verificacion.')
         return
       }
-      const res = await startHostedEtherfuseOnboarding(connectedPublicKey)
-      if (!res.ok) {
-        setError(res.error)
+      const fd = new FormData(e.currentTarget as HTMLFormElement)
+      const payload = {
+        publicKey: connectedPublicKey,
+        identity: {
+          name: {
+            givenName: String(fd.get('givenName') ?? ''),
+            familyName: String(fd.get('familyName') ?? ''),
+          },
+          dateOfBirth: String(fd.get('dateOfBirth') ?? ''),
+          address: {
+            street: String(fd.get('street') ?? ''),
+            city: String(fd.get('city') ?? ''),
+            region: String(fd.get('region') ?? ''),
+            postalCode: String(fd.get('postalCode') ?? ''),
+            country: String(fd.get('country') ?? ''),
+          },
+          idNumbers: [
+            {
+              type: String(fd.get('idType') ?? ''),
+              value: String(fd.get('idValue') ?? ''),
+            },
+          ],
+        },
+      }
+      const http = await fetch('/api/seyf/kyc/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const json = (await http.json().catch(() => ({}))) as
+        | { ok: true; status: string }
+        | { error?: { message_es?: string } }
+      if (!http.ok || !('ok' in json && json.ok)) {
+        setError(json && 'error' in json && json.error?.message_es ? json.error.message_es : 'Error al enviar KYC.')
         return
       }
-      window.location.assign(res.url)
+      setSuccess(`Datos enviados. Estado actual: ${json.status}.`)
+      router.refresh()
     })
   }
 
@@ -223,8 +260,8 @@ export default function IdentidadClient({
           identidad
         </h1>
         <p className="mt-4 text-base text-muted-foreground font-normal">
-          Un proceso seguro para cumplir la regulación. Abriremos el portal de nuestro aliado; cuando
-          termines, regresa a Seyf. Tu CLABE y datos bancarios se capturan ahí.
+          Un proceso seguro para cumplir la regulación. Completa tus datos de identidad en Seyf para
+          enviarlos a validación con Etherfuse.
         </p>
       </div>
 
@@ -285,24 +322,67 @@ export default function IdentidadClient({
             </Button>
           ) : null}
         </div>
+        {inReview ? (
+          <div className="rounded-[1rem] border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+            Tu verificación está en revisión. Mientras tanto, no es necesario reenviar datos.
+          </div>
+        ) : null}
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input name="givenName" placeholder="Nombre(s)" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+          <Input name="familyName" placeholder="Apellido(s)" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+        </div>
+        <Input
+          name="dateOfBirth"
+          type="date"
+          required
+          className="h-12 rounded-xl"
+          aria-label="Fecha de nacimiento"
+          disabled={!canSubmitForm}
+        />
+        <Input name="street" placeholder="Calle y número" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input name="city" placeholder="Ciudad" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+          <Input name="region" placeholder="Estado" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input name="postalCode" placeholder="Código postal" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+          <Input
+            name="country"
+            placeholder="País ISO-2 (MX)"
+            defaultValue="MX"
+            required
+            className="h-12 rounded-xl uppercase"
+            disabled={!canSubmitForm}
+          />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input name="idType" placeholder="Tipo de ID (RFC/CURP)" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+          <Input name="idValue" placeholder="Número de ID" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+        </div>
 
         {error && (
           <p className="rounded-[1.25rem] border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {error}
           </p>
         )}
+        {success && (
+          <p className="rounded-[1.25rem] border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
+            {success}
+          </p>
+        )}
 
         <Button
           type="submit"
-          disabled={pending || !wallet?.publicKey}
+          disabled={pending || !wallet?.publicKey || !canSubmitForm}
           className="h-14 w-full rounded-full bg-foreground text-base font-bold text-background transition-all hover:bg-foreground/90 disabled:opacity-40"
         >
-          {pending ? 'Abriendo portal…' : 'Continuar'}
+          {pending ? 'Enviando…' : inReview ? 'En revisión' : 'Enviar verificación'}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        El enlace caduca en pocos minutos. Si se vence, vuelve aquí y pulsa Continuar otra vez.
+        Revisaremos tu estado automáticamente cuando Etherfuse actualice la validación.
       </p>
 
       {allowKycTestReset && (
