@@ -7,12 +7,7 @@ import { Sparkles } from 'lucide-react'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { Button } from '@/components/ui/button'
-import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
-
-const MIN_AHORRO = 1_000
-const MAX_AHORRO = 250_000
-const ADELANTO_FACTOR = 0.75
 
 function formatMXN(amount: number) {
   return new Intl.NumberFormat('es-MX', {
@@ -24,33 +19,84 @@ function formatMXN(amount: number) {
 
 export default function AdelantoPage() {
   const router = useRouter()
-  const [ahorro, setAhorro] = useState(10_000)
-  const [tasaAnual, setTasaAnual] = useState(8)
-  const [periodoMeses, setPeriodoMeses] = useState(12)
-  const [loading, setLoading] = useState(false)
+  const [simulation, setSimulation] = useState<{
+    max_advance_mxn: number
+    fee_mxn: number
+    net_to_user_mxn: number
+    cycle_end_date: string
+    advance_available: boolean
+    error?: string
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [confirming, setConfirming] = useState(false)
   const [exito, setExito] = useState(false)
+  const [txHash, setTxHash] = useState<string | null>(null)
 
-  const { rendimientoEstimado, adelantoInstantaneo, totalEstimadoAlVencimiento, fechaLiberacion } =
-    useMemo(() => {
-      const rendimiento = ahorro * (tasaAnual / 100) * (periodoMeses / 12)
-      const adelanto = rendimiento * ADELANTO_FACTOR
-      const totalAlVencimiento = ahorro + rendimiento
-      const d = new Date()
-      d.setMonth(d.getMonth() + periodoMeses)
-      return {
-        rendimientoEstimado: rendimiento,
-        adelantoInstantaneo: adelanto,
-        totalEstimadoAlVencimiento: totalAlVencimiento,
-        fechaLiberacion: d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }),
+  useMemo(() => {
+    fetch('/api/seyf/advance/simulate')
+      .then((res) => res.json())
+      .then((data) => {
+        setSimulation(data)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const handleConfirmar = async () => {
+    if (!simulation) return
+    setConfirming(true)
+    try {
+      const res = await fetch('/api/seyf/advance/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount_mxn: simulation.max_advance_mxn }),
+      })
+      const data = await res.json()
+      if (data.status === 'completed') {
+        setTxHash(data.stellar_tx_hash)
+        setExito(true)
+      } else {
+        alert(data.error || 'Error al procesar el adelanto')
       }
-    }, [ahorro, tasaAnual, periodoMeses])
+    } catch (e) {
+      alert('Error de conexión')
+    } finally {
+      setConfirming(false)
+    }
+  }
 
-  const handleConfirmar = () => {
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      setExito(true)
-    }, 1800)
+  if (loading) {
+    return (
+      <AppPageBody className="flex items-center justify-center pt-20">
+        <p className="text-muted-foreground animate-pulse font-medium">Cargando simulación...</p>
+      </AppPageBody>
+    )
+  }
+
+  if (simulation?.error === 'advance_already_used') {
+    return (
+      <AppPageBody className="space-y-6 pt-2">
+        <AppBackLink href="/dashboard" />
+        <section className="rounded-[1.5rem] border border-amber-400/30 bg-amber-900/10 p-6 text-center">
+          <h2 className="text-xl font-bold text-amber-200">Adelanto ya utilizado</h2>
+          <p className="mt-2 text-sm text-amber-100/70">Ya has solicitado un adelanto para este ciclo. Podrás solicitar otro en el siguiente periodo.</p>
+          <Button onClick={() => router.push('/dashboard')} className="mt-6 rounded-full bg-amber-500 hover:bg-amber-600 text-black font-bold">Volver al inicio</Button>
+        </section>
+      </AppPageBody>
+    )
+  }
+
+  if (simulation?.advance_available === false) {
+    return (
+      <AppPageBody className="space-y-6 pt-2">
+        <AppBackLink href="/dashboard" />
+        <section className="rounded-[1.5rem] border border-border bg-card p-6 text-center">
+          <h2 className="text-xl font-bold">Sin ciclo activo</h2>
+          <p className="mt-2 text-sm text-muted-foreground">No tienes inversiones activas que califiquen para un adelanto en este momento.</p>
+          <Button onClick={() => router.push('/dashboard')} className="mt-6 rounded-full font-bold">Ir a invertir</Button>
+        </section>
+      </AppPageBody>
+    )
   }
 
   if (exito) {
@@ -85,10 +131,9 @@ export default function AdelantoPage() {
         </section>
 
         <div className="space-y-3 rounded-[1.5rem] border border-border bg-card p-5 shadow-[0_8px_28px_rgba(0,0,0,0.14)]">
-          <SummaryRow label="Capital bloqueado" value={formatMXN(ahorro)} />
-          <SummaryRow label="Adelanto recibido hoy" value={formatMXN(adelantoInstantaneo)} bold />
+          <SummaryRow label="Adelanto recibido" value={formatMXN(simulation?.net_to_user_mxn || 0)} bold />
           <div className="border-t border-border pt-3">
-            <SummaryRow label="Liberación estimada del capital" value={fechaLiberacion} dim />
+            <SummaryRow label="Stellar TX" value={txHash?.slice(0, 8) + '...' + txHash?.slice(-8)} dim />
           </div>
         </div>
 
@@ -108,6 +153,10 @@ export default function AdelantoPage() {
     )
   }
 
+  const fechaLiberacion = simulation?.cycle_end_date 
+    ? new Date(simulation.cycle_end_date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+    : '--'
+
   return (
     <AppPageBody className="space-y-6 pt-2">
       <AppBackLink href="/dashboard" />
@@ -120,79 +169,46 @@ export default function AdelantoPage() {
             <Sparkles className="size-3 text-violet-200" />
             Adelanto de rendimiento
           </p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-white">Simular y pedir</h1>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-white">Obtén liquidez hoy</h1>
           <p className="mt-2 text-sm text-violet-100/80">
-            El capital queda bloqueado durante el periodo. Te adelantamos hasta{' '}
-            <span className="font-bold text-white">75%</span> del rendimiento estimado.
+            Adelanta tus rendimientos proyectados sin esperar al vencimiento. 
+            <span className="block mt-1 font-bold text-white">Esto no es un préstamo.</span>
           </p>
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-border bg-card p-5 shadow-[0_8px_28px_rgba(0,0,0,0.14)]">
-        <p className="text-xs font-medium text-muted-foreground">Capital a bloquear</p>
-        <p className="mt-1 text-3xl font-black tabular-nums tracking-tight text-foreground">{formatMXN(ahorro)}</p>
-        <Slider
-          min={MIN_AHORRO}
-          max={MAX_AHORRO}
-          step={500}
-          value={[ahorro]}
-          onValueChange={([val]) => setAhorro(val)}
-          className="mt-4 w-full [&_[data-slot=slider-track]]:bg-muted [&_[data-slot=slider-range]]:bg-foreground"
-        />
-        <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-          <span>{formatMXN(MIN_AHORRO)}</span>
-          <span>Máx. {formatMXN(MAX_AHORRO)}</span>
+      <section className="space-y-4 rounded-[1.5rem] border border-border bg-card p-6 shadow-[0_8px_28px_rgba(0,0,0,0.14)]">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Monto máximo disponible</p>
+          <p className="mt-1 text-3xl font-black tabular-nums tracking-tight text-foreground">
+            {formatMXN(simulation?.max_advance_mxn || 0)}
+          </p>
+        </div>
+
+        <div className="space-y-3 pt-4 border-t border-border">
+          <SummaryRow label="Rendimiento neto a recibir" value={formatMXN(simulation?.net_to_user_mxn || 0)} bold />
+          <SummaryRow label="Comisión de servicio (flat)" value={formatMXN(simulation?.fee_mxn || 0)} dim />
+          <SummaryRow label="Fecha de liberación ciclo" value={fechaLiberacion} dim />
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-3">
-        <section className="rounded-[1.25rem] border border-border bg-card/90 p-4 shadow-[0_6px_20px_rgba(0,0,0,0.1)]">
-          <p className="text-xs font-medium text-muted-foreground">Tasa anual</p>
-          <p className="mt-1 text-2xl font-black tabular-nums text-foreground">{tasaAnual.toFixed(1)}%</p>
-          <Slider
-            min={4}
-            max={15}
-            step={0.5}
-            value={[tasaAnual]}
-            onValueChange={([val]) => setTasaAnual(val)}
-            className="mt-3 w-full [&_[data-slot=slider-track]]:bg-muted [&_[data-slot=slider-range]]:bg-foreground"
-          />
-        </section>
-        <section className="rounded-[1.25rem] border border-border bg-card/90 p-4 shadow-[0_6px_20px_rgba(0,0,0,0.1)]">
-          <p className="text-xs font-medium text-muted-foreground">Plazo</p>
-          <p className="mt-1 text-2xl font-black tabular-nums text-foreground">{periodoMeses} meses</p>
-          <Slider
-            min={3}
-            max={24}
-            step={1}
-            value={[periodoMeses]}
-            onValueChange={([val]) => setPeriodoMeses(val)}
-            className="mt-3 w-full [&_[data-slot=slider-track]]:bg-muted [&_[data-slot=slider-range]]:bg-foreground"
-          />
-        </section>
+      <div className="bg-secondary/30 rounded-[1.25rem] p-4 border border-border/50">
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <strong>Nota:</strong> El adelanto se deduce de tu rendimiento final. 
+          Al confirmarlo, el capital correspondiente quedará bloqueado hasta la fecha de liberación indicada.
+        </p>
       </div>
-
-      <section className="space-y-3 rounded-[1.5rem] border border-border bg-secondary/40 p-5 ring-1 ring-border/80">
-        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Resultado estimado</p>
-        <SummaryRow label="Rendimiento del periodo" value={formatMXN(rendimientoEstimado)} />
-        <SummaryRow label="Adelanto inmediato (75%)" value={formatMXN(adelantoInstantaneo)} bold />
-        <SummaryRow label="Total estimado al vencimiento" value={formatMXN(totalEstimadoAlVencimiento)} dim />
-        <div className="border-t border-border pt-3">
-          <SummaryRow label="Capital + fecha estimada" value={`${formatMXN(ahorro)} · ${fechaLiberacion}`} bold />
-        </div>
-      </section>
 
       <Button
         onClick={handleConfirmar}
-        disabled={loading}
+        disabled={confirming || !simulation?.max_advance_mxn}
         className="h-12 w-full rounded-full bg-foreground text-base font-bold text-background shadow-[0_10px_28px_rgba(255,255,255,0.12)] hover:bg-foreground/90 disabled:opacity-60"
       >
-        {loading ? 'Procesando…' : 'Confirmar adelanto'}
+        {confirming ? 'Ejecutando en Stellar…' : 'Confirmar adelanto'}
       </Button>
 
-      <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-        Si liquidas el adelanto antes, puedes liberar capital anticipadamente. Montos referenciales según
-        simulación.
+      <p className="text-center text-[10px] text-muted-foreground">
+        Operación procesada mediante contrato inteligente Soroban.
       </p>
     </AppPageBody>
   )
