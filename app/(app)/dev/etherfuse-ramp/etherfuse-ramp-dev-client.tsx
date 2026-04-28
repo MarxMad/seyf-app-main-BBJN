@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { Button } from '@/components/ui/button'
@@ -201,15 +202,20 @@ export default function EtherfuseRampDevClient() {
     <AppPageBody className="space-y-6 pt-4">
       <AppBackLink href="/dashboard" />
 
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-violet-400/25 bg-gradient-to-br from-violet-700/30 via-indigo-700/20 to-blue-700/15 p-5">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-cyan-400/15 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e6f0ea] to-[#dce9e3] p-5">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-[#b8b8b5]/20 blur-3xl" />
         <div className="relative">
-          <p className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-100/90">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="inline-flex rounded-full border border-[#b8b8b5]/60 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168]">
             Depósito SPEI
-          </p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-white">Añadir fondos</h1>
-          <p className="mt-1.5 text-sm text-violet-100/80">
+            </p>
+            <span className="rounded-full border border-[#d9e7e0] bg-white px-3 py-1.5 shadow-sm">
+              <Image src="/SEYF.png" alt="Seyf" width={56} height={20} className="h-5 w-auto" />
+            </span>
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-[#41534b]">Añadir fondos</h1>
+          <p className="mt-1.5 text-sm text-[#7b8f86]">
             Genera tu CLABE y realiza la transferencia desde tu banca móvil.
           </p>
         </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { AppBackLink } from '@/components/app/app-back-link'
 
@@ -23,6 +24,9 @@ export default function DepositarPage() {
       <AppBackLink href="/dashboard" />
 
       <div className="mb-8">
+        <div className="mb-3 inline-flex rounded-full border border-[#d9e7e0] bg-white px-3 py-1.5 shadow-sm">
+          <Image src="/SEYF.png" alt="Seyf" width={60} height={22} className="h-5 w-auto" />
+        </div>
         <h1 className="text-4xl font-black tracking-tight text-foreground leading-none">
           Depositar
           <br />
@@ -37,25 +41,25 @@ export default function DepositarPage() {
         <DataRow label="Banco receptor" value={BANCO} />
         <DataRow label="Beneficiario" value={BENEFICIARIO} />
 
-        <div className="rounded-[1.25rem] border border-border bg-secondary p-4">
+        <div className="rounded-[1.25rem] border border-[#c8ddd2] bg-[#edf6f2] p-4">
           <p className="mb-1 text-xs font-medium text-muted-foreground">CLABE interbancaria</p>
           <p className="text-xl font-bold tracking-widest text-foreground">{CLABE}</p>
           <button
             type="button"
             onClick={() => copy(CLABE, 'clabe')}
-            className="mt-3 rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background transition-all hover:bg-foreground/90"
+            className="mt-3 rounded-full bg-[#4f655b] px-4 py-2 text-xs font-bold text-white transition-all hover:bg-[#44584f]"
           >
             {copiedField === 'clabe' ? 'Copiado' : 'Copiar CLABE'}
           </button>
         </div>
 
-        <div className="rounded-[1.25rem] border border-border bg-secondary p-4">
+        <div className="rounded-[1.25rem] border border-[#c8ddd2] bg-[#edf6f2] p-4">
           <p className="mb-1 text-xs font-medium text-muted-foreground">Referencia / concepto</p>
           <p className="text-xl font-bold tracking-widest text-foreground">{REFERENCIA}</p>
           <button
             type="button"
             onClick={() => copy(REFERENCIA, 'ref')}
-            className="mt-3 rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background transition-all hover:bg-foreground/90"
+            className="mt-3 rounded-full bg-[#4f655b] px-4 py-2 text-xs font-bold text-white transition-all hover:bg-[#44584f]"
           >
             {copiedField === 'ref' ? 'Copiado' : 'Copiar referencia'}
           </button>

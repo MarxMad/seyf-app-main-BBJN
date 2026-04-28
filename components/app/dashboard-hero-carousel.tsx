@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { animate, motion, useMotionValue, useReducedMotion } from 'framer-motion'
 import { ArrowDownToLine, Clock, Info, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -117,10 +118,10 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[1.75rem] border border-border">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-950/80 via-card to-blue-950/60" />
-      <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-violet-500/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-12 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
+    <section className="relative overflow-hidden rounded-[1.75rem] border border-[#bfd6ca]">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd]" />
+      <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-[#9ec7b3]/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 -left-12 h-48 w-48 rounded-full bg-[#b8b8b5]/25 blur-3xl" />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.12]"
         style={{
@@ -128,6 +129,9 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
           backgroundSize: '48px 48px',
         }}
       />
+      <div className="absolute right-4 top-4 z-20 rounded-full border border-[#d9e7e0] bg-white px-3 py-1.5 shadow-sm">
+        <Image src="/SEYF.png" alt="Seyf" width={62} height={22} className="h-5 w-auto" />
+      </div>
 
       <div ref={containerRef} className="relative overflow-hidden">
         <motion.div

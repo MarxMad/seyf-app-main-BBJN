@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { OfframpActionCard } from '@/components/app/dev/offramp-action-card'
@@ -189,15 +190,20 @@ export default function EtherfuseOfframpDevClient() {
     <AppPageBody className="space-y-6 pt-4">
       <AppBackLink href="/dashboard" />
 
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-emerald-400/25 bg-gradient-to-br from-emerald-700/25 via-teal-700/20 to-cyan-700/15 p-5">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-emerald-300/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-teal-300/15 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e6f0ea] to-[#dce9e3] p-5">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-[#b8b8b5]/20 blur-3xl" />
         <div className="relative">
-          <p className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-100/90">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="inline-flex rounded-full border border-[#b8b8b5]/60 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168]">
             Retiro a cuenta
-          </p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-white">Retirar fondos</h1>
-          <p className="mt-1.5 text-sm text-emerald-100/80">
+            </p>
+            <span className="rounded-full border border-[#d9e7e0] bg-white px-3 py-1.5 shadow-sm">
+              <Image src="/SEYF.png" alt="Seyf" width={56} height={20} className="h-5 w-auto" />
+            </span>
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-[#41534b]">Retirar fondos</h1>
+          <p className="mt-1.5 text-sm text-[#7b8f86]">
             Convierte tus activos a pesos y retira a tu cuenta bancaria.
           </p>
         </div>
