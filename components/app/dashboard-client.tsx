@@ -24,6 +24,7 @@ import {
 import { formatMovementListSubtitle, type UserMovement } from '@/lib/seyf/user-movements-types'
 import { formatMXN, formatLoUltimoMonto } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import type { EtherfuseKycSnapshot } from '@/lib/etherfuse/kyc'
 
 function formatMontoOculto() {
   return '••••'
@@ -74,6 +75,13 @@ const dashboardFetcher = (url: string): Promise<DashboardViewModel> =>
     return r.json() as Promise<DashboardViewModel>
   })
 
+const kycStatusFetcher = (url: string): Promise<EtherfuseKycSnapshot | null> =>
+  fetch(url, POLL_FETCH_INIT).then(async (r) => {
+    if (!r.ok) throw new Error(`${r.status}`)
+    const body = (await r.json()) as { kyc?: EtherfuseKycSnapshot | null }
+    return body.kyc ?? null
+  })
+
 export default function DashboardClient({
   showEtherfuseRampDev = false,
   vm,
@@ -105,6 +113,16 @@ export default function DashboardClient({
       onSuccess: () => setLastUpdateAt(new Date()),
     },
   )
+  const { data: kycStatus } = useSWR<EtherfuseKycSnapshot | null>(
+    '/api/seyf/kyc/status',
+    kycStatusFetcher,
+    {
+      refreshInterval: 45_000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2_000,
+    },
+  )
 
   // Push updated SSR prop into SWR cache on navigation (vm prop identity change).
   const prevVmRef = useRef(vm)
@@ -124,6 +142,34 @@ export default function DashboardClient({
   }, [mutate])
 
   const activeCycle = data.principalMxn > 0
+  const kycBadge =
+    kycStatus?.status === 'approved' || kycStatus?.status === 'approved_chain_deploying'
+      ? {
+          label: 'Identidad verificada',
+          tone: 'ok' as const,
+          href: '/identidad',
+          action: 'Ver estado',
+        }
+      : kycStatus?.status === 'proposed'
+        ? {
+            label: 'Pendiente de verificación',
+            tone: 'wait' as const,
+            href: '/identidad',
+            action: 'Actualizar estado',
+          }
+        : kycStatus?.status === 'rejected'
+          ? {
+              label: 'Verificación fallida',
+              tone: 'bad' as const,
+              href: '/identidad',
+              action: 'Corregir datos',
+            }
+          : {
+              label: 'Verificación pendiente',
+              tone: 'muted' as const,
+              href: '/identidad',
+              action: 'Verificar ahora',
+            }
 
   useEffect(() => {
     try {
@@ -252,6 +298,17 @@ export default function DashboardClient({
           <p className="text-[11px] text-muted-foreground">
             Última actualización{' '}
             {lastUpdateAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+          <p
+            className={cn(
+              'mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold',
+              kycBadge.tone === 'ok' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700',
+              kycBadge.tone === 'wait' && 'border-amber-500/30 bg-amber-500/10 text-amber-700',
+              kycBadge.tone === 'bad' && 'border-destructive/30 bg-destructive/10 text-destructive',
+              kycBadge.tone === 'muted' && 'border-border bg-secondary/60 text-muted-foreground',
+            )}
+          >
+            {kycBadge.label}
           </p>
         </div>
         <Button
@@ -570,15 +627,21 @@ export default function DashboardClient({
           <span className="text-sm font-bold">!</span>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground">Verifica tu identidad</p>
+          <p className="text-sm font-bold text-foreground">{kycBadge.label}</p>
           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-            Así podrás depositar más y ver tu saldo completo.
+            {kycBadge.tone === 'ok'
+              ? 'Tu cuenta ya está validada. Puedes operar normalmente en depósitos y retiros.'
+              : kycBadge.tone === 'wait'
+                ? 'Tus datos ya se enviaron a Etherfuse. Mantén este estado mientras termina la validación.'
+                : kycBadge.tone === 'bad'
+                  ? 'Etherfuse rechazó la validación. Corrige tus datos y vuelve a enviarlos.'
+                  : 'Completa tu verificación para habilitar operaciones sensibles.'}
           </p>
           <Link
-            href="/identidad"
+            href={kycBadge.href}
             className="mt-2 inline-block text-xs font-bold text-[#5f7168] underline-offset-4 hover:underline"
           >
-            Verificar ahora
+            {kycBadge.action}
           </Link>
         </div>
       </section>

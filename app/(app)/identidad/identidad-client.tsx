@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { type FormEvent, useCallback, useMemo, useState, useTransition } from 'react'
+import { type FormEvent, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,8 @@ import type { EtherfuseOnboardingSession } from '@/lib/etherfuse/onboarding-sess
 import { resetKycTestSession } from './actions'
 import { cn } from '@/lib/utils'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
+
+const KYC_PENDING_UI_KEY = 'seyf_kyc_pending_ui'
 
 function DevKycResetPanel({
   onAfterReset,
@@ -112,6 +114,7 @@ export default function IdentidadClient({
   const [success, setSuccess] = useState<string | null>(null)
   const [lastErrorDetail, setLastErrorDetail] = useState<string | null>(null)
   const [kycState, setKycState] = useState<EtherfuseKycSnapshot | null>(initialKyc)
+  const [pendingConfirmation, setPendingConfirmation] = useState(initialKyc?.status === 'proposed')
   const [pending, startTransition] = useTransition()
   const [refreshing, setRefreshing] = useState(false)
   const { wallet, loading, connect } = useSeyfWallet()
@@ -119,23 +122,56 @@ export default function IdentidadClient({
   const approved =
     kycState?.status === 'approved' || kycState?.status === 'approved_chain_deploying'
   const inReview = kycState?.status === 'proposed'
+  const showPendingScreen = inReview || pendingConfirmation
+  const rejected = kycState?.status === 'rejected'
   const canSubmitForm = !inReview
   const statusHint = useMemo(
     () => (kycState ? kycStatusHint(kycState.status) : 'Completa tus datos para validar identidad.'),
     [kycState],
   )
 
+  useEffect(() => {
+    try {
+      const stored = window.sessionStorage.getItem(KYC_PENDING_UI_KEY)
+      if (stored === '1') {
+        setPendingConfirmation(true)
+      }
+    } catch {
+      // noop
+    }
+  }, [])
+
   const runRefresh = useCallback(
     async (origin: 'submit' | 'button' | 'reset') => {
       const res = await fetch('/api/seyf/kyc/status', { cache: 'no-store' })
       const data = (await res.json().catch(() => ({}))) as { kyc?: EtherfuseKycSnapshot | null }
       if (res.ok) {
-        setKycState(data.kyc ?? null)
+        const next = data.kyc ?? null
+        if (next?.status === 'proposed') {
+          setPendingConfirmation(true)
+          try {
+            window.sessionStorage.setItem(KYC_PENDING_UI_KEY, '1')
+          } catch {
+            // noop
+          }
+        }
+        if (next && (next.status === 'approved' || next.status === 'approved_chain_deploying' || next.status === 'rejected')) {
+          setPendingConfirmation(false)
+          try {
+            window.sessionStorage.removeItem(KYC_PENDING_UI_KEY)
+          } catch {
+            // noop
+          }
+        }
+        setKycState((prev) => {
+          if (!next && (pendingConfirmation || prev?.status === 'proposed')) return prev
+          return next
+        })
       } else {
         console.warn('[identidad] status refresh failed', { origin, status: res.status })
       }
     },
-    [],
+    [pendingConfirmation],
   )
 
   const onSubmit = (e: FormEvent) => {
@@ -196,6 +232,36 @@ export default function IdentidadClient({
         return
       }
       setSuccess(`Datos enviados. Estado actual: ${json.status}.`)
+      if (json.status === 'proposed' || json.status === 'approved' || json.status === 'approved_chain_deploying' || json.status === 'rejected') {
+        if (json.status === 'proposed') {
+          setPendingConfirmation(true)
+          try {
+            window.sessionStorage.setItem(KYC_PENDING_UI_KEY, '1')
+          } catch {
+            // noop
+          }
+        }
+        if (json.status === 'approved' || json.status === 'approved_chain_deploying' || json.status === 'rejected') {
+          setPendingConfirmation(false)
+          try {
+            window.sessionStorage.removeItem(KYC_PENDING_UI_KEY)
+          } catch {
+            // noop
+          }
+        }
+        setKycState((prev) =>
+          prev
+            ? { ...prev, status: json.status }
+            : {
+                customerId: '',
+                walletPublicKey: connectedPublicKey,
+                status: json.status,
+                approvedAt: null,
+                currentRejectionReason: null,
+                verifiedProfile: null,
+              },
+        )
+      }
       void runRefresh('submit')
     })
   }
@@ -291,6 +357,76 @@ export default function IdentidadClient({
     )
   }
 
+  if (showPendingScreen) {
+    return (
+      <AppPageBody>
+        <AppBackLink href="/dashboard" />
+
+        <div className="mb-6 flex justify-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/20 ring-1 ring-amber-400/30">
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-amber-500"
+              aria-hidden
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-black tracking-tight text-foreground leading-none">
+            Verificación pendiente
+          </h1>
+          <p className="mt-4 text-base text-muted-foreground font-normal">
+            Tu información ya fue enviada correctamente y está en proceso de aprobación.
+          </p>
+        </div>
+
+        <div className="mb-6 rounded-[1.5rem] border border-amber-500/30 bg-amber-500/10 p-5">
+          <p className="text-sm font-bold text-amber-700 dark:text-amber-300">
+            Estado actual: pendiente de aprobación
+          </p>
+          <p className="mt-2 text-sm text-amber-700/90 dark:text-amber-300/90">
+            Etherfuse está validando tus datos. Esto puede tardar algunos minutos.
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          disabled={refreshing}
+          onClick={refresh}
+          className="h-12 w-full rounded-full border-border bg-transparent font-semibold text-foreground hover:bg-secondary"
+        >
+          {refreshing ? 'Actualizando…' : 'Actualizar estado'}
+        </Button>
+
+        <Link href="/dashboard" className="mt-3 block">
+          <Button className="h-12 w-full rounded-full bg-foreground text-sm font-bold text-background hover:bg-foreground/90">
+            Volver al inicio
+          </Button>
+        </Link>
+
+        {allowKycTestReset && (
+          <DevKycResetPanel
+            onAfterReset={() => {
+              void runRefresh('reset')
+            }}
+          />
+        )}
+      </AppPageBody>
+    )
+  }
+
   const statusBlock = kycState ? kycSummary(kycState.status) : null
 
   return (
@@ -346,6 +482,15 @@ export default function IdentidadClient({
           </Button>
         </div>
       )}
+
+      {rejected ? (
+        <section className="mb-6 rounded-[1.25rem] border border-destructive/30 bg-destructive/10 px-4 py-4">
+          <p className="text-sm font-bold text-destructive">Verificación fallida</p>
+          <p className="mt-1 text-sm text-destructive/90">
+            Revisa tus datos y vuelve a enviar la verificación.
+          </p>
+        </section>
+      ) : null}
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="rounded-[1.25rem] border border-border bg-secondary p-4">
