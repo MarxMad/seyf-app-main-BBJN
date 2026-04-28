@@ -5,6 +5,7 @@ export type SeyfErrorCode =
   | "spei_timeout"
   | "deploy_failed"
   | "provider_unavailable"
+  | "validation_error"
   | "generic_error";
 
 // User-facing copy (español neutro mexicano, PRD §3.1 / §2.8 US-13).
@@ -15,6 +16,7 @@ const MESSAGE_ES: Record<SeyfErrorCode, string> = {
   provider_unavailable:
     "El proveedor no está disponible en este momento. Intenta en unos minutos.",
   generic_error: "Algo salió mal. Estamos en ello.",
+  validation_error: "Solicitud inválida.",
 };
 
 const DEFAULT_STATUS: Record<SeyfErrorCode, number> = {
@@ -22,6 +24,7 @@ const DEFAULT_STATUS: Record<SeyfErrorCode, number> = {
   deploy_failed: 500,
   provider_unavailable: 502,
   generic_error: 500,
+  validation_error: 400,
 };
 
 const DEFAULT_RETRYABLE: Record<SeyfErrorCode, boolean> = {
@@ -29,6 +32,7 @@ const DEFAULT_RETRYABLE: Record<SeyfErrorCode, boolean> = {
   deploy_failed: false,
   provider_unavailable: true,
   generic_error: false,
+  validation_error: false,
 };
 
 export class AppError extends Error {

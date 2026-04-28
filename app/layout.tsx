@@ -4,7 +4,6 @@ import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { PublicMobileHistorySeed } from '@/components/app/public-mobile-history-seed'
 import SeyfPollarProvider from '@/components/providers/pollar-provider'
-import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const inter = Inter({
