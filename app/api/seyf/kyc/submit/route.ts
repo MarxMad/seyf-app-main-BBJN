@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { submitEtherfuseKycIdentityData } from '@/lib/etherfuse/kyc'
+import { generateOnboardingPresignedUrlResolving409 } from '@/lib/etherfuse/onboarding'
 import {
   getEtherfuseOnboardingSession,
   resolveOnboardingIds,
@@ -19,6 +20,7 @@ export const revalidate = 0
 const bodySchema = z.object({
   publicKey: z.string().trim().min(1),
   identity: z.object({
+    id: z.string().trim().min(1).optional(),
     name: z.object({
       givenName: z.string().trim().min(1),
       familyName: z.string().trim().min(1),
@@ -42,6 +44,27 @@ const bodySchema = z.object({
       .min(1),
   }),
 })
+
+function mapKycProviderSetupError(message: string): AppError | null {
+  const m = message.toLowerCase()
+  if (m.includes('already added user with this address') || m.includes('see org:')) {
+    return new AppError('validation_error', {
+      statusCode: 409,
+      retryable: false,
+      message:
+        'Esta wallet ya está vinculada a otra organización de Etherfuse. Usa una wallet nueva o alinea tu API key con la org correcta.',
+    })
+  }
+  if (m.includes('organization not found')) {
+    return new AppError('validation_error', {
+      statusCode: 400,
+      retryable: false,
+      message:
+        'No encontramos tu organización en Etherfuse para esta API key/entorno. Revisa ETHERFUSE_API_BASE_URL y ETHERFUSE_API_KEY.',
+    })
+  }
+  return null
+}
 
 export async function POST(req: Request) {
   try {
@@ -72,14 +95,34 @@ export async function POST(req: Request) {
       bankAccountId: ids.bankAccountId,
       publicKey,
     })
+    // Ensure customer/bank-account context exists in Etherfuse before programmatic KYC submit.
+    let resolved: { customerId: string; bankAccountId: string; presignedUrl: string }
+    try {
+      resolved = await generateOnboardingPresignedUrlResolving409({
+        customerId: ids.customerId,
+        bankAccountId: ids.bankAccountId,
+        publicKey,
+      })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      const mapped = mapKycProviderSetupError(msg)
+      if (mapped) throw mapped
+      throw e
+    }
+    await saveEtherfuseOnboardingSession({
+      customerId: resolved.customerId,
+      bankAccountId: resolved.bankAccountId,
+      publicKey,
+    })
 
     const submission = await submitEtherfuseKycIdentityData({
-      customerId: ids.customerId,
+      customerId: resolved.customerId,
       pubkey: publicKey,
       identity: {
         ...parsed.data.identity,
+        id: parsed.data.identity.id?.trim() || publicKey,
         idNumbers: parsed.data.identity.idNumbers.map((x) => ({
-          id: x.id?.trim() || `${x.type.trim().toUpperCase()}-${x.value.trim()}`,
+          id: x.id?.trim() || x.value.trim(),
           type: x.type.trim(),
           value: x.value.trim(),
         })),

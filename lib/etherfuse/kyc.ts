@@ -35,6 +35,7 @@ type KycApiBody = {
 };
 
 export type EtherfuseKycSubmitIdentity = {
+  id: string;
   name: { givenName: string; familyName: string };
   dateOfBirth: string;
   address: {
@@ -44,7 +45,7 @@ export type EtherfuseKycSubmitIdentity = {
     postalCode: string;
     country: string;
   };
-  idNumbers: Array<{ id?: string; value: string; type: string }>;
+  idNumbers: Array<{ id: string; value?: string; type: string }>;
 };
 
 function parseVerifiedProfileFromKycJson(

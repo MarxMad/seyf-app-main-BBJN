@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { type FormEvent, useMemo, useState, useTransition } from 'react'
+import { type FormEvent, useCallback, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -115,6 +115,8 @@ export default function IdentidadClient({
   const [lastErrorDetail, setLastErrorDetail] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [refreshing, setRefreshing] = useState(false)
+  const lastRefreshAtRef = useRef(0)
+  const refreshLockMs = 3000
   const { wallet, loading, connect } = useSeyfWallet()
 
   const approved =
@@ -124,6 +126,19 @@ export default function IdentidadClient({
   const statusHint = useMemo(
     () => (initialKyc ? kycStatusHint(initialKyc.status) : 'Completa tus datos para validar identidad.'),
     [initialKyc],
+  )
+
+  const runRefresh = useCallback(
+    (origin: 'submit' | 'button' | 'reset') => {
+      const now = Date.now()
+      if (now - lastRefreshAtRef.current < refreshLockMs) {
+        console.warn('[identidad] refresh skipped by cooldown', { origin })
+        return
+      }
+      lastRefreshAtRef.current = now
+      router.refresh()
+    },
+    [router],
   )
 
   const onSubmit = (e: FormEvent) => {
@@ -175,7 +190,7 @@ export default function IdentidadClient({
             ? json.debug_message
             : null
         if (debugDetail) setLastErrorDetail(debugDetail)
-        console.error('[identidad] KYC submit failed', {
+        console.warn('[identidad] KYC submit failed', {
           status: http.status,
           response: json,
           payload,
@@ -185,13 +200,13 @@ export default function IdentidadClient({
       }
       setSuccess(`Datos enviados. Estado actual: ${json.status}.`)
       // Refresh inmediato una sola vez tras submit exitoso.
-      router.refresh()
+      runRefresh('submit')
     })
   }
 
   const refresh = () => {
     setRefreshing(true)
-    router.refresh()
+    runRefresh('button')
     setTimeout(() => setRefreshing(false), 600)
   }
 
@@ -271,7 +286,7 @@ export default function IdentidadClient({
         {allowKycTestReset && (
           <DevKycResetPanel
             onAfterReset={() => {
-              router.refresh()
+              runRefresh('reset')
             }}
           />
         )}
@@ -429,7 +444,7 @@ export default function IdentidadClient({
       {allowKycTestReset && (
         <DevKycResetPanel
           onAfterReset={() => {
-            router.refresh()
+            runRefresh('reset')
           }}
         />
       )}
