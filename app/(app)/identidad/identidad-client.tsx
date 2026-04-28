@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import type { EtherfuseKycSnapshot } from '@/lib/etherfuse/kyc'
 import type { EtherfuseOnboardingSession } from '@/lib/etherfuse/onboarding-session'
 import { resetKycTestSession, startHostedEtherfuseOnboarding } from './actions'
 import { cn } from '@/lib/utils'
+import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 
 function DevKycResetPanel({
   onAfterReset,
@@ -94,10 +94,10 @@ export default function IdentidadClient({
   allowKycTestReset: boolean
 }) {
   const router = useRouter()
-  const [pubkey, setPubkey] = useState(initialSession?.publicKey ?? '')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [refreshing, setRefreshing] = useState(false)
+  const { wallet, loading, connect } = useSeyfWallet()
 
   const approved =
     initialKyc?.status === 'approved' || initialKyc?.status === 'approved_chain_deploying'
@@ -106,7 +106,12 @@ export default function IdentidadClient({
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      const res = await startHostedEtherfuseOnboarding(pubkey)
+      const connectedPublicKey = wallet?.publicKey?.trim() ?? ''
+      if (!connectedPublicKey) {
+        setError('Primero inicia sesion con tu wallet para continuar con la verificacion.')
+        return
+      }
+      const res = await startHostedEtherfuseOnboarding(connectedPublicKey)
       if (!res.ok) {
         setError(res.error)
         return
@@ -197,7 +202,6 @@ export default function IdentidadClient({
         {allowKycTestReset && (
           <DevKycResetPanel
             onAfterReset={() => {
-              setPubkey('')
               router.refresh()
             }}
           />
@@ -263,18 +267,23 @@ export default function IdentidadClient({
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="rounded-[1.25rem] border border-border bg-secondary p-4">
-          <p className="text-xs font-medium text-muted-foreground">Cuenta Stellar vinculada</p>
-          <Input
-            id="stellar-pk"
-            name="publicKey"
-            value={pubkey}
-            onChange={(e) => setPubkey(e.target.value)}
-            placeholder="Pega tu clave publica Stellar"
-            autoComplete="off"
-            spellCheck={false}
-            className="mt-3 h-14 rounded-full border-0 bg-background/60 px-6 text-sm font-medium placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground"
-            required
-          />
+          <p className="text-xs font-medium text-muted-foreground">Wallet Stellar</p>
+          <p className="mt-2 text-sm text-foreground">
+            {wallet?.publicKey
+              ? `Usaremos tu wallet conectada: ${wallet.publicKey.slice(0, 6)}...${wallet.publicKey.slice(-6)}`
+              : 'Conecta tu wallet para iniciar la verificacion de identidad.'}
+          </p>
+          {!wallet?.publicKey ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-3 rounded-full"
+              disabled={loading}
+              onClick={() => void connect()}
+            >
+              {loading ? 'Cargando wallet...' : 'Conectar wallet'}
+            </Button>
+          ) : null}
         </div>
 
         {error && (
@@ -285,7 +294,7 @@ export default function IdentidadClient({
 
         <Button
           type="submit"
-          disabled={pending || !pubkey.trim()}
+          disabled={pending || !wallet?.publicKey}
           className="h-14 w-full rounded-full bg-foreground text-base font-bold text-background transition-all hover:bg-foreground/90 disabled:opacity-40"
         >
           {pending ? 'Abriendo portal…' : 'Continuar'}
@@ -299,7 +308,6 @@ export default function IdentidadClient({
       {allowKycTestReset && (
         <DevKycResetPanel
           onAfterReset={() => {
-            setPubkey('')
             router.refresh()
           }}
         />
