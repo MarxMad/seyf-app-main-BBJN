@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { type FormEvent, useState, useTransition } from 'react'
+import { type FormEvent, useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -85,6 +85,21 @@ function kycSummary(status: EtherfuseKycSnapshot['status']): { title: string; to
   }
 }
 
+function kycStatusHint(status: EtherfuseKycSnapshot['status']): string {
+  switch (status) {
+    case 'proposed':
+      return 'Tu información ya fue enviada. La validación puede tardar unos minutos.'
+    case 'rejected':
+      return 'Revisa tus datos y vuelve a enviar la verificación.'
+    case 'approved':
+    case 'approved_chain_deploying':
+      return 'Tu verificación está aprobada.'
+    case 'not_started':
+    default:
+      return 'Completa el formulario para iniciar tu verificación.'
+  }
+}
+
 export default function IdentidadClient({
   initialSession,
   initialKyc,
@@ -105,6 +120,20 @@ export default function IdentidadClient({
     initialKyc?.status === 'approved' || initialKyc?.status === 'approved_chain_deploying'
   const inReview = initialKyc?.status === 'proposed'
   const canSubmitForm = !inReview
+  const statusHint = useMemo(
+    () => (initialKyc ? kycStatusHint(initialKyc.status) : 'Completa tus datos para validar identidad.'),
+    [initialKyc],
+  )
+
+  useEffect(() => {
+    if (!inReview) return
+    const id = window.setInterval(() => {
+      router.refresh()
+    }, 20000)
+    return () => {
+      window.clearInterval(id)
+    }
+  }, [inReview, router])
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -283,6 +312,7 @@ export default function IdentidadClient({
               {initialKyc?.status === 'rejected' && initialKyc.currentRejectionReason && (
                 <p className="mt-2 text-sm text-muted-foreground">{initialKyc.currentRejectionReason}</p>
               )}
+              <p className="mt-2 text-xs text-muted-foreground">{statusHint}</p>
             </div>
           )}
           {!initialKyc && initialSession && (
@@ -382,7 +412,9 @@ export default function IdentidadClient({
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Revisaremos tu estado automáticamente cuando Etherfuse actualice la validación.
+        {inReview
+          ? 'Estamos actualizando tu estado de verificación automáticamente.'
+          : 'Cuando envíes tus datos, verás aquí el estado de validación.'}
       </p>
 
       {allowKycTestReset && (
