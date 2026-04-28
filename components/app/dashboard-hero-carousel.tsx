@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import Link from 'next/link'
 import Image from 'next/image'
 import { animate, motion, useMotionValue, useReducedMotion } from 'framer-motion'
-import { ArrowDownToLine, Clock, Info, Plus } from 'lucide-react'
+import { ArrowDownToLine, Clock, Info, Plus, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { formatMXN, formatPuntos, splitCurrencyForDisplay } from '@/lib/formatters'
@@ -35,7 +35,7 @@ const SLIDE_COUNT = TABS.length
 
 const saldosQuickActions = [
   { href: '/anadir', label: 'Depositar', icon: Plus },
-  { href: '/retirar', label: 'Transferir', icon: ArrowDownToLine },
+  { href: '/retirar', label: 'Transferir', icon: Send },
   { href: '/historial', label: 'Movimientos', icon: Clock },
   { href: '/identidad', label: 'Verificar', icon: Info },
 ] as const

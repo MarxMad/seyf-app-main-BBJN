@@ -327,7 +327,7 @@ export default function DashboardClient({
             Tu rendimiento y adelantos disponibles aparecerán aquí una vez que hagas tu primer depósito.
           </p>
           <Button asChild className="mt-2 h-11 w-full max-w-xs rounded-full font-bold">
-            <Link href="/depositar">Depositar ahora</Link>
+            <Link href="/anadir">Depositar ahora</Link>
           </Button>
         </section>
       )}
@@ -398,9 +398,9 @@ export default function DashboardClient({
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-border bg-card">
-        <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-violet-500/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#c9ddd2] bg-gradient-to-br from-[#f4f8f6] via-[#edf4f0] to-[#e3ece7]">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#9ec7b3]/18 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-[#b8b8b5]/14 blur-3xl" />
 
         <div className="relative space-y-4 p-4">
           <Link
@@ -411,30 +411,30 @@ export default function DashboardClient({
               <p className="text-sm font-bold text-foreground">Resumen visual</p>
               <p className="text-[11px] text-muted-foreground">Ver detalle en historial</p>
             </div>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary ring-1 ring-border">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 ring-1 ring-[#cad9d1]">
               <ChevronRight className="size-4 text-foreground" />
             </span>
           </Link>
 
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-violet-600/25 via-indigo-900/20 to-card p-4 shadow-inner ring-1 ring-violet-500/10">
+          <div className="relative overflow-hidden rounded-2xl border border-[#cad9d1] bg-gradient-to-br from-[#d8e8e0] via-[#d3e2dc] to-[#cddbd5] p-4 shadow-inner ring-1 ring-[#b8d1c5]/60">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm">
-                <Wallet className="size-6 text-violet-100" strokeWidth={2} />
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/65 backdrop-blur-sm">
+                <Wallet className="size-6 text-[#5f7168]" strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-200/90">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5f7168]">
                   Saldo disponible
                 </p>
-                <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-foreground dark:text-white">
+                <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-foreground">
                   {hideBalances ? formatMontoOculto() : formatMXN(mxne)}
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground dark:text-violet-100/75">Tu posición principal</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">Tu posición principal</p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
+            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1]">
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
                 <TrendingUp className="size-4 text-foreground" strokeWidth={2.25} />
               </div>
@@ -445,9 +445,9 @@ export default function DashboardClient({
                 {hideBalances ? formatMontoOculto() : <RendimientoCounter value={data.rendimientoMxn} />}
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
+            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1]">
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
-                <Zap className="size-4 text-amber-200/90" strokeWidth={2.25} />
+                <Zap className="size-4 text-[#7c9387]" strokeWidth={2.25} />
               </div>
               <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                 Adelanto
@@ -553,8 +553,8 @@ export default function DashboardClient({
         </section>
       )}
 
-      <section className="flex gap-3 rounded-[1.25rem] border border-amber-500/20 bg-amber-500/[0.07] p-4">
-        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-200">
+      <section className="flex gap-3 rounded-[1.25rem] border border-[#cad9d1] bg-[#edf4f0] p-4">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#d9e9e1] text-[#5f7168]">
           <span className="text-sm font-bold">!</span>
         </div>
         <div className="min-w-0">
@@ -564,7 +564,7 @@ export default function DashboardClient({
           </p>
           <Link
             href="/identidad"
-            className="mt-2 inline-block text-xs font-bold text-amber-200/90 underline-offset-4 hover:underline"
+            className="mt-2 inline-block text-xs font-bold text-[#5f7168] underline-offset-4 hover:underline"
           >
             Verificar ahora
           </Link>
