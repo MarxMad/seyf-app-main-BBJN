@@ -13,11 +13,27 @@ export async function GET() {
     // Get the new API response format
     const apiResponse = await buildDashboardApiResponse()
     
-    // If no active cycle, return the no_active_cycle response
+    // If no active cycle, keep API compatibility by returning both:
+    // - the new shape signal (`no_active_cycle`)
+    // - the legacy dashboard fields consumed by current UI
     if ('no_active_cycle' in apiResponse) {
-      return NextResponse.json(apiResponse, {
+      return NextResponse.json(
+        {
+          no_active_cycle: true,
+          principalMxn: vm.principalMxn,
+          rendimientoMxn: vm.rendimientoMxn,
+          adelantableMxn: vm.adelantableMxn,
+          puntos: vm.puntos,
+          tasaAnual: vm.tasaAnual,
+          saldoGastoMxn: vm.saldoGastoMxn,
+          saldoNote: vm.saldoNote,
+          movementsRecent: vm.movementsRecent,
+          advanceUsed: vm.advanceUsed,
+        },
+        {
         headers: { 'Cache-Control': 'private, max-age=60' },
-      })
+        },
+      )
     }
     
     // Otherwise, return the combined response with both formats for now

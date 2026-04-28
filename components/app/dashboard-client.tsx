@@ -193,21 +193,23 @@ export default function DashboardClient({
     return () => { cancelled = true }
   }, [wallet?.stellarAddress])
 
+  const baseMovements = Array.isArray(data.movementsRecent) ? data.movementsRecent : []
+
   const loUltimoMovements = useMemo(() => {
     const byId = new Map<string, UserMovement>()
-    for (const m of data.movementsRecent) byId.set(m.id, m)
+    for (const m of baseMovements) byId.set(m.id, m)
     for (const m of stellarMovements) byId.set(m.id, m)
     const merged = [...byId.values()].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
     return merged.slice(0, DASHBOARD_MOVEMENTS_PREVIEW_LIMIT)
-  }, [data.movementsRecent, stellarMovements])
+  }, [baseMovements, stellarMovements])
 
   useEffect(() => {
     if (!selected) return
-    const next = data.movementsRecent.find((m) => m.id === selected.id)
+    const next = baseMovements.find((m) => m.id === selected.id)
     if (next) setSelected(next)
-  }, [data.movementsRecent, selected])
+  }, [baseMovements, selected])
 
   const mxne = useMemo(() => balanceForAssetCode(assetBalances, 'MXNE'), [assetBalances])
   const cetesBalance = useMemo(() => balanceForAssetCode(assetBalances, 'CETES'), [assetBalances])
