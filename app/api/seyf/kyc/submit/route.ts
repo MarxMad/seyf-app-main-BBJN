@@ -101,6 +101,17 @@ export async function POST(req: Request) {
       },
     )
   } catch (e) {
+    if (process.env.NODE_ENV !== 'production' && e instanceof Error) {
+      const base = toErrorResponse(e, 'kyc/submit')
+      const body = (await base.json()) as { error?: unknown }
+      return NextResponse.json(
+        {
+          ...(typeof body === 'object' && body ? body : {}),
+          debug_message: e.message,
+        },
+        { status: base.status, headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
     return toErrorResponse(e, 'kyc/submit')
   }
 }

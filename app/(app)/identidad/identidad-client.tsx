@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { type FormEvent, useEffect, useMemo, useState, useTransition } from 'react'
+import { type FormEvent, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -112,6 +112,7 @@ export default function IdentidadClient({
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [lastErrorDetail, setLastErrorDetail] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [refreshing, setRefreshing] = useState(false)
   const { wallet, loading, connect } = useSeyfWallet()
@@ -125,20 +126,11 @@ export default function IdentidadClient({
     [initialKyc],
   )
 
-  useEffect(() => {
-    if (!inReview) return
-    const id = window.setInterval(() => {
-      router.refresh()
-    }, 20000)
-    return () => {
-      window.clearInterval(id)
-    }
-  }, [inReview, router])
-
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     setError(null)
     setSuccess(null)
+    setLastErrorDetail(null)
     startTransition(async () => {
       const connectedPublicKey = wallet?.publicKey?.trim() ?? ''
       if (!connectedPublicKey) {
@@ -175,13 +167,24 @@ export default function IdentidadClient({
         body: JSON.stringify(payload),
       })
       const json = (await http.json().catch(() => ({}))) as
-        | { ok: true; status: string }
-        | { error?: { message_es?: string } }
+        | { ok: true; status: string; message?: string | null }
+        | { error?: { message_es?: string }; debug_message?: string }
       if (!http.ok || !('ok' in json && json.ok)) {
+        const debugDetail =
+          json && typeof json === 'object' && 'debug_message' in json && typeof json.debug_message === 'string'
+            ? json.debug_message
+            : null
+        if (debugDetail) setLastErrorDetail(debugDetail)
+        console.error('[identidad] KYC submit failed', {
+          status: http.status,
+          response: json,
+          payload,
+        })
         setError(json && 'error' in json && json.error?.message_es ? json.error.message_es : 'Error al enviar KYC.')
         return
       }
       setSuccess(`Datos enviados. Estado actual: ${json.status}.`)
+      // Refresh inmediato una sola vez tras submit exitoso.
       router.refresh()
     })
   }
@@ -392,9 +395,15 @@ export default function IdentidadClient({
         </div>
 
         {error && (
-          <p className="rounded-[1.25rem] border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </p>
+          <section className="rounded-[1.25rem] border border-destructive/30 bg-destructive/10 px-4 py-4">
+            <p className="text-sm font-semibold text-destructive">No pudimos enviar tu verificación</p>
+            <p className="mt-1 text-sm text-destructive">{error}</p>
+            {lastErrorDetail ? (
+              <p className="mt-2 text-xs text-destructive/80">
+                Detalle técnico: {lastErrorDetail}
+              </p>
+            ) : null}
+          </section>
         )}
         {success && (
           <p className="rounded-[1.25rem] border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
@@ -413,7 +422,7 @@ export default function IdentidadClient({
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {inReview
-          ? 'Estamos actualizando tu estado de verificación automáticamente.'
+          ? 'Tu estado está en revisión. Pulsa "Actualizar estado" para consultar cambios.'
           : 'Cuando envíes tus datos, verás aquí el estado de validación.'}
       </p>
 
