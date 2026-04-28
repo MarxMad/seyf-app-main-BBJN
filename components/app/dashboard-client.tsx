@@ -321,14 +321,26 @@ export default function DashboardClient({
       ) : null}
 
       {!activeCycle && (
-        <section className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-border bg-card px-6 py-10 text-center">
-          <p className="text-sm font-bold text-foreground">Deposita tu capital para empezar</p>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Tu rendimiento y adelantos disponibles aparecerán aquí una vez que hagas tu primer depósito.
-          </p>
-          <Button asChild className="mt-2 h-11 w-full max-w-xs rounded-full font-bold">
-            <Link href="/anadir">Depositar ahora</Link>
-          </Button>
+        <section className="relative overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] px-6 py-8 text-center">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-[#b8b8b5]/20 blur-3xl" />
+          <div className="relative mx-auto max-w-md">
+            <span className="mx-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#b8b8b5]/60 bg-white/80 text-[#5f7168]">
+              <TrendingUp className="size-5" strokeWidth={2.1} />
+            </span>
+            <p className="mt-4 text-lg font-black tracking-tight text-[#41534b]">
+              Deposita tu capital para empezar
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-[#6f837a]">
+              Activa tu ciclo con tu primer depósito para ver rendimiento y adelantos disponibles.
+            </p>
+            <Button
+              asChild
+              className="mt-5 h-11 w-full max-w-xs rounded-full bg-foreground font-bold text-background hover:bg-foreground/90"
+            >
+              <Link href="/anadir">Depositar ahora</Link>
+            </Button>
+          </div>
         </section>
       )}
 

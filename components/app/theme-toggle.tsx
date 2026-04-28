@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
@@ -9,7 +10,12 @@ import { cn } from '@/lib/utils'
 
 type ThemeChoice = 'light' | 'dark' | 'system'
 
-export function ThemeToggle() {
+type ThemeToggleProps = {
+  action?: ReactNode
+  className?: string
+}
+
+export function ThemeToggle({ action, className }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -35,8 +41,11 @@ export function ThemeToggle() {
   ]
 
   return (
-    <div className="mb-4 space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">Apariencia</p>
+    <div className={cn('mb-4 space-y-2', className)}>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground">Apariencia</p>
+        {action}
+      </div>
       <div className="grid grid-cols-3 gap-2" role="group" aria-label="Tema de la aplicación">
         {items.map(({ id, label, icon: Icon }) => (
           <Button

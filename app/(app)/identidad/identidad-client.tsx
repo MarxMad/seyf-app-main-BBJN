@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { type FormEvent, useCallback, useMemo, useRef, useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { type FormEvent, useCallback, useMemo, useState, useTransition } from 'react'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { Button } from '@/components/ui/button'
@@ -109,36 +108,34 @@ export default function IdentidadClient({
   initialKyc: EtherfuseKycSnapshot | null
   allowKycTestReset: boolean
 }) {
-  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [lastErrorDetail, setLastErrorDetail] = useState<string | null>(null)
+  const [kycState, setKycState] = useState<EtherfuseKycSnapshot | null>(initialKyc)
   const [pending, startTransition] = useTransition()
   const [refreshing, setRefreshing] = useState(false)
-  const lastRefreshAtRef = useRef(0)
-  const refreshLockMs = 3000
   const { wallet, loading, connect } = useSeyfWallet()
 
   const approved =
-    initialKyc?.status === 'approved' || initialKyc?.status === 'approved_chain_deploying'
-  const inReview = initialKyc?.status === 'proposed'
+    kycState?.status === 'approved' || kycState?.status === 'approved_chain_deploying'
+  const inReview = kycState?.status === 'proposed'
   const canSubmitForm = !inReview
   const statusHint = useMemo(
-    () => (initialKyc ? kycStatusHint(initialKyc.status) : 'Completa tus datos para validar identidad.'),
-    [initialKyc],
+    () => (kycState ? kycStatusHint(kycState.status) : 'Completa tus datos para validar identidad.'),
+    [kycState],
   )
 
   const runRefresh = useCallback(
-    (origin: 'submit' | 'button' | 'reset') => {
-      const now = Date.now()
-      if (now - lastRefreshAtRef.current < refreshLockMs) {
-        console.warn('[identidad] refresh skipped by cooldown', { origin })
-        return
+    async (origin: 'submit' | 'button' | 'reset') => {
+      const res = await fetch('/api/seyf/kyc/status', { cache: 'no-store' })
+      const data = (await res.json().catch(() => ({}))) as { kyc?: EtherfuseKycSnapshot | null }
+      if (res.ok) {
+        setKycState(data.kyc ?? null)
+      } else {
+        console.warn('[identidad] status refresh failed', { origin, status: res.status })
       }
-      lastRefreshAtRef.current = now
-      router.refresh()
     },
-    [router],
+    [],
   )
 
   const onSubmit = (e: FormEvent) => {
@@ -199,20 +196,20 @@ export default function IdentidadClient({
         return
       }
       setSuccess(`Datos enviados. Estado actual: ${json.status}.`)
-      // Refresh inmediato una sola vez tras submit exitoso.
-      runRefresh('submit')
+      void runRefresh('submit')
     })
   }
 
   const refresh = () => {
     setRefreshing(true)
-    runRefresh('button')
-    setTimeout(() => setRefreshing(false), 600)
+    void runRefresh('button').finally(() => {
+      setRefreshing(false)
+    })
   }
 
-  if (approved && initialKyc) {
-    const profile = initialKyc.verifiedProfile
-    const approvedLabel = formatApprovedDate(initialKyc.approvedAt)
+  if (approved && kycState) {
+    const profile = kycState.verifiedProfile
+    const approvedLabel = formatApprovedDate(kycState.approvedAt)
     const hasDetails =
       profile &&
       (profile.fullName || profile.email || profile.phoneNumber || profile.addressLine)
@@ -286,7 +283,7 @@ export default function IdentidadClient({
         {allowKycTestReset && (
           <DevKycResetPanel
             onAfterReset={() => {
-              runRefresh('reset')
+              void runRefresh('reset')
             }}
           />
         )}
@@ -294,7 +291,7 @@ export default function IdentidadClient({
     )
   }
 
-  const statusBlock = initialKyc ? kycSummary(initialKyc.status) : null
+  const statusBlock = kycState ? kycSummary(kycState.status) : null
 
   return (
     <AppPageBody>
@@ -312,9 +309,9 @@ export default function IdentidadClient({
         </p>
       </div>
 
-      {(initialSession || initialKyc) && (
+      {(initialSession || kycState) && (
         <div className="mb-8 rounded-[1.5rem] border border-border bg-card/50 p-5">
-          {statusBlock && (
+          {statusBlock ? (
             <div className="mb-4">
               <p className="text-xs font-medium text-muted-foreground">Estado</p>
               <p
@@ -327,13 +324,13 @@ export default function IdentidadClient({
               >
                 {statusBlock.title}
               </p>
-              {initialKyc?.status === 'rejected' && initialKyc.currentRejectionReason && (
-                <p className="mt-2 text-sm text-muted-foreground">{initialKyc.currentRejectionReason}</p>
+              {kycState?.status === 'rejected' && kycState.currentRejectionReason && (
+                <p className="mt-2 text-sm text-muted-foreground">{kycState.currentRejectionReason}</p>
               )}
               <p className="mt-2 text-xs text-muted-foreground">{statusHint}</p>
             </div>
-          )}
-          {!initialKyc && initialSession && (
+          ) : null}
+          {!kycState && initialSession && (
             <p className="mb-4 text-sm text-muted-foreground">
               Guardamos tu sesión en este dispositivo. Cuando completes el portal, pulsa actualizar.
             </p>
@@ -444,7 +441,7 @@ export default function IdentidadClient({
       {allowKycTestReset && (
         <DevKycResetPanel
           onAfterReset={() => {
-            runRefresh('reset')
+            void runRefresh('reset')
           }}
         />
       )}

@@ -3,10 +3,11 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Copy, LogOut, ShieldCheck, UserRound } from 'lucide-react'
+import { Check, Copy, LogOut, Settings2, ShieldCheck, UserRound } from 'lucide-react'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import { Button } from '@/components/ui/button'
 import { NotificationSettingsCard } from '@/components/app/notification-settings-card'
+import { ThemeToggle } from '@/components/app/theme-toggle'
 import {
   SEYF_WALLET_BALANCE_EXTRA_DELAYS_MS,
   SEYF_WALLET_BALANCE_POLL_MS,
@@ -38,6 +39,7 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
   const router = useRouter()
   const { wallet, balance, loading, balanceError, disconnect, refreshBalance } = useSeyfWallet()
   const [addressCopied, setAddressCopied] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -196,32 +198,50 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
           </p>
         </div>
       ) : null}
-      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-violet-700/20 via-indigo-700/15 to-sky-700/10 px-4 py-4">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-violet-400/20 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-cyan-400/10 blur-2xl" />
+      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] px-4 py-4">
+        <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#9ec7b3]/20 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-[#b8b8b5]/20 blur-2xl" />
         <div className="relative flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-xs font-black text-foreground ring-1 ring-white/15">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-xs font-black text-foreground ring-1 ring-[#b8b8b5]/40">
             {(wallet.email?.split('@')[0]?.slice(0, 2) ?? wallet.stellarAddress.slice(0, 2)).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-bold text-foreground">Tu perfil</h2>
             <p className="truncate text-xs text-muted-foreground">Pollar · Stellar</p>
           </div>
-          <p className="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-background/65 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:border-white/15 dark:bg-black/25 dark:text-violet-100/90">
+          <p className="inline-flex items-center gap-1 rounded-full border border-[#9ec7b3]/35 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#4f6b5f]">
             <ShieldCheck className="size-3" />
             Activo
           </p>
         </div>
         <div className="relative mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl border border-violet-500/15 bg-background/55 px-3 py-2 dark:border-white/10 dark:bg-black/20">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-violet-100/80">Red</p>
-            <p className="mt-0.5 text-xs font-semibold text-foreground dark:text-white">{formatNetwork()}</p>
+          <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Red</p>
+            <p className="mt-0.5 text-xs font-semibold text-foreground">{formatNetwork()}</p>
           </div>
-          <div className="rounded-xl border border-violet-500/15 bg-background/55 px-3 py-2 dark:border-white/10 dark:bg-black/20">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-violet-100/80">Cuenta desde</p>
-            <p className="mt-0.5 truncate text-xs font-semibold text-foreground dark:text-white">{memberSince}</p>
+          <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Cuenta desde</p>
+            <p className="mt-0.5 truncate text-xs font-semibold text-foreground">{memberSince}</p>
           </div>
         </div>
+      </div>
+
+      <div className="border-b border-border px-3 py-3">
+        <ThemeToggle
+          className="mb-0"
+          action={
+            <Button
+              type="button"
+              variant={showSettings ? 'default' : 'outline'}
+              size="sm"
+              className="h-8 rounded-full px-3 text-xs font-semibold"
+              onClick={() => setShowSettings((v) => !v)}
+            >
+              <Settings2 className="mr-1.5 size-3.5" strokeWidth={2} />
+              Configuración
+            </Button>
+          }
+        />
       </div>
 
       <dl className="space-y-2 px-3 py-3">
@@ -267,9 +287,12 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
         ))}
       </dl>
 
-      <div className="px-3 pb-3">
-        <NotificationSettingsCard />
-      </div>
+      {showSettings ? (
+        <div className="border-t border-border px-3 py-3">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Configuración</p>
+          <NotificationSettingsCard />
+        </div>
+      ) : null}
 
       <div className="border-t border-border p-3">
         <Button

@@ -19,10 +19,18 @@ export async function GET() {
     if (!ctx) {
       return NextResponse.json(
         {
-          error:
-            "Sin contexto rampa: cookie /identidad o (solo dev) ETHERFUSE_MVP_* en .env.local.",
+          publicKey: "",
+          customerId: "",
+          bankAccountId: "",
+          source: "cookie",
+          cryptoWalletId: null,
+          cryptoWalletResolved: false,
+          cryptoWalletError: null,
+          kycStatus: null,
+          kycApproved: false,
+          kycReason:
+            "Sin contexto rampa: completa /identidad o configura ETHERFUSE_MVP_* en desarrollo.",
         },
-        { status: 401 },
       );
     }
 

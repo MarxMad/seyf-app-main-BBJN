@@ -74,21 +74,31 @@ export async function upsertStoredKycSnapshot(params: {
     (row) => row.customerId === params.customerId && row.walletPublicKey === params.walletPublicKey,
   )
   const eventId = params.eventId ?? null
-  const incomingTs = params.eventTimestamp ? new Date(params.eventTimestamp).getTime() : Date.now()
+  const hasExplicitTimestamp = Boolean(params.eventTimestamp)
+  const incomingTs = hasExplicitTimestamp ? new Date(params.eventTimestamp as string).getTime() : Date.now()
 
   if (idx >= 0) {
     const current = store.rows[idx]
+    const samePayload =
+      current.status === params.status &&
+      current.approvedAt === (params.approvedAt ?? null) &&
+      current.currentRejectionReason === (params.currentRejectionReason ?? null)
+    if (!eventId && samePayload) {
+      return { updated: false }
+    }
     if (eventId && current.lastEventId === eventId) return { updated: false }
     const currentTs = new Date(current.updatedAt).getTime()
     if (Number.isFinite(currentTs) && Number.isFinite(incomingTs) && incomingTs < currentTs) {
       return { updated: false }
     }
+    const effectiveTs =
+      hasExplicitTimestamp && Number.isFinite(incomingTs) ? incomingTs : currentTs || Date.now()
     store.rows[idx] = {
       ...current,
       status: params.status,
       approvedAt: params.approvedAt ?? null,
       currentRejectionReason: params.currentRejectionReason ?? null,
-      updatedAt: new Date(incomingTs).toISOString(),
+      updatedAt: new Date(effectiveTs).toISOString(),
       lastEventId: eventId,
     }
     await saveStore(store)
