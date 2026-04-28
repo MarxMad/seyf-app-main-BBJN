@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,13 @@ import {
   extractConfirmedTxSignatureFromOnrampPanelJson,
   pickRampOrderTransactionDetails,
 } from '@/lib/etherfuse/orders-api'
+import { useEffect } from 'react'
+
+type RampContextPayload = {
+  kycApproved: boolean
+  kycStatus: string | null
+  kycReason: string | null
+}
 
 export default function EtherfuseRampDevClient() {
   const [busy, setBusy] = useState<string | null>(null)
@@ -28,6 +36,8 @@ export default function EtherfuseRampDevClient() {
   const [fiatJson, setFiatJson] = useState<string>('')
   const [speiDetails, setSpeiDetails] = useState<SpeiTransferDetails | null>(null)
   const [pendingManualOrderJson, setPendingManualOrderJson] = useState<string | null>(null)
+  const [kycGate, setKycGate] = useState<RampContextPayload | null>(null)
+  const [kycLoading, setKycLoading] = useState(true)
 
   const run = useCallback(async (label: string, fn: () => Promise<void>) => {
     setErr(null)
@@ -38,6 +48,38 @@ export default function EtherfuseRampDevClient() {
       setErr(e instanceof Error ? e.message : 'Error')
     } finally {
       setBusy(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setKycLoading(true)
+    fetch('/api/seyf/etherfuse/ramp-context')
+      .then(async (r) => {
+        const j = (await r.json().catch(() => ({}))) as Partial<RampContextPayload> & { error?: string }
+        if (!r.ok) {
+          throw new Error(typeof j.error === 'string' ? j.error : `HTTP ${r.status}`)
+        }
+        if (cancelled) return
+        setKycGate({
+          kycApproved: j.kycApproved === true,
+          kycStatus: typeof j.kycStatus === 'string' ? j.kycStatus : null,
+          kycReason: typeof j.kycReason === 'string' ? j.kycReason : null,
+        })
+      })
+      .catch((e) => {
+        if (cancelled) return
+        setKycGate({
+          kycApproved: false,
+          kycStatus: null,
+          kycReason: e instanceof Error ? e.message : 'No pudimos validar tu estado KYC.',
+        })
+      })
+      .finally(() => {
+        if (!cancelled) setKycLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -179,6 +221,7 @@ export default function EtherfuseRampDevClient() {
   }, [speiDetails, pendingManualOrderJson, performFiatSimulation, run])
 
   const speiConfirmBusy = busy === 'spei-manual-confirm'
+  const canOperate = !kycLoading && kycGate?.kycApproved === true
 
   const onrampTxSignature = useMemo(
     () => extractConfirmedTxSignatureFromOnrampPanelJson(fiatJson),
@@ -225,11 +268,25 @@ export default function EtherfuseRampDevClient() {
         details={speiDetails}
         concept={speiDetails?.orderId ?? null}
       />
+      {!canOperate ? (
+        <section className="rounded-[1.25rem] border border-amber-500/30 bg-amber-500/[0.08] p-4">
+          <p className="text-sm font-bold text-foreground">Verificacion requerida</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {kycLoading
+              ? 'Validando estado KYC...'
+              : kycGate?.kycReason ??
+                'Necesitas aprobar KYC para generar CLABE y recibir tus datos de deposito.'}
+          </p>
+          <Link href="/identidad" className="mt-3 inline-block text-sm font-semibold text-foreground underline">
+            Ir a verificar identidad
+          </Link>
+        </section>
+      ) : null}
       {speiDetails && pendingManualOrderJson ? (
         <Button
           type="button"
           className="w-full"
-          disabled={!!busy}
+          disabled={!!busy || !canOperate}
           onClick={() => void confirmSpeiPayment()}
         >
           {speiConfirmBusy ? (
@@ -238,7 +295,7 @@ export default function EtherfuseRampDevClient() {
               Procesando…
             </>
           ) : (
-            'Ya hice la transferencia (prueba)'
+            'Ya hice la transferencia'
           )}
         </Button>
       ) : null}
@@ -258,14 +315,14 @@ export default function EtherfuseRampDevClient() {
           id="manual-asset"
           value={targetOverride}
           onChange={(e) => setTargetOverride(e.target.value)}
-          placeholder="Opcional · solo uso avanzado"
+          placeholder="Opcional"
           className="h-12 rounded-xl border-border bg-background px-4 font-mono text-xs"
           aria-label="Opcional avanzado"
         />
         <Button
           type="button"
           className="w-full rounded-full bg-foreground text-background"
-          disabled={!!busy}
+          disabled={!!busy || !canOperate}
           onClick={() => void openManualSpeiReview()}
         >
           {busy === 'spei-manual-prepare' ? (

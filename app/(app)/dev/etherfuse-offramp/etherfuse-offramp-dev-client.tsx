@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { OfframpActionCard } from '@/components/app/dev/offramp-action-card'
@@ -19,6 +20,13 @@ import {
   extractConfirmedTxSignatureFromOnrampPanelJson,
   pickRampOrderTransactionDetails,
 } from '@/lib/etherfuse/orders-api'
+import { useEffect } from 'react'
+
+type RampContextPayload = {
+  kycApproved: boolean
+  kycStatus: string | null
+  kycReason: string | null
+}
 
 export default function EtherfuseOfframpDevClient() {
   const [busy, setBusy] = useState<string | null>(null)
@@ -28,6 +36,8 @@ export default function EtherfuseOfframpDevClient() {
   const [orderJson, setOrderJson] = useState<string>('')
   const [useAnchor, setUseAnchor] = useState(false)
   const [trackJson, setTrackJson] = useState<string>('')
+  const [kycGate, setKycGate] = useState<RampContextPayload | null>(null)
+  const [kycLoading, setKycLoading] = useState(true)
 
   const run = useCallback(async (label: string, fn: () => Promise<void>) => {
     setErr(null)
@@ -38,6 +48,38 @@ export default function EtherfuseOfframpDevClient() {
       setErr(e instanceof Error ? e.message : 'Error')
     } finally {
       setBusy(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setKycLoading(true)
+    fetch('/api/seyf/etherfuse/ramp-context')
+      .then(async (r) => {
+        const j = (await r.json().catch(() => ({}))) as Partial<RampContextPayload> & { error?: string }
+        if (!r.ok) {
+          throw new Error(typeof j.error === 'string' ? j.error : `HTTP ${r.status}`)
+        }
+        if (cancelled) return
+        setKycGate({
+          kycApproved: j.kycApproved === true,
+          kycStatus: typeof j.kycStatus === 'string' ? j.kycStatus : null,
+          kycReason: typeof j.kycReason === 'string' ? j.kycReason : null,
+        })
+      })
+      .catch((e) => {
+        if (cancelled) return
+        setKycGate({
+          kycApproved: false,
+          kycStatus: null,
+          kycReason: e instanceof Error ? e.message : 'No pudimos validar tu estado KYC.',
+        })
+      })
+      .finally(() => {
+        if (!cancelled) setKycLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -185,6 +227,7 @@ export default function EtherfuseOfframpDevClient() {
 
   const continueBusy = busy === 'offramp-flow'
   const trackBusy = busy === 'track'
+  const canOperate = !kycLoading && kycGate?.kycApproved === true
 
   return (
     <AppPageBody className="space-y-6 pt-4">
@@ -210,13 +253,26 @@ export default function EtherfuseOfframpDevClient() {
       </section>
 
       <OfframpActionCard summary={offrampSummary} />
+      {!canOperate ? (
+        <section className="rounded-[1.25rem] border border-amber-500/30 bg-amber-500/[0.08] p-4">
+          <p className="text-sm font-bold text-foreground">Verificacion requerida</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {kycLoading
+              ? 'Validando estado KYC...'
+              : kycGate?.kycReason ?? 'Necesitas KYC aprobado para retirar a cuenta bancaria.'}
+          </p>
+          <Link href="/identidad" className="mt-3 inline-block text-sm font-semibold text-foreground underline">
+            Ir a verificar identidad
+          </Link>
+        </section>
+      ) : null}
 
       {orderJson ? (
         <Button
           type="button"
           className="w-full"
           variant="outline"
-          disabled={!!busy}
+          disabled={!!busy || !canOperate}
           onClick={() => void trackOrder()}
         >
           {trackBusy ? (
@@ -243,7 +299,7 @@ export default function EtherfuseOfframpDevClient() {
         <Input
           value={sourceAssetOverride}
           onChange={(e) => setSourceAssetOverride(e.target.value)}
-          placeholder="Opcional · solo uso avanzado"
+          placeholder="Opcional"
           className="h-12 rounded-xl border-border bg-background px-4 font-mono text-xs"
           aria-label="Opcional avanzado"
         />
@@ -258,7 +314,7 @@ export default function EtherfuseOfframpDevClient() {
             htmlFor="use-anchor"
             className="cursor-pointer text-xs leading-relaxed font-normal text-muted-foreground"
           >
-            Modo alternativo de retiro (solo si te lo indican).{' '}
+            Modo alternativo de retiro.{' '}
             <a
               href="https://docs.etherfuse.com/guides/testing-offramps#anchor-mode-stellar-only"
               target="_blank"
@@ -272,7 +328,7 @@ export default function EtherfuseOfframpDevClient() {
         <Button
           type="button"
           className="w-full rounded-full bg-foreground text-background"
-          disabled={!!busy}
+          disabled={!!busy || !canOperate}
           onClick={() => void continueOfframp()}
         >
           {continueBusy ? (

@@ -263,13 +263,13 @@ export default function IdentidadClient({
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="rounded-[1.25rem] border border-border bg-secondary p-4">
-          <p className="text-xs font-medium text-muted-foreground">Cuenta de prueba (sandbox)</p>
+          <p className="text-xs font-medium text-muted-foreground">Cuenta Stellar vinculada</p>
           <Input
             id="stellar-pk"
             name="publicKey"
             value={pubkey}
             onChange={(e) => setPubkey(e.target.value)}
-            placeholder="Pega la clave que usa Etherfuse en pruebas"
+            placeholder="Pega tu clave publica Stellar"
             autoComplete="off"
             spellCheck={false}
             className="mt-3 h-14 rounded-full border-0 bg-background/60 px-6 text-sm font-medium placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-foreground"

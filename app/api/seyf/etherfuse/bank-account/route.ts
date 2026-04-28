@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { toErrorResponse, AppError } from '@/lib/seyf/api-error'
 import { getEtherfuseOnboardingSession } from '@/lib/etherfuse/onboarding-session'
 import { createCustomerBankAccount, type BankAccountRegistration } from '@/lib/etherfuse/bank-accounts'
+import { assertEtherfuseKycApproved } from '@/lib/seyf/etherfuse-kyc-guard'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -41,6 +42,10 @@ export async function POST(req: Request) {
           'No Etherfuse session found. Start onboarding in /identidad to bind customerId first.',
       })
     }
+    await assertEtherfuseKycApproved({
+      customerId: session.customerId,
+      publicKey: session.publicKey,
+    })
 
     const raw = (await req.json().catch(() => null)) as unknown
     const parsed = bodySchema.safeParse(raw)

@@ -4,6 +4,7 @@ import { extractOrderIdFromCreateOrderResponse } from "@/lib/etherfuse/order-cre
 import { resolveMvpPartnerCryptoWalletId } from "@/lib/etherfuse/partner-accounts";
 import { createMxOnrampOrder } from "@/lib/etherfuse/ramp-api";
 import { AppError, toErrorResponse } from "@/lib/seyf/api-error";
+import { assertEtherfuseKycApproved } from "@/lib/seyf/etherfuse-kyc-guard";
 import { getEtherfuseRampContext } from "@/lib/seyf/etherfuse-ramp-context";
 import { guardEtherfuseRampRoutes } from "@/lib/seyf/etherfuse-ramp-guard";
 import { assertWalletActiveForUser } from "@/lib/seyf/wallet-provisioning";
@@ -44,6 +45,10 @@ export async function POST(req: Request) {
   }
 
   try {
+    await assertEtherfuseKycApproved({
+      customerId: ctx.customerId,
+      publicKey: ctx.publicKey,
+    });
     await assertWalletActiveForUser(ctx.customerId);
     let cryptoWalletId: string | undefined;
     try {
