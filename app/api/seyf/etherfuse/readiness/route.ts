@@ -107,7 +107,8 @@ export async function GET() {
       if (!effectiveRow) {
         bankAccountReady = false;
       } else {
-        const active = (effectiveRow.status ?? "").toLowerCase() === "active";
+        const status = (effectiveRow.status ?? "").toLowerCase();
+        const active = status === "active";
         const compliant = effectiveRow.compliant === true;
         const deleted = effectiveRow.deletedAt != null;
         bankAccountReady = active && compliant && !deleted;

@@ -177,6 +177,31 @@ Esperado para habilitar onramp:
 
 ---
 
+## 7) Validar bank account ACTIVE (crítico)
+
+Aunque KYC/docs/agreements estén aprobados, `order/onramp` puede fallar si la cuenta está `pending`.
+
+```bash
+API_KEY="$(python3 - <<'PY'
+from pathlib import Path
+for l in Path('.env').read_text().splitlines():
+    l=l.strip()
+    if l.startswith('ETHERFUSE_API_KEY='):
+        print(l.split('=',1)[1]); break
+PY
+)"
+
+curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+  "$BASE_URL/api/seyf/etherfuse/readiness" | python3 -m json.tool
+```
+
+Si `bankAccountReady=false`, revisa en Etherfuse (customer bank accounts) que el `status` ya sea `active`.
+Con `status: pending`, la orden puede fallar con:
+
+- `Bank account has not initialized correctly`
+
+---
+
 ## Troubleshooting rápido
 
 ### Error: `already added user with this address`
