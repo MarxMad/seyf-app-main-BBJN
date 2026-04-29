@@ -214,15 +214,15 @@ export default function HistorialPageClient() {
     return (
       <AppPageBody>
         <AppBackLink href="/dashboard" />
-        <section className="relative mb-8 overflow-hidden rounded-[1.5rem] border border-sky-400/25 bg-gradient-to-br from-sky-700/25 via-indigo-700/20 to-violet-700/15 p-5">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sky-300/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-violet-300/15 blur-3xl" />
+        <section className="relative mb-8 overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] p-5 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/20 blur-3xl dark:bg-[#6ba690]/20" />
+          <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-[#b8b8b5]/20 blur-3xl dark:bg-[#22433c]/40" />
           <div className="relative">
-            <p className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-sky-100/90">
+            <p className="inline-flex rounded-full border border-[#b8b8b5]/60 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168] dark:border-white/20 dark:bg-white/15 dark:text-[#d2e9df]">
               Estado de cuenta
             </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-white">Historial</h1>
-            <p className="mt-2 text-sm text-sky-100/80">
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-[#41534b] dark:text-white">Historial</h1>
+            <p className="mt-2 text-sm text-[#6f837a] dark:text-[#d2e9df]">
               Conecta tu wallet para ver Stellar (testnet + mainnet) y tus órdenes Etherfuse.
             </p>
           </div>
@@ -237,15 +237,15 @@ export default function HistorialPageClient() {
   return (
     <AppPageBody>
       <AppBackLink href="/dashboard" />
-      <section className="relative mb-8 overflow-hidden rounded-[1.5rem] border border-sky-400/25 bg-gradient-to-br from-sky-700/25 via-indigo-700/20 to-violet-700/15 p-5">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sky-300/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-violet-300/15 blur-3xl" />
+      <section className="relative mb-8 overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] p-5 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/20 blur-3xl dark:bg-[#6ba690]/20" />
+        <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-[#b8b8b5]/20 blur-3xl dark:bg-[#22433c]/40" />
         <div className="relative">
-          <p className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-sky-100/90">
+          <p className="inline-flex rounded-full border border-[#b8b8b5]/60 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168] dark:border-white/20 dark:bg-white/15 dark:text-[#d2e9df]">
             Estado de cuenta
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-white">Historial</h1>
-          <p className="mt-2 text-sm text-sky-100/80">
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-[#41534b] dark:text-white">Historial</h1>
+          <p className="mt-2 text-sm text-[#6f837a] dark:text-[#d2e9df]">
             Pagos en cadena (Stellar testnet y mainnet) y movimientos reales de ramp (Etherfuse).
           </p>
         </div>

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { animate, motion, useMotionValue, useReducedMotion } from 'framer-motion'
 import { ArrowDownToLine, Clock, Info, Plus, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -118,10 +117,10 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
   }
 
   return (
-    <section className="relative isolate overflow-hidden rounded-[1.75rem] border border-[#bfd6ca]">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd]" />
-      <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-[#9ec7b3]/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-12 h-48 w-48 rounded-full bg-[#b8b8b5]/25 blur-3xl" />
+    <section className="relative isolate overflow-hidden rounded-[1.75rem] border border-[#bfd6ca] dark:border-[#2b4a43]">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]" />
+      <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-[#9ec7b3]/30 blur-3xl dark:bg-[#6ba690]/25" />
+      <div className="pointer-events-none absolute -bottom-20 -left-12 h-48 w-48 rounded-full bg-[#b8b8b5]/25 blur-3xl dark:bg-[#22433c]/45" />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.12]"
         style={{
@@ -129,10 +128,6 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
           backgroundSize: '48px 48px',
         }}
       />
-      <div className="absolute right-4 top-4 z-10 rounded-full border border-[#d9e7e0] bg-white px-3 py-1.5 shadow-sm">
-        <Image src="/SEYF.png" alt="Seyf" width={62} height={22} />
-      </div>
-
       <div ref={containerRef} className="relative overflow-hidden">
         <motion.div
           className="flex w-[300%] cursor-grab touch-pan-x active:cursor-grabbing"

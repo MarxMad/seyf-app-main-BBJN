@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -241,9 +240,6 @@ export default function EtherfuseOfframpDevClient() {
             <p className="inline-flex rounded-full border border-[#b8b8b5]/60 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168]">
             Retiro a cuenta
             </p>
-            <span className="rounded-full border border-[#d9e7e0] bg-white px-3 py-1.5 shadow-sm">
-              <Image src="/SEYF.png" alt="Seyf" width={56} height={20} />
-            </span>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-[#41534b]">Retirar fondos</h1>
           <p className="mt-1.5 text-sm text-[#7b8f86]">

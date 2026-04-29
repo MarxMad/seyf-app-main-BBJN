@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import ThreeDMarquee from '@/components/ui/3d-marquee'
 import { Button } from '@/components/ui/button'
 
@@ -41,6 +42,11 @@ export default function HeroSection() {
       {/* Contenido encima (pointer-events para clicks sobre el fondo inerte) */}
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center">
         <div className="pointer-events-auto rounded-3xl border border-foreground/10 bg-background/40 px-8 py-10 backdrop-blur-sm">
+          <div className="mb-5 flex justify-center">
+            <span className="rounded-full border border-border bg-white/90 px-4 py-2 shadow-sm">
+              <Image src="/SEYF.png" alt="Seyf" width={88} height={30} />
+            </span>
+          </div>
           <h1 className="text-6xl font-black tracking-tight text-foreground sm:text-7xl md:text-8xl">
             Seyf
           </h1>

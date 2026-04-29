@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Image from 'next/image'
 import { RefreshCw } from 'lucide-react'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -64,24 +63,21 @@ export default function EstadisticasPage() {
     <AppPageBody className="space-y-6 pt-2">
       <AppBackLink href="/dashboard" />
 
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e4efea] to-[#dbe7e2] p-5">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-[#b8b8b5]/20 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e4efea] to-[#dbe7e2] p-5 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/25 blur-3xl dark:bg-[#6ba690]/25" />
+        <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-[#b8b8b5]/20 blur-3xl dark:bg-[#22433c]/40" />
         <div className="relative">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="inline-flex rounded-full border border-[#b8b8b5]/60 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168]">
+            <p className="inline-flex rounded-full border border-[#b8b8b5]/60 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168] dark:border-white/20 dark:bg-white/15 dark:text-[#d2e9df]">
             Mercados
             </p>
-            <span className="rounded-full border border-[#d9e7e0] bg-white px-3 py-1.5 shadow-sm">
-              <Image src="/SEYF.png" alt="Seyf" width={56} height={20} />
-            </span>
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-[#41534b]">Estadísticas</h1>
-          <p className="mt-1.5 text-sm text-[#7b8f86]">
+          <h1 className="text-2xl font-black tracking-tight text-[#41534b] dark:text-white">Estadísticas</h1>
+          <p className="mt-1.5 text-sm text-[#7b8f86] dark:text-[#d2e9df]">
             Referencia de tipo de cambio (EUR central, datos públicos Frankfurter).
           </p>
           {date ? (
-            <p className="mt-2 text-[11px] text-[#91a69d]">Cierre: {date}</p>
+            <p className="mt-2 text-[11px] text-[#91a69d] dark:text-[#b9d9cc]">Cierre: {date}</p>
           ) : null}
         </div>
       </section>

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import useSWR from 'swr'
@@ -378,25 +379,38 @@ export default function DashboardClient({
       ) : null}
 
       {!activeCycle && (
-        <section className="relative overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] px-6 py-8 text-center">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/25 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-[#b8b8b5]/20 blur-3xl" />
-          <div className="relative mx-auto max-w-md">
-            <span className="mx-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#b8b8b5]/60 bg-white/80 text-[#5f7168]">
-              <TrendingUp className="size-5" strokeWidth={2.1} />
-            </span>
-            <p className="mt-4 text-lg font-black tracking-tight text-[#41534b]">
-              Deposita tu capital para empezar
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-[#6f837a]">
-              Activa tu ciclo con tu primer depósito para ver rendimiento y adelantos disponibles.
-            </p>
-            <Button
-              asChild
-              className="mt-5 h-11 w-full max-w-xs rounded-full bg-foreground font-bold text-background hover:bg-foreground/90"
-            >
-              <Link href="/anadir">Depositar ahora</Link>
-            </Button>
+        <section className="relative overflow-hidden rounded-[1.65rem] border border-[#c6d9d0] bg-gradient-to-br from-[#0d3531] via-[#15534a] to-[#1f6559] p-5">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_55%)]" />
+          <div className="relative flex items-stretch gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#d8efe5]">
+                Comienza hoy
+              </p>
+              <p className="mt-3 text-xl font-black leading-tight tracking-tight text-white">
+                Deposita tu capital
+                <br />
+                para empezar
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-[#d2e9df]">
+                Activa tu ciclo con tu primer depósito y desbloquea rendimiento y adelantos.
+              </p>
+              <Button
+                asChild
+                className="mt-4 h-10 rounded-full bg-white px-4 text-sm font-bold text-[#184e46] hover:bg-white/90"
+              >
+                <Link href="/anadir">Depositar ahora</Link>
+              </Button>
+            </div>
+            <div className="relative w-[40%] min-w-[7.5rem] overflow-hidden rounded-2xl border border-white/20 bg-white/10">
+              <Image
+                src="/seyf-card.png"
+                alt="Tarjeta Seyf"
+                fill
+                sizes="(max-width: 640px) 35vw, 240px"
+                className="object-cover"
+                priority={false}
+              />
+            </div>
           </div>
         </section>
       )}
@@ -467,9 +481,9 @@ export default function DashboardClient({
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#c9ddd2] bg-gradient-to-br from-[#f4f8f6] via-[#edf4f0] to-[#e3ece7]">
-        <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#9ec7b3]/18 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-[#b8b8b5]/14 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#c9ddd2] bg-gradient-to-br from-[#f4f8f6] via-[#edf4f0] to-[#e3ece7] dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#9ec7b3]/18 blur-3xl dark:bg-[#6ba690]/20" />
+        <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-[#b8b8b5]/14 blur-3xl dark:bg-[#22433c]/40" />
 
         <div className="relative space-y-4 p-4">
           <Link
@@ -477,51 +491,63 @@ export default function DashboardClient({
             className="flex items-center justify-between rounded-xl py-1 transition hover:opacity-90"
           >
             <div>
-              <p className="text-sm font-bold text-foreground">Resumen visual</p>
-              <p className="text-[11px] text-muted-foreground">Ver detalle en historial</p>
+              <p className="text-sm font-bold text-foreground">
+                {data.adelantableMxn > 0
+                  ? 'Tienes disponible un adelanto de 5 años de rendimiento a tasa fija'
+                  : 'Adelanta 1 año de rendimiento con SEYF'}
+              </p>
+              <p className="text-[11px] text-muted-foreground dark:text-[#d2e9df]">
+                Simulación rápida en tiempo real
+              </p>
             </div>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 ring-1 ring-[#cad9d1]">
-              <ChevronRight className="size-4 text-foreground" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 ring-1 ring-[#cad9d1] dark:bg-white/15 dark:ring-white/20">
+              <ChevronRight className="size-4 text-foreground dark:text-white" />
             </span>
           </Link>
 
-          <div className="relative overflow-hidden rounded-2xl border border-[#cad9d1] bg-gradient-to-br from-[#d8e8e0] via-[#d3e2dc] to-[#cddbd5] p-4 shadow-inner ring-1 ring-[#b8d1c5]/60">
+          <div className="relative overflow-hidden rounded-2xl border border-[#cad9d1] bg-gradient-to-br from-[#d8e8e0] via-[#d3e2dc] to-[#cddbd5] p-4 shadow-inner ring-1 ring-[#b8d1c5]/60 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#10413a] dark:via-[#15534a] dark:to-[#1b6155] dark:ring-[#2b4a43]/70">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/65 backdrop-blur-sm">
-                <Wallet className="size-6 text-[#5f7168]" strokeWidth={2} />
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/65 backdrop-blur-sm dark:bg-white/15">
+                <Wallet className="size-6 text-[#5f7168] dark:text-[#d2e9df]" strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5f7168]">
-                  Saldo disponible
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5f7168] dark:text-[#cde5db]">
+                  {data.adelantableMxn > 0 ? 'Adelanto preaprobado' : 'Saldo disponible'}
                 </p>
-                <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-foreground">
-                  {hideBalances ? formatMontoOculto() : formatMXN(mxne)}
+                <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-foreground dark:text-white">
+                  {hideBalances
+                    ? formatMontoOculto()
+                    : data.adelantableMxn > 0
+                      ? formatMXN(data.adelantableMxn)
+                      : formatMXN(mxne)}
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">Tu posición principal</p>
+                <p className="mt-1 text-[11px] text-muted-foreground dark:text-[#d2e9df]">
+                  {data.adelantableMxn > 0 ? 'Monto estimado inmediato' : 'Tu posición principal'}
+                </p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1]">
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
-                <TrendingUp className="size-4 text-foreground" strokeWidth={2.25} />
+            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1] dark:border-[#2b4a43] dark:bg-white/10 dark:ring-white/10">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5 dark:bg-white/10">
+                <TrendingUp className="size-4 text-foreground dark:text-white" strokeWidth={2.25} />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">
                 Rendimiento
               </p>
-              <p className="mt-1 text-base font-black tabular-nums text-foreground">
+              <p className="mt-1 text-base font-black tabular-nums text-foreground dark:text-white">
                 {hideBalances ? formatMontoOculto() : <RendimientoCounter value={data.rendimientoMxn} />}
               </p>
             </div>
-            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1]">
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
-                <Zap className="size-4 text-[#7c9387]" strokeWidth={2.25} />
+            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1] dark:border-[#2b4a43] dark:bg-white/10 dark:ring-white/10">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5 dark:bg-white/10">
+                <Zap className="size-4 text-[#7c9387] dark:text-[#cde5db]" strokeWidth={2.25} />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">
                 Adelanto
               </p>
-              <p className="mt-1 text-base font-black tabular-nums text-foreground">
+              <p className="mt-1 text-base font-black tabular-nums text-foreground dark:text-white">
                 {hideBalances ? formatMontoOculto() : formatMXN(data.adelantableMxn)}
               </p>
             </div>
@@ -622,13 +648,13 @@ export default function DashboardClient({
         </section>
       )}
 
-      <section className="flex gap-3 rounded-[1.25rem] border border-[#cad9d1] bg-[#edf4f0] p-4">
-        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#d9e9e1] text-[#5f7168]">
+      <section className="flex gap-3 rounded-[1.25rem] border border-[#cad9d1] bg-[#edf4f0] p-4 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0f3b36] dark:via-[#15534a] dark:to-[#1b5b50]">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#d9e9e1] text-[#5f7168] dark:bg-white/15 dark:text-[#d2e9df]">
           <span className="text-sm font-bold">!</span>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground">{kycBadge.label}</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+          <p className="text-sm font-bold text-foreground dark:text-white">{kycBadge.label}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground dark:text-[#d2e9df]">
             {kycBadge.tone === 'ok'
               ? 'Tu cuenta ya está validada. Puedes operar normalmente en depósitos y retiros.'
               : kycBadge.tone === 'wait'
@@ -639,7 +665,7 @@ export default function DashboardClient({
           </p>
           <Link
             href={kycBadge.href}
-            className="mt-2 inline-block text-xs font-bold text-[#5f7168] underline-offset-4 hover:underline"
+            className="mt-2 inline-block text-xs font-bold text-[#5f7168] underline-offset-4 hover:underline dark:text-[#d2e9df]"
           >
             {kycBadge.action}
           </Link>

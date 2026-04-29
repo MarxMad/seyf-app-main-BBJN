@@ -198,30 +198,30 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
           </p>
         </div>
       ) : null}
-      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] px-4 py-4">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#9ec7b3]/20 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-[#b8b8b5]/20 blur-2xl" />
+      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] px-4 py-4 dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+        <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#9ec7b3]/20 blur-2xl dark:bg-[#6ba690]/25" />
+        <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-[#b8b8b5]/20 blur-2xl dark:bg-[#22433c]/45" />
         <div className="relative flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-xs font-black text-foreground ring-1 ring-[#b8b8b5]/40">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-xs font-black text-foreground ring-1 ring-[#b8b8b5]/40 dark:bg-white/15 dark:text-white dark:ring-white/20">
             {(wallet.email?.split('@')[0]?.slice(0, 2) ?? wallet.stellarAddress.slice(0, 2)).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-bold text-foreground">Tu perfil</h2>
-            <p className="truncate text-xs text-muted-foreground">Pollar · Stellar</p>
+            <h2 className="text-sm font-bold text-foreground dark:text-white">Tu perfil</h2>
+            <p className="truncate text-xs text-muted-foreground dark:text-[#d2e9df]">Pollar · Stellar</p>
           </div>
-          <p className="inline-flex items-center gap-1 rounded-full border border-[#9ec7b3]/35 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#4f6b5f]">
+          <p className="inline-flex items-center gap-1 rounded-full border border-[#9ec7b3]/35 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#4f6b5f] dark:border-white/20 dark:bg-white/15 dark:text-[#d2e9df]">
             <ShieldCheck className="size-3" />
             Activo
           </p>
         </div>
         <div className="relative mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Red</p>
-            <p className="mt-0.5 text-xs font-semibold text-foreground">{formatNetwork()}</p>
+          <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2 dark:border-white/20 dark:bg-white/10">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">Red</p>
+            <p className="mt-0.5 text-xs font-semibold text-foreground dark:text-white">{formatNetwork()}</p>
           </div>
-          <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Cuenta desde</p>
-            <p className="mt-0.5 truncate text-xs font-semibold text-foreground">{memberSince}</p>
+          <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2 dark:border-white/20 dark:bg-white/10">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">Cuenta desde</p>
+            <p className="mt-0.5 truncate text-xs font-semibold text-foreground dark:text-white">{memberSince}</p>
           </div>
         </div>
       </div>

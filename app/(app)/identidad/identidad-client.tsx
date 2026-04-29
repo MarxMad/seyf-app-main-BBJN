@@ -391,11 +391,11 @@ export default function IdentidadClient({
           </p>
         </div>
 
-        <div className="mb-6 rounded-[1.5rem] border border-amber-500/30 bg-amber-500/10 p-5">
+        <div className="mb-6 rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] p-5 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0f3b36] dark:via-[#15534a] dark:to-[#1b5b50]">
           <p className="text-sm font-bold text-amber-700 dark:text-amber-300">
             Estado actual: pendiente de aprobación
           </p>
-          <p className="mt-2 text-sm text-amber-700/90 dark:text-amber-300/90">
+          <p className="mt-2 text-sm text-[#4f6b5f] dark:text-[#d2e9df]">
             Etherfuse está validando tus datos. Esto puede tardar algunos minutos.
           </p>
         </div>
