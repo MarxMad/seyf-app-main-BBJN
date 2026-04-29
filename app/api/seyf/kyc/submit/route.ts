@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { submitEtherfuseKycIdentityData } from '@/lib/etherfuse/kyc'
 import { generateOnboardingPresignedUrlResolving409 } from '@/lib/etherfuse/onboarding'
+import { registerOrganizationWallet } from '@/lib/etherfuse/wallets'
 import {
   getEtherfuseOnboardingSession,
   resolveOnboardingIds,
@@ -98,6 +99,20 @@ export async function POST(req: Request) {
       bankAccountId: ids.bankAccountId,
       publicKey,
     })
+    // Always register the user's Pollar wallet at org level first.
+    // This keeps Wallets & Banks in Etherfuse aligned with real app users.
+    try {
+      await registerOrganizationWallet({
+        publicKey,
+        blockchain: 'stellar',
+        claimOwnership: true,
+      })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      const mapped = mapKycProviderSetupError(msg)
+      if (mapped) throw mapped
+      throw e
+    }
     // Ensure customer/bank-account context exists in Etherfuse before programmatic KYC submit.
     let resolved: { customerId: string; bankAccountId: string; presignedUrl: string }
     try {
