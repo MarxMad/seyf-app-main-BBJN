@@ -256,8 +256,12 @@ export default function IdentidadClient({
           },
           idNumbers: [
             {
-              type: String(fd.get('idType') ?? ''),
-              value: String(fd.get('idValue') ?? ''),
+              type: 'mx_curp',
+              value: String(fd.get('curp') ?? ''),
+            },
+            {
+              type: 'mx_rfc',
+              value: String(fd.get('rfc') ?? ''),
             },
           ],
         },
@@ -329,6 +333,49 @@ export default function IdentidadClient({
       }
 
       try {
+        const dobRaw = String(fd.get('dateOfBirth') ?? '').trim()
+        const birthDate = dobRaw.replaceAll('-', '')
+        const bankRes = await fetch('/api/seyf/etherfuse/bank-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            kind: 'personal',
+            account: {
+              firstName: String(fd.get('givenName') ?? '').trim(),
+              paternalLastName: String(fd.get('paternalLastName') ?? '').trim(),
+              maternalLastName: String(fd.get('maternalLastName') ?? '').trim(),
+              birthDate,
+              birthCountryIsoCode: String(fd.get('country') ?? 'MX').trim().toUpperCase(),
+              curp: String(fd.get('curp') ?? '').trim(),
+              rfc: String(fd.get('rfc') ?? '').trim(),
+              clabe: String(fd.get('clabe') ?? '').trim(),
+            },
+          }),
+        })
+        const bankJson = (await bankRes.json().catch(() => ({}))) as {
+          ok?: boolean
+          error?: { message_es?: string }
+          debug_message?: string
+        }
+        if (!bankRes.ok || !bankJson.ok) {
+          const detail = bankJson.debug_message
+          if (detail) setLastErrorDetail(detail)
+          setDocUploadError(
+            bankJson.error?.message_es ??
+              'No pudimos registrar tu cuenta bancaria para depósitos. Reintenta.',
+          )
+          return
+        }
+      } catch (bankErr) {
+        setDocUploadError(
+          bankErr instanceof Error
+            ? bankErr.message
+            : 'No pudimos registrar la cuenta bancaria.',
+        )
+        return
+      }
+
+      try {
         const agreementsRes = await fetch('/api/seyf/kyc/agreements', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -373,7 +420,7 @@ export default function IdentidadClient({
         return
       }
 
-      setSuccess(`Datos, documentos y acuerdos enviados. Estado actual: ${documentsStatus}.`)
+      setSuccess(`Datos, documentos, cuenta bancaria y acuerdos enviados. Estado actual: ${documentsStatus}.`)
       if (
         documentsStatus === 'proposed' ||
         documentsStatus === 'approved' ||
@@ -687,7 +734,23 @@ export default function IdentidadClient({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Input name="givenName" placeholder="Nombre(s)" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
-          <Input name="familyName" placeholder="Apellido(s)" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+          <Input name="familyName" placeholder="Apellido(s) completo" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input
+            name="paternalLastName"
+            placeholder="Apellido paterno"
+            required
+            className="h-12 rounded-xl"
+            disabled={!canSubmitForm}
+          />
+          <Input
+            name="maternalLastName"
+            placeholder="Apellido materno"
+            required
+            className="h-12 rounded-xl"
+            disabled={!canSubmitForm}
+          />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
@@ -738,9 +801,16 @@ export default function IdentidadClient({
           />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input name="idType" placeholder="Tipo de ID (RFC/CURP)" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
-          <Input name="idValue" placeholder="Número de ID" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+          <Input name="curp" placeholder="CURP" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
+          <Input name="rfc" placeholder="RFC" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
         </div>
+        <Input
+          name="clabe"
+          placeholder="CLABE (18 dígitos)"
+          required
+          className="h-12 rounded-xl"
+          disabled={!canSubmitForm}
+        />
         <section className="rounded-[1.25rem] border border-border bg-card/50 p-4">
           <p className="text-sm font-bold text-foreground">Documentos KYC</p>
           <p className="mt-1 text-xs text-muted-foreground">
