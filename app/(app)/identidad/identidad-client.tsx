@@ -239,6 +239,9 @@ export default function IdentidadClient({
       const payload = {
         publicKey: connectedPublicKey,
         identity: {
+          email: String(fd.get('email') ?? ''),
+          phoneNumber: String(fd.get('phoneNumber') ?? ''),
+          occupation: String(fd.get('occupation') ?? ''),
           name: {
             givenName: String(fd.get('givenName') ?? ''),
             familyName: String(fd.get('familyName') ?? ''),
@@ -325,7 +328,52 @@ export default function IdentidadClient({
         return
       }
 
-      setSuccess(`Datos y documentos enviados. Estado actual: ${documentsStatus}.`)
+      try {
+        const agreementsRes = await fetch('/api/seyf/kyc/agreements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerInfo: {
+              email: String(fd.get('email') ?? '') || undefined,
+              phone: String(fd.get('phoneNumber') ?? '') || undefined,
+              occupation: String(fd.get('occupation') ?? '') || undefined,
+              additionalInfo: {
+                curp:
+                  String(fd.get('idType') ?? '').trim().toLowerCase() === 'curp'
+                    ? String(fd.get('idValue') ?? '') || undefined
+                    : undefined,
+                rfc:
+                  String(fd.get('idType') ?? '').trim().toLowerCase() === 'rfc'
+                    ? String(fd.get('idValue') ?? '') || undefined
+                    : undefined,
+              },
+            },
+          }),
+        })
+        const agreementsJson = (await agreementsRes.json().catch(() => ({}))) as {
+          ok?: boolean
+          error?: { message_es?: string }
+          debug_message?: string
+        }
+        if (!agreementsRes.ok || !agreementsJson.ok) {
+          const detail = agreementsJson.debug_message
+          if (detail) setLastErrorDetail(detail)
+          setDocUploadError(
+            agreementsJson.error?.message_es ??
+              'No pudimos aceptar acuerdos legales de onboarding. Reintenta.',
+          )
+          return
+        }
+      } catch (agreementsErr) {
+        setDocUploadError(
+          agreementsErr instanceof Error
+            ? agreementsErr.message
+            : 'No pudimos completar acuerdos de onboarding.',
+        )
+        return
+      }
+
+      setSuccess(`Datos, documentos y acuerdos enviados. Estado actual: ${documentsStatus}.`)
       if (
         documentsStatus === 'proposed' ||
         documentsStatus === 'approved' ||
@@ -641,6 +689,30 @@ export default function IdentidadClient({
           <Input name="givenName" placeholder="Nombre(s)" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
           <Input name="familyName" placeholder="Apellido(s)" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
         </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input
+            name="email"
+            type="email"
+            placeholder="Correo electrónico"
+            required
+            className="h-12 rounded-xl"
+            disabled={!canSubmitForm}
+          />
+          <Input
+            name="phoneNumber"
+            placeholder="Teléfono (+52...)"
+            required
+            className="h-12 rounded-xl"
+            disabled={!canSubmitForm}
+          />
+        </div>
+        <Input
+          name="occupation"
+          placeholder="Ocupación"
+          required
+          className="h-12 rounded-xl"
+          disabled={!canSubmitForm}
+        />
         <Input
           name="dateOfBirth"
           type="date"

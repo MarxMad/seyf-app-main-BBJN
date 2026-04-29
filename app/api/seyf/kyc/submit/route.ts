@@ -21,6 +21,9 @@ const bodySchema = z.object({
   publicKey: z.string().trim().min(1),
   identity: z.object({
     id: z.string().trim().min(1).optional(),
+    email: z.string().trim().email().optional(),
+    phoneNumber: z.string().trim().min(5).optional(),
+    occupation: z.string().trim().min(2).optional(),
     name: z.object({
       givenName: z.string().trim().min(1),
       familyName: z.string().trim().min(1),
@@ -121,6 +124,13 @@ export async function POST(req: Request) {
       identity: {
         ...parsed.data.identity,
         id: parsed.data.identity.id?.trim() || publicKey,
+        ...(parsed.data.identity.email ? { email: parsed.data.identity.email.trim() } : {}),
+        ...(parsed.data.identity.phoneNumber
+          ? { phoneNumber: parsed.data.identity.phoneNumber.trim() }
+          : {}),
+        ...(parsed.data.identity.occupation
+          ? { occupation: parsed.data.identity.occupation.trim() }
+          : {}),
         idNumbers: parsed.data.identity.idNumbers.map((x) => ({
           id: x.id?.trim() || x.value.trim(),
           type: x.type.trim(),

@@ -4,6 +4,7 @@ import { fetchEtherfuseKycStatus } from "@/lib/etherfuse/kyc";
 import { etherfuseFetch, etherfuseReadBody } from "@/lib/etherfuse/client";
 import { resolveMvpPartnerCryptoWalletId } from "@/lib/etherfuse/partner-accounts";
 import { toErrorResponse } from "@/lib/seyf/api-error";
+import { getStoredAgreementsStatus } from "@/lib/seyf/agreements-state-store";
 import { getEtherfuseRampContext } from "@/lib/seyf/etherfuse-ramp-context";
 import { guardEtherfuseRampRoutes } from "@/lib/seyf/etherfuse-ramp-guard";
 
@@ -85,13 +86,30 @@ export async function GET() {
 
     let bankAccountReady = false;
     try {
-      const res = await etherfuseFetch("/ramp/bank-accounts", { method: "GET" });
-      const { json } = await etherfuseReadBody<{ items?: BankAccountRow[] }>(res);
+      const customerRes = await etherfuseFetch(
+        `/ramp/customer/${encodeURIComponent(ctx.customerId)}/bank-accounts`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pageSize: 30, pageNumber: 0 }),
+        },
+      );
+      const { json: customerJson } = await etherfuseReadBody<{ items?: BankAccountRow[] }>(
+        customerRes,
+      );
+      const customerItems = customerRes.ok ? customerJson?.items ?? [] : [];
+      const customerRow = customerItems.find((x) => pickBankAccountId(x) === ctx.bankAccountId);
+
+      const orgRes = await etherfuseFetch("/ramp/bank-accounts", { method: "GET" });
+      const { json } = await etherfuseReadBody<{ items?: BankAccountRow[] }>(orgRes);
       const row = (json?.items ?? []).find((x) => pickBankAccountId(x) === ctx.bankAccountId);
-      if (row) {
-        const active = (row.status ?? "").toLowerCase() === "active";
-        const compliant = row.compliant === true;
-        const deleted = row.deletedAt != null;
+      const effectiveRow = customerRow ?? row;
+      if (!effectiveRow) {
+        bankAccountReady = false;
+      } else {
+        const active = (effectiveRow.status ?? "").toLowerCase() === "active";
+        const compliant = effectiveRow.compliant === true;
+        const deleted = effectiveRow.deletedAt != null;
         bankAccountReady = active && compliant && !deleted;
       }
     } catch (e) {
@@ -103,6 +121,12 @@ export async function GET() {
     }
     if (!bankAccountReady) {
       reasons.push("Cuenta bancaria no activa/compliant para órdenes.");
+    }
+
+    const agreementsStatus = await getStoredAgreementsStatus(ctx.customerId, ctx.publicKey);
+    const agreementsAccepted = agreementsStatus?.accepted === true;
+    if (!agreementsAccepted) {
+      reasons.push("Falta aceptar acuerdos legales de onboarding.");
     }
 
     let trustlineReady = false;
@@ -123,7 +147,12 @@ export async function GET() {
     }
 
     const onrampEnabled =
-      walletRegistered && kycApproved && documentsUploaded && bankAccountReady && trustlineReady;
+      walletRegistered &&
+      kycApproved &&
+      documentsUploaded &&
+      agreementsAccepted &&
+      bankAccountReady &&
+      trustlineReady;
 
     return NextResponse.json({
       contextReady: true,
@@ -136,6 +165,7 @@ export async function GET() {
       kycStatus,
       kycApproved,
       documentsUploaded,
+      agreementsAccepted,
       bankAccountReady,
       trustlineReady,
       onrampEnabled,

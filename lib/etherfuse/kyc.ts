@@ -40,6 +40,9 @@ type KycApiBody = {
 
 export type EtherfuseKycSubmitIdentity = {
   id: string;
+  email?: string;
+  phoneNumber?: string;
+  occupation?: string;
   name: { givenName: string; familyName: string };
   dateOfBirth: string;
   address: {
