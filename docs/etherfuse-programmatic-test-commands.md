@@ -228,3 +228,19 @@ Acción:
 
 Usar `reasons[]` del endpoint readiness como checklist exacto de bloqueo.
 
+---
+
+## 8) Consultar saldo MXN normalizado (ledger)
+
+```bash
+curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+  "$BASE_URL/api/seyf/ledger/mxn" | python3 -m json.tool
+```
+
+Campos clave:
+
+- `balances.mxn_available`
+- `balances.mxn_blocked`
+- `balances.mxn_settling`
+- `balances.advance_outstanding_mxn`
+- `constraints.mxn_spendable`
