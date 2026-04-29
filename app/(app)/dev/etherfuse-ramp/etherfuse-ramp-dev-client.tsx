@@ -26,6 +26,11 @@ type RampContextPayload = {
   kycReason: string | null
 }
 
+type ReadinessPayload = {
+  onrampEnabled: boolean
+  reasons: string[]
+}
+
 export default function EtherfuseRampDevClient() {
   const [busy, setBusy] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -37,6 +42,7 @@ export default function EtherfuseRampDevClient() {
   const [pendingManualOrderJson, setPendingManualOrderJson] = useState<string | null>(null)
   const [kycGate, setKycGate] = useState<RampContextPayload | null>(null)
   const [kycLoading, setKycLoading] = useState(true)
+  const [readiness, setReadiness] = useState<ReadinessPayload | null>(null)
 
   const run = useCallback(async (label: string, fn: () => Promise<void>) => {
     setErr(null)
@@ -76,6 +82,25 @@ export default function EtherfuseRampDevClient() {
       })
       .finally(() => {
         if (!cancelled) setKycLoading(false)
+      })
+    fetch('/api/seyf/etherfuse/readiness')
+      .then(async (r) => {
+        const j = (await r.json().catch(() => ({}))) as Partial<ReadinessPayload> & { error?: string }
+        if (!r.ok) {
+          throw new Error(typeof j.error === 'string' ? j.error : `HTTP ${r.status}`)
+        }
+        if (cancelled) return
+        setReadiness({
+          onrampEnabled: j.onrampEnabled === true,
+          reasons: Array.isArray(j.reasons) ? j.reasons.filter((x): x is string => typeof x === 'string') : [],
+        })
+      })
+      .catch((e) => {
+        if (cancelled) return
+        setReadiness({
+          onrampEnabled: false,
+          reasons: [e instanceof Error ? e.message : 'No pudimos calcular readiness.'],
+        })
       })
     return () => {
       cancelled = true
@@ -220,7 +245,9 @@ export default function EtherfuseRampDevClient() {
   }, [speiDetails, pendingManualOrderJson, performFiatSimulation, run])
 
   const speiConfirmBusy = busy === 'spei-manual-confirm'
-  const canOperate = !kycLoading && kycGate?.kycApproved === true
+  const kycBypassForTesting = process.env.NODE_ENV !== 'production'
+  const canOperate =
+    kycBypassForTesting || (readiness?.onrampEnabled === true) || (!kycLoading && kycGate?.kycApproved === true)
 
   const onrampTxSignature = useMemo(
     () => extractConfirmedTxSignatureFromOnrampPanelJson(fiatJson),
@@ -273,6 +300,13 @@ export default function EtherfuseRampDevClient() {
               : kycGate?.kycReason ??
                 'Necesitas aprobar KYC para generar CLABE y recibir tus datos de deposito.'}
           </p>
+          {readiness?.reasons?.length ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+              {readiness.reasons.slice(0, 3).map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          ) : null}
           <Link href="/identidad" className="mt-3 inline-block text-sm font-semibold text-foreground underline">
             Ir a verificar identidad
           </Link>
