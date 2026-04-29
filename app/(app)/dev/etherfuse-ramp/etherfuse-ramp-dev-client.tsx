@@ -267,6 +267,17 @@ export default function EtherfuseRampDevClient() {
     return `${base}${encodeURIComponent(onrampTxSignature)}`
   }, [onrampTxSignature])
 
+  const timeline = useMemo(() => {
+    const generated = Boolean(speiDetails)
+    const transferConfirmed = Boolean(fiatJson)
+    const accredited = Boolean(onrampTxSignature)
+    return [
+      { label: 'Datos SPEI generados', done: generated },
+      { label: 'Transferencia detectada', done: transferConfirmed },
+      { label: 'Conversión y acreditación', done: accredited },
+    ]
+  }, [speiDetails, fiatJson, onrampTxSignature])
+
   return (
     <AppPageBody className="space-y-6 pt-4">
       <AppBackLink href="/dashboard" />
@@ -291,9 +302,27 @@ export default function EtherfuseRampDevClient() {
         details={speiDetails}
         concept={speiDetails?.orderId ?? null}
       />
+      <section className="rounded-[1.25rem] border border-border bg-card/60 p-4">
+        <p className="text-sm font-bold text-foreground">Estado del depósito</p>
+        <div className="mt-3 space-y-2">
+          {timeline.map((step) => (
+            <div key={step.label} className="flex items-center justify-between rounded-lg border border-border/70 px-3 py-2">
+              <span className="text-sm text-foreground">{step.label}</span>
+              <span
+                className={cn(
+                  'text-xs font-semibold',
+                  step.done ? 'text-emerald-500' : 'text-muted-foreground',
+                )}
+              >
+                {step.done ? 'Completado' : 'Pendiente'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
       {!canOperate ? (
         <section className="rounded-[1.25rem] border border-amber-500/30 bg-amber-500/[0.08] p-4">
-          <p className="text-sm font-bold text-foreground">Verificacion requerida</p>
+          <p className="text-sm font-bold text-foreground">Verificación requerida</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {kycLoading
               ? 'Validando estado KYC...'
@@ -345,9 +374,9 @@ export default function EtherfuseRampDevClient() {
           id="manual-asset"
           value={targetOverride}
           onChange={(e) => setTargetOverride(e.target.value)}
-          placeholder="Opcional"
+          placeholder="Referencia opcional"
           className="h-12 rounded-xl border-border bg-background px-4 font-mono text-xs"
-          aria-label="Opcional avanzado"
+          aria-label="Referencia opcional"
         />
         <Button
           type="button"
@@ -374,7 +403,7 @@ export default function EtherfuseRampDevClient() {
 
       {onrampTxSignature && stellarTxExplorerUrl ? (
         <div className="rounded-[1.5rem] border border-border bg-card p-4">
-          <p className="text-sm font-bold text-foreground">Comprobante</p>
+          <p className="text-sm font-bold text-foreground">Comprobante de acreditación</p>
           <p className="mt-2 break-all font-mono text-xs text-muted-foreground">{onrampTxSignature}</p>
           <a
             href={stellarTxExplorerUrl}
