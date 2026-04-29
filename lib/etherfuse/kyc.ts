@@ -23,6 +23,8 @@ export type EtherfuseKycSnapshot = {
   approvedAt: string | null;
   currentRejectionReason: string | null;
   verifiedProfile: EtherfuseKycVerifiedProfile | null;
+  documentsCount: number;
+  selfiesCount: number;
 };
 
 type KycApiBody = {
@@ -32,6 +34,8 @@ type KycApiBody = {
   approvedAt?: string | null;
   currentRejectionReason?: string | null;
   currentKycInfo?: unknown;
+  documents?: unknown;
+  selfies?: unknown;
 };
 
 export type EtherfuseKycSubmitIdentity = {
@@ -46,6 +50,13 @@ export type EtherfuseKycSubmitIdentity = {
     country: string;
   };
   idNumbers: Array<{ id: string; value?: string; type: string }>;
+};
+
+export type EtherfuseKycDocumentType = "document" | "selfie";
+
+export type EtherfuseKycDocumentImage = {
+  label: string;
+  image: string; // data URL
 };
 
 function parseVerifiedProfileFromKycJson(
@@ -146,6 +157,8 @@ export async function fetchEtherfuseKycStatus(
           ? null
           : String(json.currentRejectionReason),
       verifiedProfile: parseVerifiedProfileFromKycJson(asRecord),
+      documentsCount: Array.isArray(asRecord.documents) ? asRecord.documents.length : 0,
+      selfiesCount: Array.isArray(asRecord.selfies) ? asRecord.selfies.length : 0,
     },
   };
 }
@@ -183,6 +196,48 @@ export async function submitEtherfuseKycIdentityData(params: {
   const statusRaw = json.status;
   if (typeof statusRaw !== "string" || !isKycStatus(statusRaw)) {
     throw new Error(`Etherfuse KYC submit devolvió status inválido: ${text.slice(0, 400)}`);
+  }
+  return {
+    status: statusRaw,
+    message: typeof json.message === "string" ? json.message : null,
+  };
+}
+
+/**
+ * POST /ramp/customer/{customer_id}/kyc/documents
+ * @see https://docs.etherfuse.com/api-reference/kyc/upload-kyc-documents
+ */
+export async function uploadEtherfuseKycDocuments(params: {
+  customerId: string;
+  pubkey?: string;
+  documentType: EtherfuseKycDocumentType;
+  images: EtherfuseKycDocumentImage[];
+}): Promise<{ status: EtherfuseKycStatus; message: string | null }> {
+  const path = `/ramp/customer/${encodeURIComponent(params.customerId)}/kyc/documents`;
+  const body = {
+    ...(params.pubkey ? { pubkey: params.pubkey } : {}),
+    documentType: params.documentType,
+    images: params.images,
+  };
+  const res = await etherfuseFetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    retryable: false,
+  });
+  const { json, text } = await etherfuseReadBody<{
+    status?: string;
+    message?: string;
+  }>(res);
+
+  if (!json || typeof json !== "object") {
+    throw new Error(
+      `Etherfuse KYC documents respondió sin JSON (${res.status}): ${text.slice(0, 400)}`,
+    );
+  }
+  const statusRaw = json.status;
+  if (typeof statusRaw !== "string" || !isKycStatus(statusRaw)) {
+    throw new Error(`Etherfuse KYC documents devolvió status inválido: ${text.slice(0, 400)}`);
   }
   return {
     status: statusRaw,

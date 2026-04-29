@@ -11,8 +11,33 @@ import type { EtherfuseOnboardingSession } from '@/lib/etherfuse/onboarding-sess
 import { resetKycTestSession } from './actions'
 import { cn } from '@/lib/utils'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
+import { useEnsureCetesTrustline } from '@/lib/seyf/use-ensure-cetes-trustline'
 
 const KYC_PENDING_UI_KEY = 'seyf_kyc_pending_ui'
+const MAX_FILE_BYTES = 10 * 1024 * 1024
+
+async function fileToDataUrl(file: File): Promise<string> {
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('No pudimos leer el archivo.'))
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        reject(new Error('No pudimos convertir el archivo.'))
+        return
+      }
+      resolve(reader.result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function validateImageFile(file: File | null, label: string): string | null {
+  if (!file) return `${label} es requerido.`
+  const allowed = ['image/jpeg', 'image/png']
+  if (!allowed.includes(file.type)) return `${label} debe ser JPG o PNG.`
+  if (file.size > MAX_FILE_BYTES) return `${label} excede 10MB.`
+  return null
+}
 
 function DevKycResetPanel({
   onAfterReset,
@@ -113,11 +138,14 @@ export default function IdentidadClient({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [lastErrorDetail, setLastErrorDetail] = useState<string | null>(null)
+  const [docUploadError, setDocUploadError] = useState<string | null>(null)
   const [kycState, setKycState] = useState<EtherfuseKycSnapshot | null>(initialKyc)
   const [pendingConfirmation, setPendingConfirmation] = useState(initialKyc?.status === 'proposed')
   const [pending, startTransition] = useTransition()
   const [refreshing, setRefreshing] = useState(false)
   const { wallet, loading, connect } = useSeyfWallet()
+  const { ensure: ensureCetesTrustline, busy: trustlineBusy } = useEnsureCetesTrustline()
+  const [trustlineStatus, setTrustlineStatus] = useState<'idle' | 'done' | 'error'>('idle')
 
   const approved =
     kycState?.status === 'approved' || kycState?.status === 'approved_chain_deploying'
@@ -140,6 +168,14 @@ export default function IdentidadClient({
       // noop
     }
   }, [])
+
+  useEffect(() => {
+    if (!approved || trustlineStatus !== 'idle') return
+    void ensureCetesTrustline().then((r) => {
+      setTrustlineStatus(r.ok ? 'done' : 'error')
+      if (!r.ok) console.warn('[identidad] trustline CETES:', r.error)
+    })
+  }, [approved, trustlineStatus, ensureCetesTrustline])
 
   const runRefresh = useCallback(
     async (origin: 'submit' | 'button' | 'reset') => {
@@ -179,6 +215,7 @@ export default function IdentidadClient({
     setError(null)
     setSuccess(null)
     setLastErrorDetail(null)
+    setDocUploadError(null)
     startTransition(async () => {
       const connectedPublicKey = wallet?.publicKey?.trim() ?? ''
       if (!connectedPublicKey) {
@@ -186,6 +223,19 @@ export default function IdentidadClient({
         return
       }
       const fd = new FormData(e.currentTarget as HTMLFormElement)
+      const idFrontFile = (fd.get('idFront') as File | null) ?? null
+      const idBackFile = (fd.get('idBack') as File | null) ?? null
+      const selfieFile = (fd.get('selfie') as File | null) ?? null
+
+      const frontErr = validateImageFile(idFrontFile, 'Frente de identificación')
+      const backErr = validateImageFile(idBackFile, 'Reverso de identificación')
+      const selfieErr = validateImageFile(selfieFile, 'Selfie')
+      const validationErr = frontErr ?? backErr ?? selfieErr
+      if (validationErr) {
+        setDocUploadError(validationErr)
+        return
+      }
+
       const payload = {
         publicKey: connectedPublicKey,
         identity: {
@@ -231,9 +281,58 @@ export default function IdentidadClient({
         setError(json && 'error' in json && json.error?.message_es ? json.error.message_es : 'Error al enviar KYC.')
         return
       }
-      setSuccess(`Datos enviados. Estado actual: ${json.status}.`)
-      if (json.status === 'proposed' || json.status === 'approved' || json.status === 'approved_chain_deploying' || json.status === 'rejected') {
-        if (json.status === 'proposed') {
+      let documentsStatus = json.status
+      try {
+        const [idFront, idBack, selfie] = await Promise.all([
+          fileToDataUrl(idFrontFile as File),
+          fileToDataUrl(idBackFile as File),
+          fileToDataUrl(selfieFile as File),
+        ])
+        const docsRes = await fetch('/api/seyf/kyc/documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            publicKey: connectedPublicKey,
+            document: {
+              idFront: { label: 'id_front', image: idFront },
+              idBack: { label: 'id_back', image: idBack },
+            },
+            selfie: { label: 'selfie', image: selfie },
+          }),
+        })
+        const docsJson = (await docsRes.json().catch(() => ({}))) as {
+          ok?: boolean
+          status?: string
+          error?: { message_es?: string }
+          debug_message?: string
+        }
+        if (!docsRes.ok || !docsJson.ok) {
+          const detail = docsJson.debug_message
+          if (detail) setLastErrorDetail(detail)
+          setDocUploadError(
+            docsJson.error?.message_es ??
+              'No pudimos subir tus documentos. Reintenta con imágenes claras.',
+          )
+          return
+        }
+        if (docsJson.status) documentsStatus = docsJson.status
+      } catch (uploadErr) {
+        setDocUploadError(
+          uploadErr instanceof Error
+            ? uploadErr.message
+            : 'No pudimos procesar tus imágenes para KYC.',
+        )
+        return
+      }
+
+      setSuccess(`Datos y documentos enviados. Estado actual: ${documentsStatus}.`)
+      if (
+        documentsStatus === 'proposed' ||
+        documentsStatus === 'approved' ||
+        documentsStatus === 'approved_chain_deploying' ||
+        documentsStatus === 'rejected'
+      ) {
+        if (documentsStatus === 'proposed') {
           setPendingConfirmation(true)
           try {
             window.sessionStorage.setItem(KYC_PENDING_UI_KEY, '1')
@@ -241,7 +340,11 @@ export default function IdentidadClient({
             // noop
           }
         }
-        if (json.status === 'approved' || json.status === 'approved_chain_deploying' || json.status === 'rejected') {
+        if (
+          documentsStatus === 'approved' ||
+          documentsStatus === 'approved_chain_deploying' ||
+          documentsStatus === 'rejected'
+        ) {
           setPendingConfirmation(false)
           try {
             window.sessionStorage.removeItem(KYC_PENDING_UI_KEY)
@@ -251,14 +354,16 @@ export default function IdentidadClient({
         }
         setKycState((prev) =>
           prev
-            ? { ...prev, status: json.status }
+            ? { ...prev, status: documentsStatus as EtherfuseKycSnapshot['status'] }
             : {
                 customerId: '',
                 walletPublicKey: connectedPublicKey,
-                status: json.status,
+                status: documentsStatus as EtherfuseKycSnapshot['status'],
                 approvedAt: null,
                 currentRejectionReason: null,
                 verifiedProfile: null,
+                documentsCount: 0,
+                selfiesCount: 0,
               },
         )
       }
@@ -333,6 +438,20 @@ export default function IdentidadClient({
             </p>
           )}
         </div>
+
+        {trustlineBusy && (
+          <div className="mb-4 rounded-[1.5rem] border border-blue-500/20 bg-blue-500/[0.07] p-4">
+            <p className="text-sm text-muted-foreground">Configurando activos en tu wallet…</p>
+          </div>
+        )}
+        {trustlineStatus === 'error' && (
+          <div className="mb-4 rounded-[1.5rem] border border-amber-500/20 bg-amber-500/[0.07] p-4">
+            <p className="text-sm text-muted-foreground">
+              No se pudo agregar CETES a tu wallet automaticamente.
+              Puedes hacerlo manualmente desde la configuracion de tu wallet.
+            </p>
+          </div>
+        )}
 
         <div className="mb-8 rounded-[1.5rem] border border-emerald-500/20 bg-emerald-500/[0.07] p-5">
           <p className="text-sm leading-relaxed text-muted-foreground">
@@ -550,6 +669,41 @@ export default function IdentidadClient({
           <Input name="idType" placeholder="Tipo de ID (RFC/CURP)" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
           <Input name="idValue" placeholder="Número de ID" required className="h-12 rounded-xl" disabled={!canSubmitForm} />
         </div>
+        <section className="rounded-[1.25rem] border border-border bg-card/50 p-4">
+          <p className="text-sm font-bold text-foreground">Documentos KYC</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sube imágenes claras (JPG/PNG, máximo 10MB): frente, reverso y selfie.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <Input
+              name="idFront"
+              type="file"
+              accept="image/jpeg,image/png"
+              required
+              className="h-12 rounded-xl"
+              disabled={!canSubmitForm}
+              aria-label="Frente de identificación"
+            />
+            <Input
+              name="idBack"
+              type="file"
+              accept="image/jpeg,image/png"
+              required
+              className="h-12 rounded-xl"
+              disabled={!canSubmitForm}
+              aria-label="Reverso de identificación"
+            />
+            <Input
+              name="selfie"
+              type="file"
+              accept="image/jpeg,image/png"
+              required
+              className="h-12 rounded-xl"
+              disabled={!canSubmitForm}
+              aria-label="Selfie"
+            />
+          </div>
+        </section>
 
         {error && (
           <section className="rounded-[1.25rem] border border-destructive/30 bg-destructive/10 px-4 py-4">
@@ -560,6 +714,12 @@ export default function IdentidadClient({
                 Detalle técnico: {lastErrorDetail}
               </p>
             ) : null}
+          </section>
+        )}
+        {docUploadError && (
+          <section className="rounded-[1.25rem] border border-destructive/30 bg-destructive/10 px-4 py-4">
+            <p className="text-sm font-semibold text-destructive">No pudimos subir tus documentos</p>
+            <p className="mt-1 text-sm text-destructive">{docUploadError}</p>
           </section>
         )}
         {success && (

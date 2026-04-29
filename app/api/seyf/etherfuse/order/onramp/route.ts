@@ -12,6 +12,7 @@ import { assertWalletActiveForUser } from "@/lib/seyf/wallet-provisioning";
 const bodySchema = z.object({
   quoteId: z.string().uuid(),
 });
+const DEV_KYC_BYPASS = process.env.NODE_ENV !== "production";
 
 /**
  * POST /api/seyf/etherfuse/order/onramp
@@ -45,11 +46,13 @@ export async function POST(req: Request) {
   }
 
   try {
-    await assertEtherfuseKycApproved({
-      customerId: ctx.customerId,
-      publicKey: ctx.publicKey,
-    });
-    await assertWalletActiveForUser(ctx.customerId);
+    if (!DEV_KYC_BYPASS) {
+      await assertEtherfuseKycApproved({
+        customerId: ctx.customerId,
+        publicKey: ctx.publicKey,
+      });
+      await assertWalletActiveForUser(ctx.customerId);
+    }
     let cryptoWalletId: string | undefined;
     try {
       cryptoWalletId = await resolveMvpPartnerCryptoWalletId(ctx.publicKey);

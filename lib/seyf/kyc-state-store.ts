@@ -46,6 +46,8 @@ function rowToSnapshot(row: KycStateRow): EtherfuseKycSnapshot {
     approvedAt: row.approvedAt,
     currentRejectionReason: row.currentRejectionReason,
     verifiedProfile: null,
+    documentsCount: 0,
+    selfiesCount: 0,
   }
 }
 
