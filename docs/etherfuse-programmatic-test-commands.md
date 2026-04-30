@@ -177,7 +177,51 @@ Esperado para habilitar onramp:
 
 ---
 
-## 7) Validar bank account ACTIVE (crítico)
+## 7) Caso bloqueado (KYC no aprobado)
+
+Para validar el gate de #60, intenta cotizar sin KYC aprobado:
+
+```bash
+curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+  -H "Content-Type: application/json" \
+  -X POST "$BASE_URL/api/seyf/etherfuse/quote/onramp" \
+  --data '{"sourceAmount":"500"}' | python3 -m json.tool
+```
+
+Esperado:
+
+- HTTP `403`
+- shape de error Seyf (`code: validation_error`)
+- mensaje en español indicando que debes completar `/identidad`
+
+También debe bloquear:
+
+- `POST /api/seyf/etherfuse/order/onramp`
+- `POST /api/seyf/etherfuse/quote/offramp`
+- `POST /api/seyf/etherfuse/order/offramp`
+- `POST /api/seyf/etherfuse/bank-account`
+
+---
+
+## 8) Caso aprobado (KYC sí habilita rutas)
+
+Con KYC `approved` y readiness en verde:
+
+```bash
+curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+  -H "Content-Type: application/json" \
+  -X POST "$BASE_URL/api/seyf/etherfuse/quote/onramp" \
+  --data '{"sourceAmount":"500"}' | python3 -m json.tool
+```
+
+Esperado:
+
+- HTTP `200`
+- respuesta con `quote`
+
+---
+
+## 9) Validar bank account ACTIVE (crítico)
 
 Aunque KYC/docs/agreements estén aprobados, `order/onramp` puede fallar si la cuenta está `pending`.
 
@@ -230,7 +274,7 @@ Usar `reasons[]` del endpoint readiness como checklist exacto de bloqueo.
 
 ---
 
-## 8) Consultar saldo MXN normalizado (ledger)
+## 10) Consultar saldo MXN normalizado (ledger)
 
 ```bash
 curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
