@@ -1,7 +1,10 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import useSWR from 'swr'
+import { animate, useMotionValue, useReducedMotion } from 'framer-motion'
 import { ChevronRight, Eye, EyeOff, TrendingUp, Wallet, Zap } from 'lucide-react'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -13,37 +16,16 @@ import { balanceForAssetCode } from '@/lib/seyf/accesly-balances'
 import { cetesBalanceEquivMxne } from '@/lib/seyf/cetes-mxne-equiv'
 import { cetesStablebondDisplayFromRow } from '@/lib/seyf/stablebond-cetes-display'
 import type { EtherfuseStablebondInfo } from '@/lib/etherfuse/stablebonds-lookup'
-import {
-  DASHBOARD_POLL_EXTRA_DELAYS_MS,
-  DASHBOARD_POLL_MS,
-} from '@/lib/seyf/balance-poll-intervals'
-import { POLL_FETCH_INIT, pollBustUrl } from '@/lib/seyf/poll-fetch'
+import { DASHBOARD_POLL_EXTRA_DELAYS_MS } from '@/lib/seyf/balance-poll-intervals'
+import { POLL_FETCH_INIT } from '@/lib/seyf/poll-fetch'
 import {
   DASHBOARD_MOVEMENTS_PREVIEW_LIMIT,
   type DashboardViewModel,
 } from '@/lib/seyf/dashboard-view-model-types'
 import { formatMovementListSubtitle, type UserMovement } from '@/lib/seyf/user-movements-types'
+import { formatMXN, formatLoUltimoMonto } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
-
-function formatMXNFull(amount: number) {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    minimumFractionDigits: 2,
-  }).format(amount)
-}
-
-/** Fila «Lo último»: MXN vs cantidad on-chain. */
-function formatLoUltimoMonto(mov: UserMovement): string {
-  const code = mov.chainAssetCode?.trim()
-  const sign = mov.monto < 0 ? '− ' : mov.monto > 0 ? '+' : ''
-  if (code) {
-    const abs = Math.abs(mov.monto)
-    const n = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 7 }).format(abs)
-    return `${sign}${n} ${code}`
-  }
-  return `${sign}${formatMXNFull(Math.abs(mov.monto))}`
-}
+import type { EtherfuseKycSnapshot } from '@/lib/etherfuse/kyc'
 
 function formatMontoOculto() {
   return '••••'
@@ -58,14 +40,42 @@ function movementEstadoBadgeClass(estado: UserMovement['estado']): string {
 function formatMovementMeta(mov: UserMovement): string {
   const d = new Date(mov.createdAt)
   const hora = d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
-  const red =
-    mov.source === 'stellar'
-      ? mov.stellarNetwork === 'mainnet'
-        ? 'Mainnet'
-        : 'Testnet'
-      : null
-  return [hora, red].filter(Boolean).join(' · ')
+  return hora
 }
+
+function RendimientoCounter({ value }: { value: number }) {
+  const shouldReduce = useReducedMotion()
+  const motionVal = useMotionValue(value)
+  const [display, setDisplay] = useState(() => formatMXN(value))
+
+  useEffect(() => {
+    if (shouldReduce) {
+      setDisplay(formatMXN(value))
+      return
+    }
+    const controls = animate(motionVal, value, {
+      duration: 0.8,
+      ease: 'easeOut',
+      onUpdate: (v) => setDisplay(formatMXN(v)),
+    })
+    return controls.stop
+  }, [value, shouldReduce, motionVal])
+
+  return <>{display}</>
+}
+
+const dashboardFetcher = (url: string): Promise<DashboardViewModel> =>
+  fetch(url, POLL_FETCH_INIT).then((r) => {
+    if (!r.ok) throw new Error(`${r.status}`)
+    return r.json() as Promise<DashboardViewModel>
+  })
+
+const kycStatusFetcher = (url: string): Promise<EtherfuseKycSnapshot | null> =>
+  fetch(url, POLL_FETCH_INIT).then(async (r) => {
+    if (!r.ok) throw new Error(`${r.status}`)
+    const body = (await r.json()) as { kyc?: EtherfuseKycSnapshot | null }
+    return body.kyc ?? null
+  })
 
 export default function DashboardClient({
   showEtherfuseRampDev = false,
@@ -76,7 +86,6 @@ export default function DashboardClient({
 }) {
   const { wallet, assetBalances, loading, refreshBalance } = useSeyfWallet()
   const [selected, setSelected] = useState<UserMovement | null>(null)
-  const [liveVm, setLiveVm] = useState(vm)
   const [hideBalances, setHideBalances] = useState(false)
   const [lastUpdateAt, setLastUpdateAt] = useState<Date>(new Date())
   const [stablebondCetes, setStablebondCetes] = useState<{
@@ -87,10 +96,75 @@ export default function DashboardClient({
   }>({ loading: false, annualPercent: null, priceMx: null })
   const [stellarMovements, setStellarMovements] = useState<UserMovement[]>([])
 
+  const { data = vm, error, mutate } = useSWR<DashboardViewModel>(
+    '/api/seyf/dashboard',
+    dashboardFetcher,
+    {
+      fallbackData: vm,
+      refreshInterval: 60_000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2_000,
+      onSuccess: () => setLastUpdateAt(new Date()),
+    },
+  )
+  const { data: kycStatus } = useSWR<EtherfuseKycSnapshot | null>(
+    '/api/seyf/kyc/status',
+    kycStatusFetcher,
+    {
+      refreshInterval: 45_000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2_000,
+    },
+  )
+
+  // Push updated SSR prop into SWR cache on navigation (vm prop identity change).
+  const prevVmRef = useRef(vm)
   useEffect(() => {
-    setLiveVm(vm)
+    if (vm === prevVmRef.current) return
+    prevVmRef.current = vm
+    void mutate(vm, { revalidate: false })
     setLastUpdateAt(new Date())
-  }, [vm])
+  }, [vm, mutate])
+
+  // Burst revalidations after mount to catch slow Etherfuse propagation.
+  useEffect(() => {
+    const timers = DASHBOARD_POLL_EXTRA_DELAYS_MS.map((ms) =>
+      setTimeout(() => void mutate(), ms),
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [mutate])
+
+  const activeCycle = data.principalMxn > 0
+  const kycBadge =
+    kycStatus?.status === 'approved' || kycStatus?.status === 'approved_chain_deploying'
+      ? {
+          label: 'Identidad verificada',
+          tone: 'ok' as const,
+          href: '/identidad',
+          action: 'Ver estado',
+        }
+      : kycStatus?.status === 'proposed'
+        ? {
+            label: 'Pendiente de verificación',
+            tone: 'wait' as const,
+            href: '/identidad',
+            action: 'Actualizar estado',
+          }
+        : kycStatus?.status === 'rejected'
+          ? {
+              label: 'Verificación fallida',
+              tone: 'bad' as const,
+              href: '/identidad',
+              action: 'Corregir datos',
+            }
+          : {
+              label: 'Verificación pendiente',
+              tone: 'muted' as const,
+              href: '/identidad',
+              action: 'Verificar ahora',
+            }
 
   useEffect(() => {
     try {
@@ -105,50 +179,36 @@ export default function DashboardClient({
 
   useEffect(() => {
     if (!wallet) {
-      setStablebondCetes({
-        loading: false,
-        annualPercent: null,
-        priceMx: null,
-      })
+      setStablebondCetes({ loading: false, annualPercent: null, priceMx: null })
       return
     }
     let cancelled = false
     setStablebondCetes((s) => ({ ...s, loading: true }))
     void fetch('/api/seyf/etherfuse/lookup/stablebonds?cetesOnly=1')
       .then(async (r) => {
-        const data = (await r.json().catch(() => ({}))) as {
+        const payload = (await r.json().catch(() => ({}))) as {
           cetes?: EtherfuseStablebondInfo | null
           calculatedAt?: string
           error?: string
         }
         if (cancelled) return
         if (!r.ok) {
-          setStablebondCetes({
-            loading: false,
-            annualPercent: null,
-            priceMx: null,
-          })
+          setStablebondCetes({ loading: false, annualPercent: null, priceMx: null })
           return
         }
-        const parsed = cetesStablebondDisplayFromRow(data.cetes ?? null)
+        const parsed = cetesStablebondDisplayFromRow(payload.cetes ?? null)
         setStablebondCetes({
           loading: false,
           annualPercent: parsed.annualPercent,
           priceMx: parsed.priceMx,
-          calculatedAt: data.calculatedAt,
+          calculatedAt: payload.calculatedAt,
         })
       })
       .catch(() => {
         if (cancelled) return
-        setStablebondCetes({
-          loading: false,
-          annualPercent: null,
-          priceMx: null,
-        })
+        setStablebondCetes({ loading: false, annualPercent: null, priceMx: null })
       })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [wallet?.stellarAddress])
 
   useEffect(() => {
@@ -161,9 +221,9 @@ export default function DashboardClient({
     void fetch(`/api/seyf/stellar-movements?account=${encodeURIComponent(addr)}`)
       .then(async (r) => {
         if (!r.ok) return [] as UserMovement[]
-        const data = (await r.json()) as unknown
-        if (!Array.isArray(data)) return []
-        return data as UserMovement[]
+        const rows = (await r.json()) as unknown
+        if (!Array.isArray(rows)) return []
+        return rows as UserMovement[]
       })
       .then((rows) => {
         if (!cancelled) setStellarMovements(rows)
@@ -171,68 +231,26 @@ export default function DashboardClient({
       .catch(() => {
         if (!cancelled) setStellarMovements([])
       })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [wallet?.stellarAddress])
+
+  const baseMovements = Array.isArray(data.movementsRecent) ? data.movementsRecent : []
 
   const loUltimoMovements = useMemo(() => {
     const byId = new Map<string, UserMovement>()
-    for (const m of liveVm.movementsRecent) byId.set(m.id, m)
+    for (const m of baseMovements) byId.set(m.id, m)
     for (const m of stellarMovements) byId.set(m.id, m)
     const merged = [...byId.values()].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
     return merged.slice(0, DASHBOARD_MOVEMENTS_PREVIEW_LIMIT)
-  }, [liveVm.movementsRecent, stellarMovements])
-
-  const refreshDashboard = useCallback(async () => {
-    try {
-      const r = await fetch(pollBustUrl('/api/seyf/dashboard'), POLL_FETCH_INIT)
-      if (!r.ok) return
-      const next = (await r.json()) as DashboardViewModel
-      setLiveVm(next)
-      setLastUpdateAt(new Date())
-    } catch {
-      /* mantener último valor válido */
-    }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    const tick = () => {
-      if (cancelled) return
-      if (document.visibilityState !== 'visible') return
-      void refreshDashboard()
-    }
-    tick()
-    const extraTimers = DASHBOARD_POLL_EXTRA_DELAYS_MS.map((ms) => setTimeout(tick, ms))
-    const id = setInterval(tick, DASHBOARD_POLL_MS)
-    const onVis = () => {
-      if (document.visibilityState === 'visible') tick()
-    }
-    const onFocus = () => tick()
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) tick()
-    }
-    document.addEventListener('visibilitychange', onVis)
-    window.addEventListener('focus', onFocus)
-    window.addEventListener('pageshow', onPageShow)
-    return () => {
-      cancelled = true
-      for (const t of extraTimers) clearTimeout(t)
-      clearInterval(id)
-      document.removeEventListener('visibilitychange', onVis)
-      window.removeEventListener('focus', onFocus)
-      window.removeEventListener('pageshow', onPageShow)
-    }
-  }, [refreshDashboard])
+  }, [baseMovements, stellarMovements])
 
   useEffect(() => {
     if (!selected) return
-    const next = liveVm.movementsRecent.find((m) => m.id === selected.id)
+    const next = baseMovements.find((m) => m.id === selected.id)
     if (next) setSelected(next)
-  }, [liveVm.movementsRecent, selected])
+  }, [baseMovements, selected])
 
   const mxne = useMemo(() => balanceForAssetCode(assetBalances, 'MXNE'), [assetBalances])
   const cetesBalance = useMemo(() => balanceForAssetCode(assetBalances, 'CETES'), [assetBalances])
@@ -246,6 +264,7 @@ export default function DashboardClient({
       <AppPageBody className="space-y-6 pt-4">
         <div className="h-[22rem] animate-pulse rounded-[1.75rem] border border-border bg-secondary/40" />
         <div className="h-48 animate-pulse rounded-[1.5rem] border border-border bg-secondary/30" />
+        <div className="h-40 animate-pulse rounded-[1.5rem] border border-border bg-secondary/30" />
       </AppPageBody>
     )
   }
@@ -256,7 +275,7 @@ export default function DashboardClient({
         <div className="rounded-[1.5rem] border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm font-bold text-foreground">Conecta tu wallet</p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Para ver tu saldo MXNe en el tablero, inicia sesión con Pollar desde el inicio.
+            Para ver tu saldo y movimientos, inicia sesión en tu cuenta.
           </p>
           <Button asChild className="mt-6 h-11 w-full max-w-xs rounded-full font-bold">
             <Link href="/">Ir a conectar</Link>
@@ -274,6 +293,17 @@ export default function DashboardClient({
           <p className="text-[11px] text-muted-foreground">
             Última actualización{' '}
             {lastUpdateAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+          <p
+            className={cn(
+              'mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold',
+              kycBadge.tone === 'ok' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700',
+              kycBadge.tone === 'wait' && 'border-amber-500/30 bg-amber-500/10 text-amber-700',
+              kycBadge.tone === 'bad' && 'border-destructive/30 bg-destructive/10 text-destructive',
+              kycBadge.tone === 'muted' && 'border-border bg-secondary/60 text-muted-foreground',
+            )}
+          >
+            {kycBadge.label}
           </p>
         </div>
         <Button
@@ -295,13 +325,30 @@ export default function DashboardClient({
         </Button>
       </section>
 
+      {error && (
+        <section className="flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/[0.08] px-4 py-3">
+          <p className="text-xs font-medium text-amber-200">
+            No pudimos cargar tu información. Intenta de nuevo.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="ml-3 h-8 shrink-0 rounded-full border-amber-500/30 bg-transparent px-3 text-xs font-semibold text-amber-300 hover:bg-amber-500/10"
+            onClick={() => void mutate()}
+          >
+            Reintentar
+          </Button>
+        </section>
+      )}
+
       <div className="relative">
         <DashboardHeroCarousel
           data={{
             principal: hideBalances ? 0 : mxne,
-            adelantable: hideBalances ? 0 : liveVm.adelantableMxn,
-            puntos: liveVm.puntos,
-            tasaAnual: liveVm.tasaAnual,
+            adelantable: hideBalances ? 0 : data.adelantableMxn,
+            puntos: data.puntos,
+            tasaAnual: data.tasaAnual,
+            advanceUsed: data.advanceUsed,
             stablebondCetes,
             cetesWallet: {
               balance: hideBalances ? 0 : cetesBalance,
@@ -318,11 +365,49 @@ export default function DashboardClient({
           </div>
         ) : null}
       </div>
-      {liveVm.saldoNote ? (
+
+      {data.saldoNote ? (
         <p className="-mt-2 px-1 text-center text-[11px] leading-snug text-muted-foreground">
-          {liveVm.saldoNote}
+          {data.saldoNote}
         </p>
       ) : null}
+
+      {!activeCycle && (
+        <section className="relative overflow-hidden rounded-[1.65rem] border border-[#c6d9d0] bg-gradient-to-br from-[#0d3531] via-[#15534a] to-[#1f6559] p-5">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_55%)]" />
+          <div className="relative flex items-stretch gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#d8efe5]">
+                Comienza hoy
+              </p>
+              <p className="mt-3 text-xl font-black leading-tight tracking-tight text-white">
+                Deposita tu capital
+                <br />
+                para empezar
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-[#d2e9df]">
+                Activa tu ciclo con tu primer depósito y desbloquea rendimiento y adelantos.
+              </p>
+              <Button
+                asChild
+                className="mt-4 h-10 rounded-full bg-white px-4 text-sm font-bold text-[#184e46] hover:bg-white/90"
+              >
+                <Link href="/anadir">Depositar ahora</Link>
+              </Button>
+            </div>
+            <div className="relative w-[40%] min-w-[7.5rem] overflow-hidden rounded-2xl border border-white/20 bg-white/10">
+              <Image
+                src="/seyf-card.png"
+                alt="Tarjeta Seyf"
+                fill
+                sizes="(max-width: 640px) 35vw, 240px"
+                className="object-cover"
+                priority={false}
+              />
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="overflow-hidden rounded-[1.5rem] border border-border bg-card">
         <div className="border-b border-border px-4 py-3">
@@ -335,7 +420,7 @@ export default function DashboardClient({
         <ul className="divide-y divide-border">
           {loUltimoMovements.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-muted-foreground">
-              Aquí aparecerán depósitos, retiros, transferencias en Stellar y demás movimientos.
+              Aquí aparecerán depósitos, retiros, transferencias y demás movimientos.
             </li>
           ) : (
             loUltimoMovements.map((mov) => {
@@ -390,9 +475,9 @@ export default function DashboardClient({
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-border bg-card">
-        <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-violet-500/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#c9ddd2] bg-gradient-to-br from-[#f4f8f6] via-[#edf4f0] to-[#e3ece7] dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#9ec7b3]/18 blur-3xl dark:bg-[#6ba690]/20" />
+        <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-[#b8b8b5]/14 blur-3xl dark:bg-[#22433c]/40" />
 
         <div className="relative space-y-4 p-4">
           <Link
@@ -400,103 +485,126 @@ export default function DashboardClient({
             className="flex items-center justify-between rounded-xl py-1 transition hover:opacity-90"
           >
             <div>
-              <p className="text-sm font-bold text-foreground">Resumen visual</p>
-              <p className="text-[11px] text-muted-foreground">Ver detalle en historial</p>
+              <p className="text-sm font-bold text-foreground">
+                {data.adelantableMxn > 0
+                  ? 'Tienes un adelanto de rendimiento disponible'
+                  : 'Activa tu cuenta para habilitar adelantos'}
+              </p>
+              <p className="text-[11px] text-muted-foreground dark:text-[#d2e9df]">
+                Simulación de condiciones en tiempo real
+              </p>
             </div>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary ring-1 ring-border">
-              <ChevronRight className="size-4 text-foreground" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 ring-1 ring-[#cad9d1] dark:bg-white/15 dark:ring-white/20">
+              <ChevronRight className="size-4 text-foreground dark:text-white" />
             </span>
           </Link>
 
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-violet-600/25 via-indigo-900/20 to-card p-4 shadow-inner ring-1 ring-violet-500/10">
+          <div className="relative overflow-hidden rounded-2xl border border-[#cad9d1] bg-gradient-to-br from-[#d8e8e0] via-[#d3e2dc] to-[#cddbd5] p-4 shadow-inner ring-1 ring-[#b8d1c5]/60 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#10413a] dark:via-[#15534a] dark:to-[#1b6155] dark:ring-[#2b4a43]/70">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm">
-                <Wallet className="size-6 text-violet-100" strokeWidth={2} />
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/65 backdrop-blur-sm dark:bg-white/15">
+                <Wallet className="size-6 text-[#5f7168] dark:text-[#d2e9df]" strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-200/90">
-                  Saldo MXNe
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5f7168] dark:text-[#cde5db]">
+                  {data.adelantableMxn > 0 ? 'Adelanto preaprobado' : 'Saldo disponible'}
                 </p>
-                <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-white">
-                  {hideBalances ? formatMontoOculto() : formatMXNFull(mxne)}
+                <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-foreground dark:text-white">
+                  {hideBalances
+                    ? formatMontoOculto()
+                    : data.adelantableMxn > 0
+                      ? formatMXN(data.adelantableMxn)
+                      : formatMXN(mxne)}
                 </p>
-                <p className="mt-1 text-[11px] text-violet-100/75">Tu posición principal</p>
+                <p className="mt-1 text-[11px] text-muted-foreground dark:text-[#d2e9df]">
+                  {data.adelantableMxn > 0 ? 'Monto estimado inmediato' : 'Tu posición principal'}
+                </p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
-                <TrendingUp className="size-4 text-foreground" strokeWidth={2.25} />
+            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1] dark:border-[#2b4a43] dark:bg-white/10 dark:ring-white/10">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5 dark:bg-white/10">
+                <TrendingUp className="size-4 text-foreground dark:text-white" strokeWidth={2.25} />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">
                 Rendimiento
               </p>
-              <p className="mt-1 text-base font-black tabular-nums text-foreground">
-                {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.rendimientoMxn)}
+              <p className="mt-1 text-base font-black tabular-nums text-foreground dark:text-white">
+                {hideBalances ? formatMontoOculto() : <RendimientoCounter value={data.rendimientoMxn} />}
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
-                <Zap className="size-4 text-amber-200/90" strokeWidth={2.25} />
+            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1] dark:border-[#2b4a43] dark:bg-white/10 dark:ring-white/10">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5 dark:bg-white/10">
+                <Zap className="size-4 text-[#7c9387] dark:text-[#cde5db]" strokeWidth={2.25} />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">
                 Adelanto
               </p>
-              <p className="mt-1 text-base font-black tabular-nums text-foreground">
-                {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.adelantableMxn)}
+              <p className="mt-1 text-base font-black tabular-nums text-foreground dark:text-white">
+                {hideBalances ? formatMontoOculto() : formatMXN(data.adelantableMxn)}
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[1.6rem] border border-violet-400/25 bg-gradient-to-br from-violet-700/35 via-indigo-700/25 to-sky-700/20 p-5 shadow-[0_16px_45px_rgba(76,29,149,0.35)]">
-        <div className="pointer-events-none absolute -right-14 -top-20 h-44 w-44 rounded-full bg-violet-400/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-12 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
-        <div className="relative">
-          <div className="inline-flex items-center rounded-full border border-violet-200/25 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-100/90">
-            Adelanto disponible
-          </div>
-          <p className="mt-2 text-3xl font-black tabular-nums tracking-tight text-white">
-          {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.adelantableMxn)}
-          </p>
-          <p className="mt-1.5 text-xs leading-relaxed text-violet-100/80">
-            Recibe parte de tu rendimiento hoy, sin retirar tu ahorro.
-          </p>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {[
-              { label: 'Sin papeleo', value: '100%' },
-              { label: 'Respuesta', value: 'Inmediata' },
-              { label: 'Plazo', value: '12 meses' },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border border-white/15 bg-black/20 px-2.5 py-2 text-center backdrop-blur-[2px]"
+      {activeCycle && (
+        <section className="relative overflow-hidden rounded-[1.6rem] border border-violet-500/20 bg-gradient-to-br from-violet-100 via-indigo-100 to-sky-100 p-5 shadow-[0_16px_45px_rgba(76,29,149,0.16)] dark:border-violet-400/25 dark:from-violet-700/35 dark:via-indigo-700/25 dark:to-sky-700/20 dark:shadow-[0_16px_45px_rgba(76,29,149,0.35)]">
+          <div className="pointer-events-none absolute -right-14 -top-20 h-44 w-44 rounded-full bg-violet-400/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-12 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="relative">
+            <div className="inline-flex items-center rounded-full border border-violet-500/20 bg-background/65 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:border-violet-200/25 dark:bg-black/20 dark:text-violet-100/90">
+              Adelanto disponible
+            </div>
+            <p className="mt-2 text-3xl font-black tabular-nums tracking-tight text-foreground dark:text-white">
+              {hideBalances ? formatMontoOculto() : formatMXN(data.adelantableMxn)}
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground dark:text-violet-100/80">
+              Recibe una parte de tu rendimiento hoy, sin retirar tu capital.
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[
+                { label: 'Proceso', value: 'Digital' },
+                { label: 'Respuesta', value: 'Rápida' },
+                { label: 'Liquidación', value: 'Al cierre' },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-xl border border-violet-500/15 bg-background/55 px-2.5 py-2 text-center backdrop-blur-[2px] dark:border-white/15 dark:bg-black/20"
+                >
+                  <p className="text-[10px] text-muted-foreground dark:text-violet-100/75">{item.label}</p>
+                  <p className="mt-0.5 text-[11px] font-bold text-foreground dark:text-white">{item.value}</p>
+                </div>
+              ))}
+            </div>
+            {data.adelantableMxn > 0 ? (
+              <Link href="/adelanto" className="mt-4 block">
+                <Button className="h-12 w-full rounded-full text-base font-black">
+                  Pedir adelanto
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                disabled
+                className="mt-4 h-12 w-full rounded-full bg-secondary text-base font-black text-muted-foreground cursor-not-allowed"
               >
-                <p className="text-[10px] text-violet-100/75">{item.label}</p>
-                <p className="mt-0.5 text-[11px] font-bold text-white">{item.value}</p>
-              </div>
-            ))}
+                Pedir adelanto
+              </Button>
+            )}
+            <p className="mt-2 text-center text-[11px] text-muted-foreground dark:text-violet-100/70">
+              Simula monto, tasa y plazo en el siguiente paso.
+            </p>
           </div>
-          <Link href="/adelanto" className="mt-4 block">
-            <Button className="h-12 w-full rounded-full bg-white text-base font-black text-violet-950 shadow-[0_12px_30px_rgba(255,255,255,0.22)] hover:bg-white/90">
-              Pedir adelanto
-            </Button>
-          </Link>
-          <p className="mt-2 text-center text-[11px] text-violet-100/70">
-            Simula monto, tasa y plazo en el siguiente paso.
-          </p>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {liveVm.saldoGastoMxn > 0 && (
+      {data.saldoGastoMxn > 0 && (
         <section className="flex items-center justify-between rounded-[1.5rem] border border-border bg-card px-4 py-4">
           <div>
             <p className="text-xs font-medium text-muted-foreground">Saldo para gastar</p>
             <p className="text-xl font-black tabular-nums text-foreground">
-              {hideBalances ? formatMontoOculto() : formatMXNFull(liveVm.saldoGastoMxn)}
+              {hideBalances ? formatMontoOculto() : formatMXN(data.saldoGastoMxn)}
             </p>
           </div>
           <Link href="/gastar">
@@ -511,7 +619,7 @@ export default function DashboardClient({
       )}
 
       {showEtherfuseRampDev && (
-        <section className="rounded-[1.25rem] border border-dashed border-amber-500/25 bg-amber-500/[0.06] p-4 space-y-2">
+        <section className="space-y-2 rounded-[1.25rem] border border-dashed border-amber-500/25 bg-amber-500/[0.06] p-4">
           <p className="text-xs font-bold text-amber-200/90">Solo desarrollo</p>
           <Link
             href="/depositar"
@@ -534,20 +642,26 @@ export default function DashboardClient({
         </section>
       )}
 
-      <section className="flex gap-3 rounded-[1.25rem] border border-amber-500/20 bg-amber-500/[0.07] p-4">
-        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-200">
+      <section className="flex gap-3 rounded-[1.25rem] border border-[#cad9d1] bg-[#edf4f0] p-4 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0f3b36] dark:via-[#15534a] dark:to-[#1b5b50]">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#d9e9e1] text-[#5f7168] dark:bg-white/15 dark:text-[#d2e9df]">
           <span className="text-sm font-bold">!</span>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground">Verifica tu identidad</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-            Así podrás depositar más y ver tu saldo completo.
+          <p className="text-sm font-bold text-foreground dark:text-white">{kycBadge.label}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground dark:text-[#d2e9df]">
+            {kycBadge.tone === 'ok'
+              ? 'Tu cuenta ya está validada. Puedes operar normalmente en depósitos y retiros.'
+              : kycBadge.tone === 'wait'
+                ? 'Tus datos ya se enviaron a Etherfuse. Mantén este estado mientras termina la validación.'
+                : kycBadge.tone === 'bad'
+                  ? 'Etherfuse rechazó la validación. Corrige tus datos y vuelve a enviarlos.'
+                  : 'Completa tu verificación para habilitar operaciones sensibles.'}
           </p>
           <Link
-            href="/identidad"
-            className="mt-2 inline-block text-xs font-bold text-amber-200/90 underline-offset-4 hover:underline"
+            href={kycBadge.href}
+            className="mt-2 inline-block text-xs font-bold text-[#5f7168] underline-offset-4 hover:underline dark:text-[#d2e9df]"
           >
-            Verificar ahora
+            {kycBadge.action}
           </Link>
         </div>
       </section>

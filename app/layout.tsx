@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { ThemeProvider } from '@/components/theme-provider'
 import { PublicMobileHistorySeed } from '@/components/app/public-mobile-history-seed'
 import PollarProviderClient from '@/components/providers/pollar-provider-client'
 import './globals.css'
@@ -29,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`dark ${inter.variable}`}>
+    <html lang="es" suppressHydrationWarning className={inter.variable}>
       <body className="min-h-dvh font-sans antialiased">
         <PublicMobileHistorySeed />
         <PollarProviderClient>{children}</PollarProviderClient>

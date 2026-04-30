@@ -3,9 +3,11 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Copy, LogOut, ShieldCheck, UserRound } from 'lucide-react'
+import { Check, Copy, LogOut, Settings2, ShieldCheck, UserRound } from 'lucide-react'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import { Button } from '@/components/ui/button'
+import { NotificationSettingsCard } from '@/components/app/notification-settings-card'
+import { ThemeToggle } from '@/components/app/theme-toggle'
 import {
   SEYF_WALLET_BALANCE_EXTRA_DELAYS_MS,
   SEYF_WALLET_BALANCE_POLL_MS,
@@ -37,6 +39,7 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
   const router = useRouter()
   const { wallet, balance, loading, balanceError, disconnect, refreshBalance } = useSeyfWallet()
   const [addressCopied, setAddressCopied] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -186,41 +189,59 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
   return (
     <section className={`overflow-hidden ${shell}`}>
       {balanceError ? (
-        <div className="border-b border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+        <div className="border-b border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-100">
           <p className="font-semibold">No se pudieron cargar los saldos</p>
-          <p className="mt-1 text-amber-100/85">
+          <p className="mt-1 text-amber-800/85 dark:text-amber-100/85">
             {balanceError}. Si ves «Origin not allowed», añade en Pollar Dashboard la URL exacta de esta
-            pestaña (p. ej. <code className="rounded bg-black/30 px-1">http://localhost:3000</code> y{' '}
-            <code className="rounded bg-black/30 px-1">http://127.0.0.1:3000</code>).
+            pestaña (p. ej. <code className="rounded bg-foreground/10 px-1">http://localhost:3000</code> y{' '}
+            <code className="rounded bg-foreground/10 px-1">http://127.0.0.1:3000</code>).
           </p>
         </div>
       ) : null}
-      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-violet-700/20 via-indigo-700/15 to-sky-700/10 px-4 py-4">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-violet-400/20 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-cyan-400/10 blur-2xl" />
+      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] px-4 py-4 dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+        <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#9ec7b3]/20 blur-2xl dark:bg-[#6ba690]/25" />
+        <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-[#b8b8b5]/20 blur-2xl dark:bg-[#22433c]/45" />
         <div className="relative flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-xs font-black text-foreground ring-1 ring-white/15">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-xs font-black text-foreground ring-1 ring-[#b8b8b5]/40 dark:bg-white/15 dark:text-white dark:ring-white/20">
             {(wallet.email?.split('@')[0]?.slice(0, 2) ?? wallet.stellarAddress.slice(0, 2)).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-bold text-foreground">Tu perfil</h2>
-            <p className="truncate text-xs text-muted-foreground">Pollar · Stellar</p>
+            <h2 className="text-sm font-bold text-foreground dark:text-white">Tu perfil</h2>
+            <p className="truncate text-xs text-muted-foreground dark:text-[#d2e9df]">Pollar · Stellar</p>
           </div>
-          <p className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-100/90">
+          <p className="inline-flex items-center gap-1 rounded-full border border-[#9ec7b3]/35 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#4f6b5f] dark:border-white/20 dark:bg-white/15 dark:text-[#d2e9df]">
             <ShieldCheck className="size-3" />
             Activo
           </p>
         </div>
         <div className="relative mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-violet-100/80">Red</p>
-            <p className="mt-0.5 text-xs font-semibold text-white">{formatNetwork()}</p>
+          <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2 dark:border-white/20 dark:bg-white/10">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">Red</p>
+            <p className="mt-0.5 text-xs font-semibold text-foreground dark:text-white">{formatNetwork()}</p>
           </div>
-          <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-violet-100/80">Cuenta desde</p>
-            <p className="mt-0.5 truncate text-xs font-semibold text-white">{memberSince}</p>
+          <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2 dark:border-white/20 dark:bg-white/10">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">Cuenta desde</p>
+            <p className="mt-0.5 truncate text-xs font-semibold text-foreground dark:text-white">{memberSince}</p>
           </div>
         </div>
+      </div>
+
+      <div className="border-b border-border px-3 py-3">
+        <ThemeToggle
+          className="mb-0"
+          action={
+            <Button
+              type="button"
+              variant={showSettings ? 'default' : 'outline'}
+              size="sm"
+              className="h-8 rounded-full px-3 text-xs font-semibold"
+              onClick={() => setShowSettings((v) => !v)}
+            >
+              <Settings2 className="mr-1.5 size-3.5" strokeWidth={2} />
+              Configuración
+            </Button>
+          }
+        />
       </div>
 
       <dl className="space-y-2 px-3 py-3">
@@ -265,6 +286,13 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
           </div>
         ))}
       </dl>
+
+      {showSettings ? (
+        <div className="border-t border-border px-3 py-3">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Configuración</p>
+          <NotificationSettingsCard />
+        </div>
+      ) : null}
 
       <div className="border-t border-border p-3">
         <Button

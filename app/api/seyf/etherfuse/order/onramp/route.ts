@@ -3,8 +3,11 @@ import { z } from "zod";
 import { extractOrderIdFromCreateOrderResponse } from "@/lib/etherfuse/order-create-response";
 import { resolveMvpPartnerCryptoWalletId } from "@/lib/etherfuse/partner-accounts";
 import { createMxOnrampOrder } from "@/lib/etherfuse/ramp-api";
+import { AppError, toErrorResponse } from "@/lib/seyf/api-error";
+import { assertEtherfuseKycApproved } from "@/lib/seyf/etherfuse-kyc-guard";
 import { getEtherfuseRampContext } from "@/lib/seyf/etherfuse-ramp-context";
 import { guardEtherfuseRampRoutes } from "@/lib/seyf/etherfuse-ramp-guard";
+import { assertWalletActiveForUser } from "@/lib/seyf/wallet-provisioning";
 
 const bodySchema = z.object({
   quoteId: z.string().uuid(),
@@ -42,6 +45,11 @@ export async function POST(req: Request) {
   }
 
   try {
+    await assertEtherfuseKycApproved({
+      customerId: ctx.customerId,
+      publicKey: ctx.publicKey,
+    });
+    await assertWalletActiveForUser(ctx.customerId);
     let cryptoWalletId: string | undefined;
     try {
       cryptoWalletId = await resolveMvpPartnerCryptoWalletId(ctx.publicKey);
@@ -62,11 +70,12 @@ export async function POST(req: Request) {
       contextSource: ctx.source,
     });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Error al crear orden";
-    const conflict = message.includes("409") || message.toLowerCase().includes("pending");
-    return NextResponse.json(
-      { error: message },
-      { status: conflict ? 409 : 502 },
-    );
+    if (e instanceof Error && e.message.includes("(409)")) {
+      return toErrorResponse(
+        new AppError("provider_unavailable", { statusCode: 409, retryable: false, message: e.message }),
+        "order/onramp",
+      );
+    }
+    return toErrorResponse(e, "order/onramp");
   }
 }

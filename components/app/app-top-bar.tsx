@@ -26,7 +26,7 @@ export default function AppTopBar() {
   const { wallet, loading } = useSeyfWallet()
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-lg items-center gap-2 px-6 py-3">
         <Sheet>
           <SheetTrigger asChild>

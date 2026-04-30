@@ -1,4 +1,5 @@
 import { etherfuseFetch, etherfuseReadBody } from "./client";
+import { mapEtherfuseHttpError } from "./errors";
 
 type OrderRow = Record<string, unknown>;
 
@@ -42,7 +43,7 @@ export async function fetchOrdersFirstPage(): Promise<OrderRow[]> {
   const res = await etherfuseFetch("/ramp/orders", { method: "GET" });
   const { json, text } = await etherfuseReadBody<{ items?: OrderRow[] }>(res);
   if (!res.ok) {
-    throw new Error(`Etherfuse /ramp/orders (${res.status}): ${text.slice(0, 400)}`);
+    throw mapEtherfuseHttpError(res.status, text.slice(0, 400));
   }
   return Array.isArray(json?.items) ? json.items : [];
 }
@@ -60,9 +61,7 @@ export async function fetchCustomerOrdersFirstPage(
   );
   const { json, text } = await etherfuseReadBody<{ items?: OrderRow[] }>(res);
   if (!res.ok) {
-    throw new Error(
-      `Etherfuse /ramp/customer/.../orders (${res.status}): ${text.slice(0, 400)}`,
-    );
+    throw mapEtherfuseHttpError(res.status, text.slice(0, 400));
   }
   return Array.isArray(json?.items) ? json.items : [];
 }
@@ -95,11 +94,7 @@ export async function fetchCustomerOrdersAllPages(
   const collected: OrderRow[] = [];
   const seenIds = new Set<string>();
 
-  for (
-    let pageNumber = 0;
-    pageNumber < pageLimit;
-    pageNumber++
-  ) {
+  for (let pageNumber = 0; pageNumber < pageLimit; pageNumber++) {
     const res = await etherfuseFetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -108,14 +103,13 @@ export async function fetchCustomerOrdersAllPages(
         pageNumber,
       }),
     });
-    const { json, text } = await etherfuseReadBody<CustomerOrdersPagedJson>(res);
+    const { json, text } =
+      await etherfuseReadBody<CustomerOrdersPagedJson>(res);
     if (!res.ok) {
       if (pageNumber === 0) {
         return fetchCustomerOrdersFirstPage(customerId);
       }
-      throw new Error(
-        `Etherfuse POST ${path} (${res.status}): ${text.slice(0, 400)}`,
-      );
+      throw mapEtherfuseHttpError(res.status, text.slice(0, 400));
     }
     const items = Array.isArray(json?.items) ? json.items : [];
     for (const row of items) {
@@ -172,9 +166,7 @@ export async function fetchOrderDetails(orderId: string): Promise<unknown> {
   );
   const { json, text } = await etherfuseReadBody(res);
   if (!res.ok) {
-    throw new Error(
-      `Etherfuse /ramp/order/${orderId} (${res.status}): ${text.slice(0, 400)}`,
-    );
+    throw mapEtherfuseHttpError(res.status, text.slice(0, 400));
   }
   return json;
 }
@@ -190,35 +182,24 @@ export async function cancelOrder(orderId: string): Promise<void> {
   );
   const { text } = await etherfuseReadBody(res);
   if (!res.ok) {
-    throw new Error(
-      `Etherfuse cancel order (${res.status}): ${text.slice(0, 400)}`,
-    );
+    throw mapEtherfuseHttpError(res.status, text.slice(0, 400));
   }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
  * Tras `fiat_received` el estado puede tardar; reintenta GET /ramp/order/{id}.
+ * Retry is delegated to etherfuseFetch (retryable: true).
  */
 export async function fetchOrderDetailsWithRetry(
   orderId: string,
-  opts?: { attempts?: number; delayMs?: number },
+  _opts?: { attempts?: number; delayMs?: number },
 ): Promise<unknown> {
-  const attempts = opts?.attempts ?? 5;
-  const delayMs = opts?.delayMs ?? 1200;
-  let last: Error | null = null;
-  for (let i = 0; i < attempts; i++) {
-    try {
-      return await fetchOrderDetails(orderId);
-    } catch (e) {
-      last = e instanceof Error ? e : new Error(String(e));
-      if (i < attempts - 1) await sleep(delayMs);
-    }
-  }
-  throw last ?? new Error("fetchOrderDetailsWithRetry: sin respuesta");
+  const res = await etherfuseFetch(
+    `/ramp/order/${encodeURIComponent(orderId)}`,
+    { method: "GET", retryable: true },
+  );
+  const { json } = await etherfuseReadBody(res);
+  return json;
 }
 
 /**
@@ -248,10 +229,7 @@ export type RampOrderTransactionDetails = {
   bankAccountId: string | null;
 };
 
-function strFrom(
-  o: Record<string, unknown>,
-  ...keys: string[]
-): string | null {
+function strFrom(o: Record<string, unknown>, ...keys: string[]): string | null {
   for (const k of keys) {
     const v = o[k];
     if (typeof v === "string" && v.trim()) return v.trim();
@@ -260,10 +238,7 @@ function strFrom(
   return null;
 }
 
-function intFrom(
-  o: Record<string, unknown>,
-  ...keys: string[]
-): number | null {
+function intFrom(o: Record<string, unknown>, ...keys: string[]): number | null {
   for (const k of keys) {
     const v = o[k];
     if (typeof v === "number" && Number.isFinite(v)) return Math.round(v);

@@ -12,4 +12,7 @@ export type DashboardViewModel = {
   saldoGastoMxn: number;
   saldoNote: string | null;
   movementsRecent: UserMovement[];
+  /** AC-6: true when the user has an active advance in progress. Greyes out the advance card.
+   *  Populate from Etherfuse loan status once the endpoint is available. */
+  advanceUsed: boolean;
 };

@@ -5,7 +5,9 @@ import {
   fetchRampableAssetsForWallet,
   pickOfframpSourceIdentifier,
 } from "@/lib/etherfuse/ramp-api";
+import { toErrorResponse } from "@/lib/seyf/api-error";
 import { getEtherfuseRampContext } from "@/lib/seyf/etherfuse-ramp-context";
+import { assertEtherfuseKycApproved } from "@/lib/seyf/etherfuse-kyc-guard";
 import { guardEtherfuseRampRoutes } from "@/lib/seyf/etherfuse-ramp-guard";
 
 const bodySchema = z.object({
@@ -46,6 +48,10 @@ export async function POST(req: Request) {
   }
 
   try {
+    await assertEtherfuseKycApproved({
+      customerId: ctx.customerId,
+      publicKey: ctx.publicKey,
+    });
     const { assets } = await fetchRampableAssetsForWallet({
       walletPublicKey: ctx.publicKey,
     });
@@ -74,8 +80,6 @@ export async function POST(req: Request) {
       contextSource: ctx.source,
     });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Error al cotizar offramp";
-    console.error("[quote/offramp]", message);
-    return NextResponse.json({ error: message }, { status: 502 });
+    return toErrorResponse(e, "quote/offramp");
   }
 }

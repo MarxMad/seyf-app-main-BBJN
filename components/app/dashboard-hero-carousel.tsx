@@ -2,16 +2,18 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { animate, motion, useMotionValue } from 'framer-motion'
-import { ArrowDownToLine, Clock, Info, Plus } from 'lucide-react'
+import { animate, motion, useMotionValue, useReducedMotion } from 'framer-motion'
+import { ArrowDownToLine, Clock, Info, Plus, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { formatMXN, formatPuntos, splitCurrencyForDisplay } from '@/lib/formatters'
 
 type HeroData = {
   principal: number
   adelantable: number
   puntos: number
   tasaAnual: number
+  advanceUsed?: boolean
   /** CETES desde Etherfuse /lookup/stablebonds */
   stablebondCetes?: {
     loading: boolean
@@ -30,50 +32,12 @@ type HeroData = {
 const TABS = ['Saldos', 'Adelanto', 'Puntos'] as const
 const SLIDE_COUNT = TABS.length
 
-function formatMXNFull(amount: number) {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    minimumFractionDigits: 2,
-  }).format(amount)
-}
-
-/** Separa cuerpo y centavos (locale-safe) para tipografía tipo referencia. */
-function splitCurrencyForDisplay(amount: number) {
-  const parts = new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).formatToParts(amount)
-  let main = ''
-  let fraction = ''
-  let decimalSep = '.'
-  for (const p of parts) {
-    if (p.type === 'fraction') {
-      fraction = p.value
-      continue
-    }
-    if (p.type === 'decimal') {
-      decimalSep = p.value
-      continue
-    }
-    main += p.value
-  }
-  const cents = fraction ? `${decimalSep}${fraction}` : ''
-  return { main: main.trim(), cents }
-}
-
 const saldosQuickActions = [
   { href: '/depositar', label: 'Depositar', icon: Plus },
   { href: '/retirar', label: 'Transferir', icon: ArrowDownToLine },
   { href: '/historial', label: 'Movimientos', icon: Clock },
   { href: '/identidad', label: 'Verificar', icon: Info },
 ] as const
-
-function formatPuntos(n: number) {
-  return new Intl.NumberFormat('es-MX').format(n)
-}
 
 const spring = { type: 'spring' as const, stiffness: 420, damping: 38, mass: 0.85 }
 
@@ -100,6 +64,7 @@ function formatCetesUnits(n: number) {
 
 export function DashboardHeroCarousel({ data }: { data: HeroData }) {
   const { main: balanceMain, cents: balanceCents } = splitCurrencyForDisplay(data.principal)
+  const shouldReduce = useReducedMotion()
   const sb = data.stablebondCetes
   const cw = data.cetesWallet
   const stablebondUpdatedLabel =
@@ -131,9 +96,13 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
       const clamped = Math.max(0, Math.min(SLIDE_COUNT - 1, i))
       setIndex(clamped)
       if (viewportW <= 0) return
-      animate(x, -clamped * viewportW, spring)
+      if (shouldReduce) {
+        x.set(-clamped * viewportW)
+      } else {
+        animate(x, -clamped * viewportW, spring)
+      }
     },
-    [viewportW, x],
+    [viewportW, x, shouldReduce],
   )
 
   const onDragEnd = (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
@@ -148,10 +117,10 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[1.75rem] border border-border">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-950/80 via-card to-blue-950/60" />
-      <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-violet-500/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-12 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
+    <section className="relative isolate overflow-hidden rounded-[1.75rem] border border-[#bfd6ca] dark:border-[#2b4a43]">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]" />
+      <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-[#9ec7b3]/30 blur-3xl dark:bg-[#6ba690]/25" />
+      <div className="pointer-events-none absolute -bottom-20 -left-12 h-48 w-48 rounded-full bg-[#b8b8b5]/25 blur-3xl dark:bg-[#22433c]/45" />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.12]"
         style={{
@@ -159,7 +128,6 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
           backgroundSize: '48px 48px',
         }}
       />
-
       <div ref={containerRef} className="relative overflow-hidden">
         <motion.div
           className="flex w-[300%] cursor-grab touch-pan-x active:cursor-grabbing"
@@ -192,13 +160,12 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
               <div className="mx-auto mt-3 flex w-fit max-w-[19rem] items-center gap-1.5 rounded-full border border-border bg-secondary/55 px-3 py-1.5 text-[11px] text-muted-foreground">
                 <Info className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2.25} aria-hidden />
                 <span className="truncate">
-                  Referencia CETES:
-                  {sb.annualPercent != null ? ` ${sb.annualPercent.toFixed(2)}% anual` : ''}
+                  {sb.annualPercent != null ? `${sb.annualPercent.toFixed(2)}% anual` : ''}
                   {sb.priceMx != null
                     ? ` · ${new Intl.NumberFormat('es-MX', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 6,
-                      }).format(sb.priceMx)} MXN/CETES`
+                      }).format(sb.priceMx)} MXN`
                     : ''}
                 </span>
                 {stablebondUpdatedLabel ? (
@@ -217,7 +184,7 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
             {cw && cw.balance > 0 ? (
               <div className="mx-auto mt-4 max-w-[19rem] rounded-xl border border-violet-500/25 bg-violet-500/[0.08] px-3 py-2.5 text-center ring-1 ring-border/50">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  CETES en tu wallet
+                  Saldo invertido
                 </p>
                 <p className="mt-1 text-xl font-black tabular-nums leading-tight text-foreground">
                   {formatCetesUnits(cw.balance)}{' '}
@@ -229,17 +196,16 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
                     aria-hidden
                   />
                 ) : cw.equivMxne != null ? (
-                  <p className="mt-2 text-sm font-bold leading-tight text-emerald-200/95">
-                    ≈ {formatMXNFull(cw.equivMxne)}{' '}
-                    <span className="text-xs font-semibold text-muted-foreground">MXNe</span>
+                  <p className="mt-2 text-sm font-bold leading-tight text-emerald-700 dark:text-emerald-200/95">
+                    ≈ {formatMXN(cw.equivMxne)}
                   </p>
                 ) : (
                   <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
-                    Sin cotización CETES→MXN ahora. Reintenta en un momento.
+                    Sin referencia disponible. Reintenta en un momento.
                   </p>
                 )}
                 <p className="mt-1.5 text-[9px] leading-tight text-muted-foreground/80">
-                  Referencia tipo de cambio Etherfuse (stablebond), no precio de swap on-chain.
+                  Valor estimado para consulta. Puede variar.
                 </p>
               </div>
             ) : null}
@@ -267,12 +233,23 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
             </div>
           </div>
 
-          <div className="w-1/3 shrink-0 px-6 pb-2 pt-10 text-center">
+          <div
+            className={cn(
+              'w-1/3 shrink-0 px-6 pb-2 pt-10 text-center transition-opacity',
+              data.advanceUsed && 'pointer-events-none opacity-40 grayscale',
+            )}
+          >
             <p className="text-[13px] font-medium text-muted-foreground">Adelanto</p>
             <p className="mt-1 text-[2.75rem] font-black leading-none tracking-tight tabular-nums text-foreground">
-              {formatMXNFull(data.adelantable)}
+              {formatMXN(data.adelantable)}
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">Sin usar tu ahorro principal</p>
+            {data.advanceUsed ? (
+              <span className="mt-2 inline-block rounded-full border border-border bg-secondary/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                Adelanto en curso
+              </span>
+            ) : (
+              <p className="mt-2 text-xs text-muted-foreground">Sin tocar tu capital principal</p>
+            )}
             <Link
               href="/adelanto"
               className="mt-4 inline-block text-xs font-bold text-foreground underline-offset-4 hover:underline"
@@ -310,7 +287,11 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
                 <motion.span
                   layoutId="hero-tab-pill"
                   className="absolute inset-0 rounded-full bg-foreground shadow-sm"
-                  transition={{ type: 'spring', stiffness: 520, damping: 40 }}
+                  transition={
+                    shouldReduce
+                      ? { duration: 0 }
+                      : { type: 'spring', stiffness: 520, damping: 40 }
+                  }
                 />
               )}
               <span className="relative z-10">{label}</span>
@@ -320,11 +301,20 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
 
         {index === 1 && (
           <div className="mt-4 flex justify-center px-2">
-            <Link href="/adelanto" className="w-full max-w-xs">
-              <Button className="h-11 w-full rounded-full bg-foreground text-sm font-bold text-background hover:bg-foreground/90">
+            {data.adelantable > 0 ? (
+              <Link href="/adelanto" className="w-full max-w-xs">
+                <Button className="h-11 w-full rounded-full bg-foreground text-sm font-bold text-background hover:bg-foreground/90">
+                  Pedir adelanto
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                disabled
+                className="h-11 w-full max-w-xs rounded-full bg-foreground/40 text-sm font-bold text-background/60 cursor-not-allowed"
+              >
                 Pedir adelanto
               </Button>
-            </Link>
+            )}
           </div>
         )}
         {index === 2 && (
