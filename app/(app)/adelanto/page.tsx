@@ -7,6 +7,7 @@ import { Sparkles } from 'lucide-react'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { Button } from '@/components/ui/button'
+import { CETES_FIXED_APY } from '@/lib/seyf/cetes-fixed-apy'
 import { cn } from '@/lib/utils'
 
 function formatMXN(amount: number) {
@@ -15,6 +16,10 @@ function formatMXN(amount: number) {
     currency: 'MXN',
     minimumFractionDigits: 2,
   }).format(amount)
+}
+
+function formatPercent(value: number) {
+  return `${value.toFixed(2)}%`
 }
 
 export default function AdelantoPage() {
@@ -73,6 +78,8 @@ export default function AdelantoPage() {
   }, [])
 
   const spendableMxn = ledger?.constraints?.mxn_spendable ?? 0
+  const ahorroTrabajandoMxn = ledger?.balances?.mxn_available ?? 0
+  const ahorroProtegidoMxn = Math.max(0, (ledger?.balances?.mxn_total ?? 0) - (ledger?.balances?.advance_outstanding_mxn ?? 0))
   const maxAdvanceBusiness = useMemo(() => {
     const simulated = simulation?.max_advance_mxn ?? 0
     return Math.max(0, Math.min(simulated, spendableMxn))
@@ -219,13 +226,17 @@ export default function AdelantoPage() {
             Adelanta una parte de tu rendimiento proyectado sin esperar al vencimiento.
             <span className="block mt-1 font-bold text-white">Tu saldo se mantiene protegido por reglas de bloqueo.</span>
           </p>
+          <p className="mt-3 inline-flex rounded-full border border-white/20 bg-black/20 px-2.5 py-1 text-[11px] font-semibold text-violet-100">
+            APY CETES de referencia: {formatPercent(CETES_FIXED_APY)}
+          </p>
         </div>
       </section>
 
       <section className="space-y-4 rounded-[1.5rem] border border-border bg-card p-6 shadow-[0_8px_28px_rgba(0,0,0,0.14)]">
         <div className="grid gap-3 sm:grid-cols-2">
+          <MiniStat label="Ahorro trabajando" value={formatMXN(ahorroTrabajandoMxn)} />
           <MiniStat label="Saldo disponible" value={formatMXN(spendableMxn)} />
-          <MiniStat label="Saldo bloqueado" value={formatMXN(ledger?.balances?.mxn_blocked ?? 0)} />
+          <MiniStat label="Ahorro protegido" value={formatMXN(ahorroProtegidoMxn)} />
         </div>
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Monto máximo disponible</p>
@@ -237,6 +248,7 @@ export default function AdelantoPage() {
         <div className="space-y-3 pt-4 border-t border-border">
           <SummaryRow label="Rendimiento neto a recibir" value={formatMXN(Math.max(0, (simulation?.net_to_user_mxn || 0) > 0 ? Math.min(simulation?.net_to_user_mxn || 0, maxAdvanceBusiness) : 0))} bold />
           <SummaryRow label="Comisión de servicio (flat)" value={formatMXN(simulation?.fee_mxn || 0)} dim />
+          <SummaryRow label="APY CETES (fijo en app)" value={formatPercent(CETES_FIXED_APY)} dim />
           <SummaryRow label="Fecha de liberación ciclo" value={fechaLiberacion} dim />
         </div>
       </section>
@@ -268,8 +280,8 @@ export default function AdelantoPage() {
 
       <div className="bg-secondary/30 rounded-[1.25rem] p-4 border border-border/50">
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          <strong>Nota:</strong> El adelanto se descuenta de tu rendimiento proyectado.
-          Al confirmarlo, ese monto queda reservado hasta la fecha de liquidación.
+          <strong>Nota:</strong> El adelanto se toma del rendimiento proyectado y tu ahorro principal
+          permanece protegido dentro de tu ciclo activo.
         </p>
       </div>
 
@@ -278,7 +290,7 @@ export default function AdelantoPage() {
         disabled={confirming || !maxAdvanceBusiness || (readiness ? !readiness.onrampEnabled : false)}
         className="h-12 w-full rounded-full bg-foreground text-base font-bold text-background shadow-[0_10px_28px_rgba(255,255,255,0.12)] hover:bg-foreground/90 disabled:opacity-60"
       >
-        {confirming ? 'Confirmando operación…' : 'Confirmar adelanto'}
+        {confirming ? 'Confirmando operación…' : 'Pedir adelanto ahora'}
       </Button>
 
       <p className="text-center text-[10px] text-muted-foreground">

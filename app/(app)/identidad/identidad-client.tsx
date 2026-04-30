@@ -605,7 +605,7 @@ export default function IdentidadClient({
           </p>
         </div>
 
-        <div className="mb-6 rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] p-5 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0f3b36] dark:via-[#15534a] dark:to-[#1b5b50]">
+        <div className="glass-mint-card mb-6 p-5">
           <p className="text-sm font-bold text-amber-700 dark:text-amber-300">
             Estado actual: pendiente de aprobación
           </p>

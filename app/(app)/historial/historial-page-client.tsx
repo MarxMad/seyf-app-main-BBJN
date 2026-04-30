@@ -214,7 +214,7 @@ export default function HistorialPageClient() {
     return (
       <AppPageBody>
         <AppBackLink href="/dashboard" />
-        <section className="relative mb-8 overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] p-5 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+        <section className="glass-mint-card mb-8 p-5">
           <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/20 blur-3xl dark:bg-[#6ba690]/20" />
           <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-[#b8b8b5]/20 blur-3xl dark:bg-[#22433c]/40" />
           <div className="relative">
@@ -237,7 +237,7 @@ export default function HistorialPageClient() {
   return (
     <AppPageBody>
       <AppBackLink href="/dashboard" />
-      <section className="relative mb-8 overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] p-5 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+      <section className="glass-mint-card mb-8 p-5">
         <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/20 blur-3xl dark:bg-[#6ba690]/20" />
         <div className="pointer-events-none absolute -bottom-20 -left-14 h-44 w-44 rounded-full bg-[#b8b8b5]/20 blur-3xl dark:bg-[#22433c]/40" />
         <div className="relative">

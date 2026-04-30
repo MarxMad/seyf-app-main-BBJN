@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { animate, motion, useMotionValue, useReducedMotion } from 'framer-motion'
 import { ArrowDownToLine, Clock, Info, Plus, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { CETES_FIXED_APY } from '@/lib/seyf/cetes-fixed-apy'
 import { cn } from '@/lib/utils'
 import { formatMXN, formatPuntos, splitCurrencyForDisplay } from '@/lib/formatters'
 
@@ -248,7 +249,9 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
                 Adelanto en curso
               </span>
             ) : (
-              <p className="mt-2 text-xs text-muted-foreground">Sin tocar tu capital principal</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Capital ahorrado protegido · APY CETES {CETES_FIXED_APY.toFixed(2)}%
+              </p>
             )}
             <Link
               href="/adelanto"

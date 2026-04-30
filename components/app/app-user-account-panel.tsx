@@ -198,7 +198,7 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
           </p>
         </div>
       ) : null}
-      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] px-4 py-4 dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+      <div className="glass-mint-card rounded-none border-x-0 border-t-0 border-b border-border px-4 py-4">
         <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#9ec7b3]/20 blur-2xl dark:bg-[#6ba690]/25" />
         <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-[#b8b8b5]/20 blur-2xl dark:bg-[#22433c]/45" />
         <div className="relative flex items-center gap-3">

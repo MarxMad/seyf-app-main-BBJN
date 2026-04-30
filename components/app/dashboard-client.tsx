@@ -475,7 +475,7 @@ export default function DashboardClient({
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#c9ddd2] bg-gradient-to-br from-[#f4f8f6] via-[#edf4f0] to-[#e3ece7] dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+      <section className="glass-mint-card">
         <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#9ec7b3]/18 blur-3xl dark:bg-[#6ba690]/20" />
         <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-[#b8b8b5]/14 blur-3xl dark:bg-[#22433c]/40" />
 
@@ -499,7 +499,7 @@ export default function DashboardClient({
             </span>
           </Link>
 
-          <div className="relative overflow-hidden rounded-2xl border border-[#cad9d1] bg-gradient-to-br from-[#d8e8e0] via-[#d3e2dc] to-[#cddbd5] p-4 shadow-inner ring-1 ring-[#b8d1c5]/60 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#10413a] dark:via-[#15534a] dark:to-[#1b6155] dark:ring-[#2b4a43]/70">
+          <div className="glass-mint-inner relative overflow-hidden p-4 ring-1 ring-[#b8d1c5]/40 dark:ring-[#2b4a43]/50">
             <div className="flex items-center gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/65 backdrop-blur-sm dark:bg-white/15">
                 <Wallet className="size-6 text-[#5f7168] dark:text-[#d2e9df]" strokeWidth={2} />
@@ -523,7 +523,7 @@ export default function DashboardClient({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1] dark:border-[#2b4a43] dark:bg-white/10 dark:ring-white/10">
+            <div className="glass-mint-inner p-3.5 ring-1 ring-[#dbe7e1]/45 dark:ring-white/10">
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5 dark:bg-white/10">
                 <TrendingUp className="size-4 text-foreground dark:text-white" strokeWidth={2.25} />
               </div>
@@ -534,7 +534,7 @@ export default function DashboardClient({
                 {hideBalances ? formatMontoOculto() : <RendimientoCounter value={data.rendimientoMxn} />}
               </p>
             </div>
-            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1] dark:border-[#2b4a43] dark:bg-white/10 dark:ring-white/10">
+            <div className="glass-mint-inner p-3.5 ring-1 ring-[#dbe7e1]/45 dark:ring-white/10">
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5 dark:bg-white/10">
                 <Zap className="size-4 text-[#7c9387] dark:text-[#cde5db]" strokeWidth={2.25} />
               </div>
@@ -642,7 +642,7 @@ export default function DashboardClient({
         </section>
       )}
 
-      <section className="flex gap-3 rounded-[1.25rem] border border-[#cad9d1] bg-[#edf4f0] p-4 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0f3b36] dark:via-[#15534a] dark:to-[#1b5b50]">
+      <section className="glass-mint-card flex gap-3 p-4">
         <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#d9e9e1] text-[#5f7168] dark:bg-white/15 dark:text-[#d2e9df]">
           <span className="text-sm font-bold">!</span>
         </div>
