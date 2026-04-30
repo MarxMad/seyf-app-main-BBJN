@@ -184,11 +184,11 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
             {cw && cw.balance > 0 ? (
               <div className="mx-auto mt-4 max-w-[19rem] rounded-xl border border-violet-500/25 bg-violet-500/[0.08] px-3 py-2.5 text-center ring-1 ring-border/50">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  Capital digital en tu cuenta
+                  Saldo invertido
                 </p>
                 <p className="mt-1 text-xl font-black tabular-nums leading-tight text-foreground">
                   {formatCetesUnits(cw.balance)}{' '}
-                  <span className="text-sm font-bold text-muted-foreground">Peso Digital</span>
+                  <span className="text-sm font-bold text-muted-foreground">CETES</span>
                 </p>
                 {cw.priceLoading ? (
                   <div
@@ -201,11 +201,11 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
                   </p>
                 ) : (
                   <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
-                    Sin cotización disponible. Reintenta en un momento.
+                    Sin referencia disponible. Reintenta en un momento.
                   </p>
                 )}
                 <p className="mt-1.5 text-[9px] leading-tight text-muted-foreground/80">
-                  Tipo de cambio de referencia. Puede variar.
+                  Valor estimado para consulta. Puede variar.
                 </p>
               </div>
             ) : null}
@@ -245,10 +245,10 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
             </p>
             {data.advanceUsed ? (
               <span className="mt-2 inline-block rounded-full border border-border bg-secondary/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                Adelanto ya solicitado
+                Adelanto en curso
               </span>
             ) : (
-              <p className="mt-2 text-xs text-muted-foreground">Sin usar tu ahorro principal</p>
+              <p className="mt-2 text-xs text-muted-foreground">Sin tocar tu capital principal</p>
             )}
             <Link
               href="/adelanto"

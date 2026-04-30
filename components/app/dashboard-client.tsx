@@ -40,13 +40,7 @@ function movementEstadoBadgeClass(estado: UserMovement['estado']): string {
 function formatMovementMeta(mov: UserMovement): string {
   const d = new Date(mov.createdAt)
   const hora = d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
-  const red =
-    mov.source === 'stellar'
-      ? mov.stellarNetwork === 'mainnet'
-        ? 'Mainnet'
-        : 'Testnet'
-      : null
-  return [hora, red].filter(Boolean).join(' · ')
+  return hora
 }
 
 function RendimientoCounter({ value }: { value: number }) {
@@ -281,7 +275,7 @@ export default function DashboardClient({
         <div className="rounded-[1.5rem] border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm font-bold text-foreground">Conecta tu wallet</p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Para ver tu saldo en el tablero, inicia sesión desde el inicio.
+            Para ver tu saldo y movimientos, inicia sesión en tu cuenta.
           </p>
           <Button asChild className="mt-6 h-11 w-full max-w-xs rounded-full font-bold">
             <Link href="/">Ir a conectar</Link>
@@ -493,11 +487,11 @@ export default function DashboardClient({
             <div>
               <p className="text-sm font-bold text-foreground">
                 {data.adelantableMxn > 0
-                  ? 'Tienes disponible un adelanto de 5 años de rendimiento a tasa fija'
-                  : 'Adelanta 1 año de rendimiento con SEYF'}
+                  ? 'Tienes un adelanto de rendimiento disponible'
+                  : 'Activa tu cuenta para habilitar adelantos'}
               </p>
               <p className="text-[11px] text-muted-foreground dark:text-[#d2e9df]">
-                Simulación rápida en tiempo real
+                Simulación de condiciones en tiempo real
               </p>
             </div>
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 ring-1 ring-[#cad9d1] dark:bg-white/15 dark:ring-white/20">
@@ -567,13 +561,13 @@ export default function DashboardClient({
               {hideBalances ? formatMontoOculto() : formatMXN(data.adelantableMxn)}
             </p>
             <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground dark:text-violet-100/80">
-              Recibe parte de tu rendimiento hoy, sin retirar tu ahorro.
+              Recibe una parte de tu rendimiento hoy, sin retirar tu capital.
             </p>
             <div className="mt-3 grid grid-cols-3 gap-2">
               {[
-                { label: 'Sin papeleo', value: '100%' },
-                { label: 'Respuesta', value: 'Inmediata' },
-                { label: 'Plazo', value: '12 meses' },
+                { label: 'Proceso', value: 'Digital' },
+                { label: 'Respuesta', value: 'Rápida' },
+                { label: 'Liquidación', value: 'Al cierre' },
               ].map((item) => (
                 <div
                   key={item.label}
