@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import useSWR from 'swr'
@@ -24,6 +25,7 @@ import {
 import { formatMovementListSubtitle, type UserMovement } from '@/lib/seyf/user-movements-types'
 import { formatMXN, formatLoUltimoMonto } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import type { EtherfuseKycSnapshot } from '@/lib/etherfuse/kyc'
 
 function formatMontoOculto() {
   return '••••'
@@ -38,13 +40,7 @@ function movementEstadoBadgeClass(estado: UserMovement['estado']): string {
 function formatMovementMeta(mov: UserMovement): string {
   const d = new Date(mov.createdAt)
   const hora = d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
-  const red =
-    mov.source === 'stellar'
-      ? mov.stellarNetwork === 'mainnet'
-        ? 'Mainnet'
-        : 'Testnet'
-      : null
-  return [hora, red].filter(Boolean).join(' · ')
+  return hora
 }
 
 function RendimientoCounter({ value }: { value: number }) {
@@ -72,6 +68,13 @@ const dashboardFetcher = (url: string): Promise<DashboardViewModel> =>
   fetch(url, POLL_FETCH_INIT).then((r) => {
     if (!r.ok) throw new Error(`${r.status}`)
     return r.json() as Promise<DashboardViewModel>
+  })
+
+const kycStatusFetcher = (url: string): Promise<EtherfuseKycSnapshot | null> =>
+  fetch(url, POLL_FETCH_INIT).then(async (r) => {
+    if (!r.ok) throw new Error(`${r.status}`)
+    const body = (await r.json()) as { kyc?: EtherfuseKycSnapshot | null }
+    return body.kyc ?? null
   })
 
 export default function DashboardClient({
@@ -105,6 +108,16 @@ export default function DashboardClient({
       onSuccess: () => setLastUpdateAt(new Date()),
     },
   )
+  const { data: kycStatus } = useSWR<EtherfuseKycSnapshot | null>(
+    '/api/seyf/kyc/status',
+    kycStatusFetcher,
+    {
+      refreshInterval: 45_000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2_000,
+    },
+  )
 
   // Push updated SSR prop into SWR cache on navigation (vm prop identity change).
   const prevVmRef = useRef(vm)
@@ -124,6 +137,34 @@ export default function DashboardClient({
   }, [mutate])
 
   const activeCycle = data.principalMxn > 0
+  const kycBadge =
+    kycStatus?.status === 'approved' || kycStatus?.status === 'approved_chain_deploying'
+      ? {
+          label: 'Identidad verificada',
+          tone: 'ok' as const,
+          href: '/identidad',
+          action: 'Ver estado',
+        }
+      : kycStatus?.status === 'proposed'
+        ? {
+            label: 'Pendiente de verificación',
+            tone: 'wait' as const,
+            href: '/identidad',
+            action: 'Actualizar estado',
+          }
+        : kycStatus?.status === 'rejected'
+          ? {
+              label: 'Verificación fallida',
+              tone: 'bad' as const,
+              href: '/identidad',
+              action: 'Corregir datos',
+            }
+          : {
+              label: 'Verificación pendiente',
+              tone: 'muted' as const,
+              href: '/identidad',
+              action: 'Verificar ahora',
+            }
 
   useEffect(() => {
     try {
@@ -193,21 +234,23 @@ export default function DashboardClient({
     return () => { cancelled = true }
   }, [wallet?.stellarAddress])
 
+  const baseMovements = Array.isArray(data.movementsRecent) ? data.movementsRecent : []
+
   const loUltimoMovements = useMemo(() => {
     const byId = new Map<string, UserMovement>()
-    for (const m of data.movementsRecent) byId.set(m.id, m)
+    for (const m of baseMovements) byId.set(m.id, m)
     for (const m of stellarMovements) byId.set(m.id, m)
     const merged = [...byId.values()].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
     return merged.slice(0, DASHBOARD_MOVEMENTS_PREVIEW_LIMIT)
-  }, [data.movementsRecent, stellarMovements])
+  }, [baseMovements, stellarMovements])
 
   useEffect(() => {
     if (!selected) return
-    const next = data.movementsRecent.find((m) => m.id === selected.id)
+    const next = baseMovements.find((m) => m.id === selected.id)
     if (next) setSelected(next)
-  }, [data.movementsRecent, selected])
+  }, [baseMovements, selected])
 
   const mxne = useMemo(() => balanceForAssetCode(assetBalances, 'MXNE'), [assetBalances])
   const cetesBalance = useMemo(() => balanceForAssetCode(assetBalances, 'CETES'), [assetBalances])
@@ -232,7 +275,7 @@ export default function DashboardClient({
         <div className="rounded-[1.5rem] border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm font-bold text-foreground">Conecta tu wallet</p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Para ver tu saldo en el tablero, inicia sesión desde el inicio.
+            Para ver tu saldo y movimientos, inicia sesión en tu cuenta.
           </p>
           <Button asChild className="mt-6 h-11 w-full max-w-xs rounded-full font-bold">
             <Link href="/">Ir a conectar</Link>
@@ -250,6 +293,17 @@ export default function DashboardClient({
           <p className="text-[11px] text-muted-foreground">
             Última actualización{' '}
             {lastUpdateAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+          <p
+            className={cn(
+              'mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold',
+              kycBadge.tone === 'ok' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700',
+              kycBadge.tone === 'wait' && 'border-amber-500/30 bg-amber-500/10 text-amber-700',
+              kycBadge.tone === 'bad' && 'border-destructive/30 bg-destructive/10 text-destructive',
+              kycBadge.tone === 'muted' && 'border-border bg-secondary/60 text-muted-foreground',
+            )}
+          >
+            {kycBadge.label}
           </p>
         </div>
         <Button
@@ -319,14 +373,39 @@ export default function DashboardClient({
       ) : null}
 
       {!activeCycle && (
-        <section className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-border bg-card px-6 py-10 text-center">
-          <p className="text-sm font-bold text-foreground">Deposita tu capital para empezar</p>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Tu rendimiento y adelantos disponibles aparecerán aquí una vez que hagas tu primer depósito.
-          </p>
-          <Button asChild className="mt-2 h-11 w-full max-w-xs rounded-full font-bold">
-            <Link href="/depositar">Depositar ahora</Link>
-          </Button>
+        <section className="relative overflow-hidden rounded-[1.65rem] border border-[#c6d9d0] bg-gradient-to-br from-[#0d3531] via-[#15534a] to-[#1f6559] p-5">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_55%)]" />
+          <div className="relative flex items-stretch gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#d8efe5]">
+                Comienza hoy
+              </p>
+              <p className="mt-3 text-xl font-black leading-tight tracking-tight text-white">
+                Deposita tu capital
+                <br />
+                para empezar
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-[#d2e9df]">
+                Activa tu ciclo con tu primer depósito y desbloquea rendimiento y adelantos.
+              </p>
+              <Button
+                asChild
+                className="mt-4 h-10 rounded-full bg-white px-4 text-sm font-bold text-[#184e46] hover:bg-white/90"
+              >
+                <Link href="/anadir">Depositar ahora</Link>
+              </Button>
+            </div>
+            <div className="relative w-[40%] min-w-[7.5rem] overflow-hidden rounded-2xl border border-white/20 bg-white/10">
+              <Image
+                src="/seyf-card.png"
+                alt="Tarjeta Seyf"
+                fill
+                sizes="(max-width: 640px) 35vw, 240px"
+                className="object-cover"
+                priority={false}
+              />
+            </div>
+          </div>
         </section>
       )}
 
@@ -396,9 +475,9 @@ export default function DashboardClient({
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-border bg-card">
-        <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-violet-500/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#c9ddd2] bg-gradient-to-br from-[#f4f8f6] via-[#edf4f0] to-[#e3ece7] dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#9ec7b3]/18 blur-3xl dark:bg-[#6ba690]/20" />
+        <div className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full bg-[#b8b8b5]/14 blur-3xl dark:bg-[#22433c]/40" />
 
         <div className="relative space-y-4 p-4">
           <Link
@@ -406,51 +485,63 @@ export default function DashboardClient({
             className="flex items-center justify-between rounded-xl py-1 transition hover:opacity-90"
           >
             <div>
-              <p className="text-sm font-bold text-foreground">Resumen visual</p>
-              <p className="text-[11px] text-muted-foreground">Ver detalle en historial</p>
+              <p className="text-sm font-bold text-foreground">
+                {data.adelantableMxn > 0
+                  ? 'Tienes un adelanto de rendimiento disponible'
+                  : 'Activa tu cuenta para habilitar adelantos'}
+              </p>
+              <p className="text-[11px] text-muted-foreground dark:text-[#d2e9df]">
+                Simulación de condiciones en tiempo real
+              </p>
             </div>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary ring-1 ring-border">
-              <ChevronRight className="size-4 text-foreground" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 ring-1 ring-[#cad9d1] dark:bg-white/15 dark:ring-white/20">
+              <ChevronRight className="size-4 text-foreground dark:text-white" />
             </span>
           </Link>
 
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-violet-600/25 via-indigo-900/20 to-card p-4 shadow-inner ring-1 ring-violet-500/10">
+          <div className="relative overflow-hidden rounded-2xl border border-[#cad9d1] bg-gradient-to-br from-[#d8e8e0] via-[#d3e2dc] to-[#cddbd5] p-4 shadow-inner ring-1 ring-[#b8d1c5]/60 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#10413a] dark:via-[#15534a] dark:to-[#1b6155] dark:ring-[#2b4a43]/70">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm">
-                <Wallet className="size-6 text-violet-100" strokeWidth={2} />
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/65 backdrop-blur-sm dark:bg-white/15">
+                <Wallet className="size-6 text-[#5f7168] dark:text-[#d2e9df]" strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-200/90">
-                  Saldo disponible
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5f7168] dark:text-[#cde5db]">
+                  {data.adelantableMxn > 0 ? 'Adelanto preaprobado' : 'Saldo disponible'}
                 </p>
                 <p className="mt-0.5 text-2xl font-black tabular-nums tracking-tight text-foreground dark:text-white">
-                  {hideBalances ? formatMontoOculto() : formatMXN(mxne)}
+                  {hideBalances
+                    ? formatMontoOculto()
+                    : data.adelantableMxn > 0
+                      ? formatMXN(data.adelantableMxn)
+                      : formatMXN(mxne)}
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground dark:text-violet-100/75">Tu posición principal</p>
+                <p className="mt-1 text-[11px] text-muted-foreground dark:text-[#d2e9df]">
+                  {data.adelantableMxn > 0 ? 'Monto estimado inmediato' : 'Tu posición principal'}
+                </p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
-                <TrendingUp className="size-4 text-foreground" strokeWidth={2.25} />
+            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1] dark:border-[#2b4a43] dark:bg-white/10 dark:ring-white/10">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5 dark:bg-white/10">
+                <TrendingUp className="size-4 text-foreground dark:text-white" strokeWidth={2.25} />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">
                 Rendimiento
               </p>
-              <p className="mt-1 text-base font-black tabular-nums text-foreground">
+              <p className="mt-1 text-base font-black tabular-nums text-foreground dark:text-white">
                 {hideBalances ? formatMontoOculto() : <RendimientoCounter value={data.rendimientoMxn} />}
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-secondary/60 p-3.5 ring-1 ring-border/60">
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5">
-                <Zap className="size-4 text-amber-200/90" strokeWidth={2.25} />
+            <div className="rounded-2xl border border-[#cad9d1] bg-white/70 p-3.5 ring-1 ring-[#dbe7e1] dark:border-[#2b4a43] dark:bg-white/10 dark:ring-white/10">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/5 dark:bg-white/10">
+                <Zap className="size-4 text-[#7c9387] dark:text-[#cde5db]" strokeWidth={2.25} />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">
                 Adelanto
               </p>
-              <p className="mt-1 text-base font-black tabular-nums text-foreground">
+              <p className="mt-1 text-base font-black tabular-nums text-foreground dark:text-white">
                 {hideBalances ? formatMontoOculto() : formatMXN(data.adelantableMxn)}
               </p>
             </div>
@@ -470,13 +561,13 @@ export default function DashboardClient({
               {hideBalances ? formatMontoOculto() : formatMXN(data.adelantableMxn)}
             </p>
             <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground dark:text-violet-100/80">
-              Recibe parte de tu rendimiento hoy, sin retirar tu ahorro.
+              Recibe una parte de tu rendimiento hoy, sin retirar tu capital.
             </p>
             <div className="mt-3 grid grid-cols-3 gap-2">
               {[
-                { label: 'Sin papeleo', value: '100%' },
-                { label: 'Respuesta', value: 'Inmediata' },
-                { label: 'Plazo', value: '12 meses' },
+                { label: 'Proceso', value: 'Digital' },
+                { label: 'Respuesta', value: 'Rápida' },
+                { label: 'Liquidación', value: 'Al cierre' },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -551,20 +642,26 @@ export default function DashboardClient({
         </section>
       )}
 
-      <section className="flex gap-3 rounded-[1.25rem] border border-amber-500/20 bg-amber-500/[0.07] p-4">
-        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-200">
+      <section className="flex gap-3 rounded-[1.25rem] border border-[#cad9d1] bg-[#edf4f0] p-4 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0f3b36] dark:via-[#15534a] dark:to-[#1b5b50]">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#d9e9e1] text-[#5f7168] dark:bg-white/15 dark:text-[#d2e9df]">
           <span className="text-sm font-bold">!</span>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground">Verifica tu identidad</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-            Así podrás depositar más y ver tu saldo completo.
+          <p className="text-sm font-bold text-foreground dark:text-white">{kycBadge.label}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground dark:text-[#d2e9df]">
+            {kycBadge.tone === 'ok'
+              ? 'Tu cuenta ya está validada. Puedes operar normalmente en depósitos y retiros.'
+              : kycBadge.tone === 'wait'
+                ? 'Tus datos ya se enviaron a Etherfuse. Mantén este estado mientras termina la validación.'
+                : kycBadge.tone === 'bad'
+                  ? 'Etherfuse rechazó la validación. Corrige tus datos y vuelve a enviarlos.'
+                  : 'Completa tu verificación para habilitar operaciones sensibles.'}
           </p>
           <Link
-            href="/identidad"
-            className="mt-2 inline-block text-xs font-bold text-amber-200/90 underline-offset-4 hover:underline"
+            href={kycBadge.href}
+            className="mt-2 inline-block text-xs font-bold text-[#5f7168] underline-offset-4 hover:underline dark:text-[#d2e9df]"
           >
-            Verificar ahora
+            {kycBadge.action}
           </Link>
         </div>
       </section>

@@ -114,8 +114,8 @@ export function NotificationSettingsCard() {
           />
         </label>
 
-        <div className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-3">
-          <div className="pr-4">
+        <div className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3.5">
+          <div className="pr-1">
             <p className="text-sm font-semibold text-foreground">Notificaciones activas</p>
             <p className="mt-1 text-xs text-muted-foreground">
               Si apagas esta opcion, seguiremos registrando el intento pero no enviaremos SMS.

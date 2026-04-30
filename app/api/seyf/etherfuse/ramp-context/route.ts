@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveMvpPartnerCryptoWalletId } from "@/lib/etherfuse/partner-accounts";
 import { toErrorResponse } from "@/lib/seyf/api-error";
+import { getEtherfuseKycGateResult } from "@/lib/seyf/etherfuse-kyc-guard";
 import { getEtherfuseRampContext } from "@/lib/seyf/etherfuse-ramp-context";
 import { guardEtherfuseRampRoutes } from "@/lib/seyf/etherfuse-ramp-guard";
 
@@ -18,21 +19,47 @@ export async function GET() {
     if (!ctx) {
       return NextResponse.json(
         {
-          error:
-            "Sin contexto rampa: cookie /identidad o (solo dev) ETHERFUSE_MVP_* en .env.local.",
+          publicKey: "",
+          customerId: "",
+          bankAccountId: "",
+          source: "cookie",
+          cryptoWalletId: null,
+          cryptoWalletResolved: false,
+          cryptoWalletError: null,
+          kycStatus: null,
+          kycApproved: false,
+          kycReason:
+            "Sin contexto rampa: completa /identidad o configura ETHERFUSE_MVP_* en desarrollo.",
         },
-        { status: 401 },
       );
     }
 
     let cryptoWalletId: string | null = null;
     let cryptoWalletError: string | null = null;
+    let kycStatus: string | null = null;
+    let kycApproved = false;
+    let kycReason: string | null = null;
     try {
       cryptoWalletId = await resolveMvpPartnerCryptoWalletId(ctx.publicKey);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("[seyf/ramp-context] cryptoWallet lookup failed:", msg);
       cryptoWalletError = msg;
+    }
+    try {
+      const kycGate = await getEtherfuseKycGateResult({
+        customerId: ctx.customerId,
+        publicKey: ctx.publicKey,
+      });
+      kycStatus = kycGate.status;
+      kycApproved = kycGate.approved;
+      kycReason = kycGate.reason;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[seyf/ramp-context] kyc status lookup failed:", msg);
+      kycStatus = null;
+      kycApproved = false;
+      kycReason = "No pudimos validar tu estado KYC. Intenta de nuevo.";
     }
 
     return NextResponse.json({
@@ -43,6 +70,9 @@ export async function GET() {
       cryptoWalletId,
       cryptoWalletResolved: Boolean(cryptoWalletId),
       cryptoWalletError,
+      kycStatus,
+      kycApproved,
+      kycReason,
     });
   } catch (e) {
     return toErrorResponse(e, "ramp-context");

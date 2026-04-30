@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { Search, BarChart3, CreditCard } from 'lucide-react'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import AppUserAccountPanel from '@/components/app/app-user-account-panel'
-import { ThemeToggle } from '@/components/app/theme-toggle'
 import {
   Sheet,
   SheetClose,
@@ -27,7 +26,7 @@ export default function AppTopBar() {
   const { wallet, loading } = useSeyfWallet()
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-lg items-center gap-2 px-6 py-3">
         <Sheet>
           <SheetTrigger asChild>
@@ -57,11 +56,7 @@ export default function AppTopBar() {
                   Inicio
                 </Link>
               </SheetClose>
-              <ThemeToggle />
               <AppUserAccountPanel />
-              <div className="mt-6 border-t border-border pt-4">
-                <ThemeToggle />
-              </div>
             </div>
           </SheetContent>
         </Sheet>

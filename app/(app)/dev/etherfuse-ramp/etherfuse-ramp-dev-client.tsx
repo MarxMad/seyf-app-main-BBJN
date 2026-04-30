@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,18 @@ import {
   extractConfirmedTxSignatureFromOnrampPanelJson,
   pickRampOrderTransactionDetails,
 } from '@/lib/etherfuse/orders-api'
+import { useEffect } from 'react'
+
+type RampContextPayload = {
+  kycApproved: boolean
+  kycStatus: string | null
+  kycReason: string | null
+}
+
+type ReadinessPayload = {
+  onrampEnabled: boolean
+  reasons: string[]
+}
 
 export default function EtherfuseRampDevClient() {
   const [busy, setBusy] = useState<string | null>(null)
@@ -27,6 +40,9 @@ export default function EtherfuseRampDevClient() {
   const [fiatJson, setFiatJson] = useState<string>('')
   const [speiDetails, setSpeiDetails] = useState<SpeiTransferDetails | null>(null)
   const [pendingManualOrderJson, setPendingManualOrderJson] = useState<string | null>(null)
+  const [kycGate, setKycGate] = useState<RampContextPayload | null>(null)
+  const [kycLoading, setKycLoading] = useState(true)
+  const [readiness, setReadiness] = useState<ReadinessPayload | null>(null)
 
   const run = useCallback(async (label: string, fn: () => Promise<void>) => {
     setErr(null)
@@ -37,6 +53,57 @@ export default function EtherfuseRampDevClient() {
       setErr(e instanceof Error ? e.message : 'Error')
     } finally {
       setBusy(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setKycLoading(true)
+    fetch('/api/seyf/etherfuse/ramp-context')
+      .then(async (r) => {
+        const j = (await r.json().catch(() => ({}))) as Partial<RampContextPayload> & { error?: string }
+        if (!r.ok) {
+          throw new Error(typeof j.error === 'string' ? j.error : `HTTP ${r.status}`)
+        }
+        if (cancelled) return
+        setKycGate({
+          kycApproved: j.kycApproved === true,
+          kycStatus: typeof j.kycStatus === 'string' ? j.kycStatus : null,
+          kycReason: typeof j.kycReason === 'string' ? j.kycReason : null,
+        })
+      })
+      .catch((e) => {
+        if (cancelled) return
+        setKycGate({
+          kycApproved: false,
+          kycStatus: null,
+          kycReason: e instanceof Error ? e.message : 'No pudimos validar tu estado KYC.',
+        })
+      })
+      .finally(() => {
+        if (!cancelled) setKycLoading(false)
+      })
+    fetch('/api/seyf/etherfuse/readiness')
+      .then(async (r) => {
+        const j = (await r.json().catch(() => ({}))) as Partial<ReadinessPayload> & { error?: string }
+        if (!r.ok) {
+          throw new Error(typeof j.error === 'string' ? j.error : `HTTP ${r.status}`)
+        }
+        if (cancelled) return
+        setReadiness({
+          onrampEnabled: j.onrampEnabled === true,
+          reasons: Array.isArray(j.reasons) ? j.reasons.filter((x): x is string => typeof x === 'string') : [],
+        })
+      })
+      .catch((e) => {
+        if (cancelled) return
+        setReadiness({
+          onrampEnabled: false,
+          reasons: [e instanceof Error ? e.message : 'No pudimos calcular readiness.'],
+        })
+      })
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -178,6 +245,7 @@ export default function EtherfuseRampDevClient() {
   }, [speiDetails, pendingManualOrderJson, performFiatSimulation, run])
 
   const speiConfirmBusy = busy === 'spei-manual-confirm'
+  const canOperate = (readiness?.onrampEnabled === true) || (!kycLoading && kycGate?.kycApproved === true)
 
   const onrampTxSignature = useMemo(
     () => extractConfirmedTxSignatureFromOnrampPanelJson(fiatJson),
@@ -197,19 +265,32 @@ export default function EtherfuseRampDevClient() {
     return `${base}${encodeURIComponent(onrampTxSignature)}`
   }, [onrampTxSignature])
 
+  const timeline = useMemo(() => {
+    const generated = Boolean(speiDetails)
+    const transferConfirmed = Boolean(fiatJson)
+    const accredited = Boolean(onrampTxSignature)
+    return [
+      { label: 'Datos SPEI generados', done: generated },
+      { label: 'Transferencia detectada', done: transferConfirmed },
+      { label: 'Conversión y acreditación', done: accredited },
+    ]
+  }, [speiDetails, fiatJson, onrampTxSignature])
+
   return (
     <AppPageBody className="space-y-6 pt-4">
       <AppBackLink href="/dashboard" />
 
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-violet-400/25 bg-gradient-to-br from-violet-700/30 via-indigo-700/20 to-blue-700/15 p-5">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-cyan-400/15 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#bfd6ca] bg-gradient-to-br from-[#edf6f2] via-[#e6f0ea] to-[#dce9e3] p-5 dark:border-[#2b4a43] dark:bg-gradient-to-br dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#9ec7b3]/25 blur-3xl dark:bg-[#6ba690]/25" />
+        <div className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-[#b8b8b5]/20 blur-3xl dark:bg-[#22433c]/40" />
         <div className="relative">
-          <p className="inline-flex rounded-full border border-white/15 bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-100/90">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="inline-flex rounded-full border border-[#b8b8b5]/60 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168] dark:border-white/20 dark:bg-white/15 dark:text-[#d2e9df]">
             Depósito SPEI
-          </p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-white">Añadir fondos</h1>
-          <p className="mt-1.5 text-sm text-violet-100/80">
+            </p>
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-[#41534b] dark:text-white">Añadir fondos</h1>
+          <p className="mt-1.5 text-sm text-[#7b8f86] dark:text-[#d2e9df]">
             Genera tu CLABE y realiza la transferencia desde tu banca móvil.
           </p>
         </div>
@@ -219,11 +300,50 @@ export default function EtherfuseRampDevClient() {
         details={speiDetails}
         concept={speiDetails?.orderId ?? null}
       />
+      <section className="rounded-[1.25rem] border border-border bg-card/60 p-4">
+        <p className="text-sm font-bold text-foreground">Estado del depósito</p>
+        <div className="mt-3 space-y-2">
+          {timeline.map((step) => (
+            <div key={step.label} className="flex items-center justify-between rounded-lg border border-border/70 px-3 py-2">
+              <span className="text-sm text-foreground">{step.label}</span>
+              <span
+                className={cn(
+                  'text-xs font-semibold',
+                  step.done ? 'text-emerald-500' : 'text-muted-foreground',
+                )}
+              >
+                {step.done ? 'Completado' : 'Pendiente'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+      {!canOperate ? (
+        <section className="rounded-[1.25rem] border border-amber-500/30 bg-amber-500/[0.08] p-4">
+          <p className="text-sm font-bold text-foreground">Verificación requerida</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {kycLoading
+              ? 'Validando estado KYC...'
+              : kycGate?.kycReason ??
+                'Necesitas aprobar KYC para generar CLABE y recibir tus datos de deposito.'}
+          </p>
+          {readiness?.reasons?.length ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+              {readiness.reasons.slice(0, 3).map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          ) : null}
+          <Link href="/identidad" className="mt-3 inline-block text-sm font-semibold text-foreground underline">
+            Ir a verificar identidad
+          </Link>
+        </section>
+      ) : null}
       {speiDetails && pendingManualOrderJson ? (
         <Button
           type="button"
           className="w-full"
-          disabled={!!busy}
+          disabled={!!busy || !canOperate}
           onClick={() => void confirmSpeiPayment()}
         >
           {speiConfirmBusy ? (
@@ -232,7 +352,7 @@ export default function EtherfuseRampDevClient() {
               Procesando…
             </>
           ) : (
-            'Ya hice la transferencia (prueba)'
+            'Ya hice la transferencia'
           )}
         </Button>
       ) : null}
@@ -252,14 +372,14 @@ export default function EtherfuseRampDevClient() {
           id="manual-asset"
           value={targetOverride}
           onChange={(e) => setTargetOverride(e.target.value)}
-          placeholder="Opcional · solo uso avanzado"
+          placeholder="Referencia opcional"
           className="h-12 rounded-xl border-border bg-background px-4 font-mono text-xs"
-          aria-label="Opcional avanzado"
+          aria-label="Referencia opcional"
         />
         <Button
           type="button"
           className="w-full rounded-full bg-foreground text-background"
-          disabled={!!busy}
+          disabled={!!busy || !canOperate}
           onClick={() => void openManualSpeiReview()}
         >
           {busy === 'spei-manual-prepare' ? (
@@ -281,7 +401,7 @@ export default function EtherfuseRampDevClient() {
 
       {onrampTxSignature && stellarTxExplorerUrl ? (
         <div className="rounded-[1.5rem] border border-border bg-card p-4">
-          <p className="text-sm font-bold text-foreground">Comprobante</p>
+          <p className="text-sm font-bold text-foreground">Comprobante de acreditación</p>
           <p className="mt-2 break-all font-mono text-xs text-muted-foreground">{onrampTxSignature}</p>
           <a
             href={stellarTxExplorerUrl}

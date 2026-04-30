@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useState } from 'react'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { AppPageBody } from '@/components/app/app-page-body'
@@ -45,23 +46,27 @@ export default function TarjetaPage() {
           >
             <div
               className={cn(
-                'absolute inset-0 overflow-hidden rounded-[1.35rem] border border-white/15 p-5 shadow-xl',
-                'bg-gradient-to-br from-zinc-800 via-zinc-900 to-black',
+                'absolute inset-0 overflow-hidden rounded-[1.35rem] border border-white/30 p-5 shadow-xl',
+                'bg-gradient-to-br from-[#0d3531] via-[#15534a] to-[#1f6559]',
               )}
               style={{ backfaceVisibility: 'hidden' as const, WebkitBackfaceVisibility: 'hidden' }}
             >
-              <div className="pointer-events-none absolute -right-8 top-6 h-28 w-28 rounded-full bg-violet-500/25 blur-2xl" />
-              <div className="pointer-events-none absolute -bottom-6 -left-4 h-24 w-24 rounded-full bg-indigo-400/20 blur-2xl" />
+              <div className="pointer-events-none absolute inset-0 opacity-[0.22]">
+                <Image src="/seyf-card.png" alt="" fill sizes="380px" className="object-cover" />
+              </div>
+              <div className="pointer-events-none absolute -right-8 top-6 h-28 w-28 rounded-full bg-[#8dc0ae]/35 blur-2xl" />
+              <div className="pointer-events-none absolute -bottom-6 -left-4 h-24 w-24 rounded-full bg-[#2f6f62]/35 blur-2xl" />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.28)_0%,rgba(255,255,255,0.03)_36%,rgba(255,255,255,0.1)_100%)]" />
 
               <div className="relative flex h-full flex-col justify-between">
                 <div className="flex items-start justify-between">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/90">Seyf</p>
-                  <span className="rounded-md bg-amber-200/90 px-2 py-0.5 text-[10px] font-black text-amber-950">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/95">Seyf</p>
+                  <span className="rounded-md bg-white/85 px-2 py-0.5 text-[10px] font-black text-[#184e46]">
                     VIRTUAL
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-9 w-12 rounded-md bg-gradient-to-br from-amber-100 to-amber-300/80 shadow-inner ring-1 ring-black/20" />
+                  <span className="h-9 w-12 rounded-md bg-gradient-to-br from-zinc-100 to-zinc-300/80 shadow-inner ring-1 ring-black/20" />
                   <div className="ml-1 flex gap-1">
                     {[0, 1, 2, 3].map((i) => (
                       <span key={i} className="h-1 w-1 rounded-full bg-white/60" />
@@ -94,8 +99,8 @@ export default function TarjetaPage() {
 
             <div
               className={cn(
-                'absolute inset-0 overflow-hidden rounded-[1.35rem] border border-white/15 p-5 shadow-xl',
-                'bg-gradient-to-br from-zinc-700 via-zinc-900 to-zinc-950',
+                'absolute inset-0 overflow-hidden rounded-[1.35rem] border border-white/20 p-5 shadow-xl',
+                'bg-gradient-to-br from-[#0c2f2b] via-[#123f37] to-[#10352f]',
               )}
               style={{
                 backfaceVisibility: 'hidden' as const,
@@ -103,7 +108,10 @@ export default function TarjetaPage() {
                 transform: 'rotateY(180deg)',
               }}
             >
-              <div className="pointer-events-none absolute inset-x-0 top-8 h-9 bg-zinc-950/90" />
+              <div className="pointer-events-none absolute inset-0 opacity-[0.14]">
+                <Image src="/seyf-card.png" alt="" fill sizes="380px" className="object-cover" />
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 top-8 h-9 bg-black/70" />
               <div className="relative flex h-full flex-col justify-between pb-1 pt-[4.6rem]">
                 <div>
                   <p className="text-[9px] font-semibold uppercase tracking-wider text-white/50">

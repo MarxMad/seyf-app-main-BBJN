@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { animate, motion, useMotionValue, useReducedMotion } from 'framer-motion'
-import { ArrowDownToLine, Clock, Info, Plus } from 'lucide-react'
+import { ArrowDownToLine, Clock, Info, Plus, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { formatMXN, formatPuntos, splitCurrencyForDisplay } from '@/lib/formatters'
@@ -34,7 +34,7 @@ const SLIDE_COUNT = TABS.length
 
 const saldosQuickActions = [
   { href: '/anadir', label: 'Depositar', icon: Plus },
-  { href: '/retirar', label: 'Transferir', icon: ArrowDownToLine },
+  { href: '/retirar', label: 'Transferir', icon: Send },
   { href: '/historial', label: 'Movimientos', icon: Clock },
   { href: '/identidad', label: 'Verificar', icon: Info },
 ] as const
@@ -117,10 +117,10 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[1.75rem] border border-border">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-950/80 via-card to-blue-950/60" />
-      <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-violet-500/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-12 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
+    <section className="relative isolate overflow-hidden rounded-[1.75rem] border border-[#bfd6ca] dark:border-[#2b4a43]">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] dark:from-[#0d3531] dark:via-[#15534a] dark:to-[#1f6559]" />
+      <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-[#9ec7b3]/30 blur-3xl dark:bg-[#6ba690]/25" />
+      <div className="pointer-events-none absolute -bottom-20 -left-12 h-48 w-48 rounded-full bg-[#b8b8b5]/25 blur-3xl dark:bg-[#22433c]/45" />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.12]"
         style={{
@@ -128,7 +128,6 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
           backgroundSize: '48px 48px',
         }}
       />
-
       <div ref={containerRef} className="relative overflow-hidden">
         <motion.div
           className="flex w-[300%] cursor-grab touch-pan-x active:cursor-grabbing"
@@ -185,11 +184,11 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
             {cw && cw.balance > 0 ? (
               <div className="mx-auto mt-4 max-w-[19rem] rounded-xl border border-violet-500/25 bg-violet-500/[0.08] px-3 py-2.5 text-center ring-1 ring-border/50">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  Capital digital en tu cuenta
+                  Saldo invertido
                 </p>
                 <p className="mt-1 text-xl font-black tabular-nums leading-tight text-foreground">
                   {formatCetesUnits(cw.balance)}{' '}
-                  <span className="text-sm font-bold text-muted-foreground">Peso Digital</span>
+                  <span className="text-sm font-bold text-muted-foreground">CETES</span>
                 </p>
                 {cw.priceLoading ? (
                   <div
@@ -202,11 +201,11 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
                   </p>
                 ) : (
                   <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
-                    Sin cotización disponible. Reintenta en un momento.
+                    Sin referencia disponible. Reintenta en un momento.
                   </p>
                 )}
                 <p className="mt-1.5 text-[9px] leading-tight text-muted-foreground/80">
-                  Tipo de cambio de referencia. Puede variar.
+                  Valor estimado para consulta. Puede variar.
                 </p>
               </div>
             ) : null}
@@ -246,10 +245,10 @@ export function DashboardHeroCarousel({ data }: { data: HeroData }) {
             </p>
             {data.advanceUsed ? (
               <span className="mt-2 inline-block rounded-full border border-border bg-secondary/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                Adelanto ya solicitado
+                Adelanto en curso
               </span>
             ) : (
-              <p className="mt-2 text-xs text-muted-foreground">Sin usar tu ahorro principal</p>
+              <p className="mt-2 text-xs text-muted-foreground">Sin tocar tu capital principal</p>
             )}
             <Link
               href="/adelanto"
