@@ -236,4 +236,3 @@ El flujo está listo para producción cuando:
 - onramp crea orden y acredita activo en esa misma wallet
 - webhook `kyc_updated` actualiza estado en Seyf de forma consistente
 - sin dependencia de fallback MVP ni wallets estáticas de desarrollo
-
