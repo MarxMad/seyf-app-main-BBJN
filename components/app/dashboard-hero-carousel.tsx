@@ -33,8 +33,8 @@ const TABS = ['Saldos', 'Adelanto', 'Puntos'] as const
 const SLIDE_COUNT = TABS.length
 
 const saldosQuickActions = [
-  { href: '/anadir', label: 'Depositar', icon: Plus },
-  { href: '/retirar', label: 'Transferir', icon: Send },
+  { href: '/depositar', label: 'Depositar', icon: Plus },
+  { href: '/retirar', label: 'Transferir', icon: ArrowDownToLine },
   { href: '/historial', label: 'Movimientos', icon: Clock },
   { href: '/identidad', label: 'Verificar', icon: Info },
 ] as const

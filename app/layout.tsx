@@ -3,7 +3,7 @@ import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { PublicMobileHistorySeed } from '@/components/app/public-mobile-history-seed'
-import SeyfPollarProvider from '@/components/providers/pollar-provider'
+import PollarProviderClient from '@/components/providers/pollar-provider-client'
 import './globals.css'
 
 const inter = Inter({
@@ -32,11 +32,9 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className={inter.variable}>
       <body className="min-h-dvh font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <PublicMobileHistorySeed />
-          <SeyfPollarProvider>{children}</SeyfPollarProvider>
-          <Analytics />
-        </ThemeProvider>
+        <PublicMobileHistorySeed />
+        <PollarProviderClient>{children}</PollarProviderClient>
+        <Analytics />
       </body>
     </html>
   )

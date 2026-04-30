@@ -12,8 +12,8 @@ const navItems = [
     icon: LayoutGrid,
   },
   {
-    href: '/anadir',
-    label: 'Añadir',
+    href: '/depositar',
+    label: 'Depositar',
     icon: PlusCircle,
   },
   {
