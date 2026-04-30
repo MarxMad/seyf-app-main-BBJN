@@ -12,9 +12,11 @@ type Props = {
 }
 
 export default function SeyfPollarProvider({ children }: Props) {
+  // Prefiere la clave publicable explícita; NEXT_PUBLIC_POLLAR_API_KEY queda
+  // como alias de compatibilidad (puede ser la misma clave).
   const apiKey =
-    process.env.NEXT_PUBLIC_POLLAR_API_KEY?.trim() ||
     process.env.NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_POLLAR_API_KEY?.trim() ||
     ''
 
   const stellarNetwork = stellarWalletNetworkFromEnv()

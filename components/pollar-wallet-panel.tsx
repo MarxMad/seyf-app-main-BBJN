@@ -4,6 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import { Button } from '@/components/ui/button'
+import { AlertCircle } from 'lucide-react'
+
+const POLLAR_API_KEY = process.env.NEXT_PUBLIC_POLLAR_API_KEY?.trim() ?? ''
 
 function maskAddress(value?: string | null) {
   if (!value) return '-'
@@ -74,24 +77,49 @@ export default function PollarWalletPanel() {
         <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-4">
           <h3 className="text-lg font-bold text-foreground">Iniciar sesión</h3>
 
-          {!wallet ? (
-            <Button
-              type="button"
-              size="lg"
-              className="h-12 w-full rounded-full text-base font-bold sm:w-auto sm:min-w-[14rem]"
-              disabled={!mounted || loading || creating}
-              onClick={() => void connect()}
-            >
-              {creating ? 'Preparando wallet…' : loading ? 'Cargando…' : 'Iniciar sesión'}
-            </Button>
-          ) : null}
+          {/* alerta si falta la clave Pollar */}
+          {mounted && !POLLAR_API_KEY && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-destructive/40 bg-destructive/10 px-3.5 py-3 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              <div>
+                <p className="font-semibold">Falta NEXT_PUBLIC_POLLAR_API_KEY</p>
+                <p className="mt-0.5 text-xs opacity-80">
+                  Agrega la clave publicable de{' '}
+                  <a
+                    href="https://dashboard.pollar.xyz/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline underline-offset-2"
+                  >
+                    dashboard.pollar.xyz
+                  </a>{' '}
+                  en tu .env y reinicia el servidor.
+                </p>
+              </div>
+            </div>
+          )}
 
-          {!mounted || loading ? (
-            <p className="text-sm text-muted-foreground">Cargando estado de wallet...</p>
+          {!wallet ? (
+            <>
+              {/* skeleton mientras Pollar carga client-side */}
+              {!mounted ? (
+                <div className="h-12 w-full animate-pulse rounded-full bg-secondary/60 sm:w-52" />
+              ) : (
+                <Button
+                  type="button"
+                  size="lg"
+                  className="h-12 w-full rounded-full text-base font-bold sm:w-auto sm:min-w-[14rem]"
+                  disabled={loading || creating || !POLLAR_API_KEY}
+                  onClick={() => void connect()}
+                >
+                  {creating ? 'Preparando wallet…' : loading ? 'Cargando…' : 'Iniciar sesión'}
+                </Button>
+              )}
+            </>
           ) : null}
 
           {creating ? (
-            <p className="text-sm text-muted-foreground">Creando wallet embedded...</p>
+            <p className="text-sm text-muted-foreground">Creando wallet embebida…</p>
           ) : null}
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
