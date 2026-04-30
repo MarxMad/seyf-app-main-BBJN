@@ -245,9 +245,7 @@ export default function EtherfuseRampDevClient() {
   }, [speiDetails, pendingManualOrderJson, performFiatSimulation, run])
 
   const speiConfirmBusy = busy === 'spei-manual-confirm'
-  const kycBypassForTesting = process.env.NODE_ENV !== 'production'
-  const canOperate =
-    kycBypassForTesting || (readiness?.onrampEnabled === true) || (!kycLoading && kycGate?.kycApproved === true)
+  const canOperate = (readiness?.onrampEnabled === true) || (!kycLoading && kycGate?.kycApproved === true)
 
   const onrampTxSignature = useMemo(
     () => extractConfirmedTxSignatureFromOnrampPanelJson(fiatJson),

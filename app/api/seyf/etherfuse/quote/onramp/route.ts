@@ -14,7 +14,6 @@ const bodySchema = z.object({
   sourceAmount: z.string().min(1),
   targetAsset: z.string().min(5).optional(),
 });
-const DEV_KYC_BYPASS = process.env.NODE_ENV !== "production";
 
 /**
  * POST /api/seyf/etherfuse/quote/onramp
@@ -48,12 +47,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    if (!DEV_KYC_BYPASS) {
-      await assertEtherfuseKycApproved({
-        customerId: ctx.customerId,
-        publicKey: ctx.publicKey,
-      });
-    }
+    await assertEtherfuseKycApproved({
+      customerId: ctx.customerId,
+      publicKey: ctx.publicKey,
+    });
     const { assets } = await fetchRampableAssetsForWallet({
       walletPublicKey: ctx.publicKey,
     });

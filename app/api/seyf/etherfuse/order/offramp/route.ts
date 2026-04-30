@@ -46,15 +46,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const devBypass = process.env.NODE_ENV !== "production";
   try {
-    if (!devBypass) {
-      await assertEtherfuseKycApproved({
-        customerId: ctx.customerId,
-        publicKey: ctx.publicKey,
-      });
-      await assertWalletActiveForUser(ctx.customerId);
-    }
+    await assertEtherfuseKycApproved({
+      customerId: ctx.customerId,
+      publicKey: ctx.publicKey,
+    });
+    await assertWalletActiveForUser(ctx.customerId);
     let cryptoWalletId: string | undefined;
     try {
       cryptoWalletId = await resolveMvpPartnerCryptoWalletId(ctx.publicKey);

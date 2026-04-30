@@ -6,6 +6,10 @@ const APPROVED_KYC_STATUSES: ReadonlySet<EtherfuseKycStatus> = new Set([
   'approved_chain_deploying',
 ])
 
+export function isEtherfuseKycApprovedStatus(status: EtherfuseKycStatus): boolean {
+  return APPROVED_KYC_STATUSES.has(status)
+}
+
 export type EtherfuseIdentityContext = {
   customerId: string
   publicKey: string
@@ -31,7 +35,7 @@ export async function getEtherfuseKycGateResult(
           : 'No pudimos validar tu estado KYC en este momento. Intenta de nuevo.',
     }
   }
-  const approved = APPROVED_KYC_STATUSES.has(kyc.data.status)
+  const approved = isEtherfuseKycApprovedStatus(kyc.data.status)
   return {
     approved,
     status: kyc.data.status,

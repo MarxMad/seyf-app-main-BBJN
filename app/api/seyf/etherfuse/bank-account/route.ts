@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import { toErrorResponse, AppError } from '@/lib/seyf/api-error'
+import { assertEtherfuseKycApproved } from '@/lib/seyf/etherfuse-kyc-guard'
 import {
   getEtherfuseOnboardingSession,
   saveEtherfuseOnboardingSession,
@@ -44,6 +45,19 @@ export async function POST(req: Request) {
           'No Etherfuse session found. Start onboarding in /identidad to bind customerId first.',
       })
     }
+    if (!session.publicKey) {
+      throw new AppError('validation_error', {
+        statusCode: 401,
+        retryable: false,
+        message:
+          'No Etherfuse wallet context found. Complete /identidad first to bind your public key.',
+      })
+    }
+
+    await assertEtherfuseKycApproved({
+      customerId: session.customerId,
+      publicKey: session.publicKey,
+    })
 
     const raw = (await req.json().catch(() => null)) as unknown
     const parsed = bodySchema.safeParse(raw)
