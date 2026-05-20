@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Geist_Mono } from 'next/font/google'
+import { Inter, Geist, Geist_Mono, Fraunces } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { PublicMobileHistorySeed } from '@/components/app/public-mobile-history-seed'
@@ -12,7 +12,22 @@ const inter = Inter({
   weight: ['400', '500', '600', '700', '800', '900'],
   variable: '--font-inter',
 })
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const geist = Geist({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-geist',
+})
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-geist-mono',
+})
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  weight: ['400', '500', '600'],
+  variable: '--font-fraunces',
+})
 
 const siteUrl = getSiteUrl()
 const defaultTitle = 'Seyf — Gasta ahora y nunca pagues'
@@ -77,7 +92,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es-MX" suppressHydrationWarning className={inter.variable}>
+    <html
+      lang="es-MX"
+      suppressHydrationWarning
+      className={`${inter.variable} ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}
+    >
       <body className="min-h-dvh font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <PublicMobileHistorySeed />

@@ -1,44 +1,23 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
-import {
-  SEYF_LANDING_BONDS_LINE,
-  SEYF_LANDING_CARDS_SHOWCASE_BODY,
-  SEYF_LANDING_CARDS_SHOWCASE_DISCLAIMER,
-  SEYF_LANDING_CARDS_SHOWCASE_TITLE,
-  SEYF_LANDING_FOOTER_CTA_TITLE,
-  SEYF_LANDING_LEAD,
-  SEYF_LANDING_MARKETS,
-  SEYF_LANDING_MARKETS_SECTION_TITLE,
-  SEYF_LANDING_SECURITY_BODY,
-  SEYF_LANDING_SECURITY_TITLE,
-  SEYF_LANDING_TAGLINE,
-  SEYF_LANDING_TAGLINE_PARTS,
-} from '@/lib/seyf/landing-copy'
-import { SeyfScrollGallery } from '@/components/landing/seyf-scroll-gallery'
-import ThreeDMarquee from '@/components/ui/3d-marquee'
-import { cn } from '@/lib/utils'
 
-/** Imágenes del marquee de fondo (mismo set que el hero anterior). */
-const LANDING_MARQUEE_IMAGES = [
-  'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1618044733300-9472054094ee?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?w=400&h=300&fit=crop',
-] as const
+import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
+import styles from './seyf-landing-page.module.css'
+
+const RATE_ANNUAL = 0.104
+const TERM_DAYS = 28
+
+const numberFmt = new Intl.NumberFormat('es-MX', {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+})
+const intFmt = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 })
+
+const fmt = (n: number) => numberFmt.format(n)
+const fmtInt = (n: number) => intFmt.format(Math.round(n))
 
 function useLandingWalletRedirect() {
   const router = useRouter()
@@ -65,259 +44,851 @@ function useLandingWalletRedirect() {
   return { mounted, loading, creating, error, connect }
 }
 
-function PrimaryCta({
-  disabled,
-  onClick,
-  label,
-  className,
-}: {
-  disabled?: boolean
-  onClick: () => void
-  label: string
-  className?: string
-}) {
-  return (
-    <Button
-      type="button"
-      size="lg"
-      disabled={disabled}
-      onClick={onClick}
-      className={cn(
-        'h-12 rounded-full px-8 text-base font-bold shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]',
-        className,
-      )}
-    >
-      {label}
-    </Button>
-  )
+function useSliderPercent(min: number, max: number, value: number) {
+  const pct = ((value - min) / (max - min)) * 100
+  return { '--pct': `${pct}%` } as React.CSSProperties
 }
 
 export default function SeyfLandingPage() {
   const { mounted, loading, creating, error, connect } = useLandingWalletRedirect()
-
   const busy = !mounted || loading || creating
-  const label = creating ? 'Preparando tu cuenta…' : loading ? 'Cargando…' : 'Iniciar'
+  const start = () => {
+    if (busy) return
+    connect()
+  }
 
-  const start = () => void connect()
+  // Hero calculator state — fixed 5% advance, slider over deposit.
+  const [heroDeposit, setHeroDeposit] = useState(10000)
+  const hero = useMemo(() => {
+    const yieldYear = heroDeposit * RATE_ANNUAL
+    const yieldMonth = yieldYear * (TERM_DAYS / 365)
+    const advance = yieldMonth * 0.05
+    return { yieldYear, yieldMonth, advance }
+  }, [heroDeposit])
+  const heroSliderStyle = useSliderPercent(1000, 200000, heroDeposit)
+
+  // Big calculator state — deposit + percent.
+  const [bigDeposit, setBigDeposit] = useState(25000)
+  const [bigPercent, setBigPercent] = useState(5)
+  const big = useMemo(() => {
+    const yieldYear = bigDeposit * RATE_ANNUAL
+    const yieldMonth = yieldYear * (TERM_DAYS / 365)
+    const advance = yieldMonth * (bigPercent / 100)
+    return { yieldMonth, advance, final: bigDeposit + yieldMonth }
+  }, [bigDeposit, bigPercent])
+  const bigDepositStyle = useSliderPercent(1000, 200000, bigDeposit)
+  const bigPercentStyle = useSliderPercent(1, 5, bigPercent)
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-50">
-      {/* Nav estilo Revolut: logo + anclas + CTA */}
-      <header className="fixed top-0 right-0 left-0 z-50 border-b border-zinc-200/80 bg-white/85 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/85">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6">
-          <Link href="/" className="flex shrink-0 items-center gap-2">
-            <Image
-              src="/SEYF.png"
-              alt="Seyf"
-              width={120}
-              height={42}
-              className="h-8 w-auto object-contain sm:h-9"
-              priority
-            />
+    <div className={styles.root}>
+      {/* ============================ NAV ============================ */}
+      <nav className={styles.nav}>
+        <div className={styles.navInner}>
+          <Link href="/" className={styles.logo}>
+            <span className={styles.logoGlyph}>S</span>
+            S E Y F
           </Link>
-          <nav className="hidden items-center gap-8 text-sm font-medium text-zinc-600 md:flex dark:text-zinc-400">
-            <a href="#recorrido" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Recorrido
-            </a>
-            <a href="#tarjetas" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Tarjetas
-            </a>
-            <a href="#mercados" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Mercados
-            </a>
-            <a href="#seguridad" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Seguridad
-            </a>
-          </nav>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Button
+          <div className={styles.navLinks}>
+            <a href="#como">Cómo funciona</a>
+            <a href="#calc">Calculadora</a>
+            <a href="#tarjeta">Tarjeta</a>
+            <a href="#seguridad">Seguridad</a>
+          </div>
+          <div className={styles.navCta}>
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="hidden font-semibold sm:inline-flex"
-              disabled={busy}
+              className={`${styles.btn} ${styles.btnGhost} ${styles.navCtaLogin}`}
               onClick={start}
+              disabled={busy}
             >
               Iniciar sesión
-            </Button>
-            <PrimaryCta
-              disabled={busy}
+            </button>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnPrimary}`}
               onClick={start}
-              label={label}
-              className="h-10 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 sm:h-11"
-            />
-          </div>
-        </div>
-      </header>
-
-      {/* Hero: fondo ThreeDMarquee (efecto animado del hero original) + velo para legibilidad */}
-      <section className="relative isolate min-h-[calc(100svh-2.5rem)] overflow-hidden px-4 pt-24 pb-20 sm:min-h-[calc(100svh-3rem)] sm:px-6 sm:pt-32 sm:pb-28">
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-          <ThreeDMarquee
-            images={[...LANDING_MARQUEE_IMAGES]}
-            className="opacity-[0.44] dark:opacity-[0.30] !h-full !min-h-full min-h-[28rem] w-full max-w-none rounded-none xl:!h-full xl:!min-h-0"
-          />
-        </div>
-        <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-white/88 via-[#f4faf7]/80 to-white/90 dark:from-zinc-950/92 dark:via-zinc-950/78 dark:to-zinc-950/94"
-          aria-hidden
-        />
-        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden opacity-90 dark:opacity-70" aria-hidden>
-          <div className="absolute -top-24 right-[-18%] h-[min(420px,55vw)] w-[min(420px,55vw)] rounded-full bg-[#8ab9a3]/18 blur-3xl dark:bg-[#15534a]/22" />
-          <div className="absolute -bottom-28 left-[-12%] h-[min(380px,50vw)] w-[min(380px,50vw)] rounded-full bg-[#15534a]/10 blur-3xl dark:bg-[#1f6559]/18" />
-        </div>
-        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center text-center">
-          <Image
-            src="/SEYF.png"
-            alt=""
-            width={560}
-            height={200}
-            className="h-auto w-[min(92vw,20rem)] object-contain sm:w-[min(28rem,85vw)]"
-            aria-hidden
-          />
-          <h1 className="mt-10 text-4xl font-black tracking-tight text-balance text-zinc-950 sm:text-5xl md:text-[3.25rem] md:leading-[1.08] dark:text-white">
-            {SEYF_LANDING_TAGLINE_PARTS.before}
-            <span className="text-[#45b596] dark:text-[#7fe8cc]">{SEYF_LANDING_TAGLINE_PARTS.highlight}</span>
-            {SEYF_LANDING_TAGLINE_PARTS.after}
-          </h1>
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-zinc-600 sm:text-lg dark:text-zinc-400">
-            {SEYF_LANDING_LEAD}
-          </p>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-500 sm:text-base dark:text-zinc-500">
-            {SEYF_LANDING_BONDS_LINE}
-          </p>
-          <div className="mt-10 flex flex-col items-center gap-3">
-            <PrimaryCta
               disabled={busy}
-              onClick={start}
-              label={label}
-              className="min-w-[12rem] bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
-            />
-            {error ? <p className="max-w-md text-center text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+            >
+              {creating ? 'Preparando…' : 'Crear cuenta →'}
+            </button>
           </div>
         </div>
-      </section>
+      </nav>
 
-      {/* Bloque estilo Revolut: fondo negro, copy centrado, CTA píldora clara, imagen de tarjetas debajo */}
-      <section
-        id="tarjetas"
-        className="scroll-mt-20 border-y border-white/5 bg-black px-4 pt-14 pb-8 text-white sm:px-6 sm:pt-20 sm:pb-12"
-      >
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-black tracking-tight text-balance sm:text-4xl md:text-[2.75rem] md:leading-tight">
-            {SEYF_LANDING_CARDS_SHOWCASE_TITLE}
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-zinc-300 sm:text-lg">
-            {SEYF_LANDING_CARDS_SHOWCASE_BODY}
-          </p>
-          <p className="mx-auto mt-3 max-w-lg text-[11px] leading-snug text-zinc-500 sm:text-xs">
-            {SEYF_LANDING_CARDS_SHOWCASE_DISCLAIMER}
-          </p>
-          <div className="mt-8 flex justify-center">
-            <PrimaryCta
-              disabled={busy}
-              onClick={start}
-              label={label}
-              className="min-w-[12rem] bg-white text-black hover:bg-zinc-200"
-            />
-          </div>
-        </div>
-        <div className="relative mx-auto mt-12 max-w-5xl sm:mt-16">
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/50 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_32px_64px_-12px_rgba(0,0,0,0.6)]">
-            <Image
-              src="/landing/seyf-cards-showcase.png"
-              alt="Tarjetas físicas Seyf en distintos niveles"
-              width={1024}
-              height={575}
-              sizes="(max-width: 1024px) 100vw, 1024px"
-              className="h-auto w-full object-cover object-center"
-            />
-          </div>
-          {/* Reflejo suave tipo vitrina Revolut */}
-          <div
-            className="pointer-events-none absolute inset-x-8 -bottom-6 h-24 bg-gradient-to-t from-black via-black/80 to-transparent sm:inset-x-12"
-            aria-hidden
-          />
-        </div>
-      </section>
-
-      {/* Banda oscura + rejilla tipo planes Revolut */}
-      <section id="mercados" className="scroll-mt-20 bg-zinc-950 px-4 py-16 text-white sm:px-6 sm:py-24">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="text-center text-3xl font-black tracking-tight sm:text-4xl">
-            {SEYF_LANDING_MARKETS_SECTION_TITLE}
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-sm text-zinc-400 sm:text-base">
-            Un solo lugar para ver tu refugio diversificado y adelantar rendimientos según tu ritmo.
-          </p>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {SEYF_LANDING_MARKETS.map((m) => (
-              <div
-                key={m.name}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:bg-white/[0.06]"
-              >
-                <p className="text-xs font-bold uppercase tracking-wider text-emerald-400/90">{m.name}</p>
-                <p className="mt-3 text-sm leading-relaxed text-zinc-300">{m.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Split claro: copy + marca */}
-      <section id="seguridad" className="scroll-mt-20 bg-zinc-100 px-4 py-16 sm:px-6 sm:py-24 dark:bg-zinc-900">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
+      {/* ============================ HERO ============================ */}
+      <section className={styles.hero}>
+        <div className={styles.heroBg} aria-hidden />
+        <div className={styles.heroGrid} aria-hidden />
+        <div className={`${styles.container} ${styles.heroInner}`}>
           <div>
-            <h2 className="text-3xl font-black tracking-tight text-zinc-950 sm:text-4xl dark:text-white">
-              {SEYF_LANDING_SECURITY_TITLE}
-            </h2>
-            <p className="mt-5 text-base leading-relaxed text-zinc-600 sm:text-lg dark:text-zinc-400">
-              {SEYF_LANDING_SECURITY_BODY}
+            <div className={styles.pill}>
+              <span className="dot" />
+              Powered by Etherfuse · Stellar · Soroban
+            </div>
+            <h1 className={styles.huge}>
+              Buy Now,
+              <br />
+              <span className={styles.ital}>Pay Never.</span>
+            </h1>
+            <p className={styles.heroSub}>
+              Tu dinero genera rendimiento con <strong>CETES tokenizados</strong>, y nosotros te
+              adelantamos las ganancias futuras — sin tocar tu capital, sin intereses, sin sorpresas.
             </p>
-            <PrimaryCta
-              disabled={busy}
-              onClick={start}
-              label={label}
-              className="mt-8 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
-            />
+            <div className={styles.heroCta}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnLg}`}
+                onClick={start}
+                disabled={busy}
+              >
+                {creating ? 'Preparando…' : 'Comenzar gratis →'}
+              </button>
+              <a
+                className={`${styles.btn} ${styles.btnGhost} ${styles.btnLg} ${styles.btnGhostBordered}`}
+                href="#calc"
+              >
+                Calcular mi adelanto
+              </a>
+            </div>
+            {error ? (
+              <p style={{ marginTop: 16, color: '#ff8a80', fontSize: 14 }}>{error}</p>
+            ) : null}
+            <div className={styles.heroStrip}>
+              <span>
+                <span className={styles.stripDot} /> CNBV · Sandbox
+              </span>
+              <span>
+                <span className={styles.stripDot} /> Custodia en INDEVAL
+              </span>
+              <span>
+                <span className={styles.stripDot} /> Auditado on-chain
+              </span>
+            </div>
           </div>
-          <div className="flex justify-center lg:justify-end">
-            <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-zinc-200/80 bg-gradient-to-br from-emerald-500/15 via-white to-zinc-100 p-10 shadow-xl dark:border-white/10 dark:from-emerald-500/10 dark:via-zinc-900 dark:to-zinc-950">
-              <div className="flex justify-center">
-                <Image
-                  src="/SEYF.png"
-                  alt="Seyf"
-                  width={280}
-                  height={100}
-                  className="h-auto w-full max-w-[220px] object-contain opacity-95 dark:opacity-100"
-                />
+
+          {/* Live calculator card */}
+          <div className={styles.calc}>
+            <div className={styles.calcHead}>
+              <span className="label">Simulador de adelanto</span>
+              <span className="live">
+                <span className="dot" /> En vivo · MXN
+              </span>
+            </div>
+
+            <div className={styles.calcRow}>
+              <div className="rowLabel">
+                <span className="lbl">Tu depósito</span>
+                <span className="lblHint">CETES · 10.4% anual</span>
               </div>
-              <p className="mt-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                Custodia y operaciones con claridad. Tu futuro, pagado por adelantado.
-              </p>
+              <div className="amount">
+                ${fmtInt(heroDeposit)}
+                <span className="cents">.00</span>
+              </div>
+              <input
+                type="range"
+                min={1000}
+                max={200000}
+                step={1000}
+                value={heroDeposit}
+                onChange={(e) => setHeroDeposit(Number(e.target.value))}
+                style={heroSliderStyle}
+                aria-label="Depósito"
+              />
+              <div className={styles.calcTick}>
+                <span>$1K</span>
+                <span>$50K</span>
+                <span>$100K</span>
+                <span>$200K</span>
+              </div>
+            </div>
+
+            <div className={styles.calcResults}>
+              <div className={styles.calcResultsGrid}>
+                <div className={styles.calcCell}>
+                  <div className="clbl">Adelanto hoy</div>
+                  <div className="cval">${fmt(hero.advance)}</div>
+                  <div className="csub">5% del rendimiento proyectado</div>
+                </div>
+                <div className={styles.calcCell}>
+                  <div className="clbl">Rendimiento mensual</div>
+                  <div className="cval">${fmt(hero.yieldMonth)}</div>
+                  <div className="csub">CETES soberanos · 28 días</div>
+                </div>
+                <div className={styles.calcCell}>
+                  <div className="clbl">Ganancia anual</div>
+                  <div className="cval">${fmtInt(hero.yieldYear)}</div>
+                  <div className="csub">Capital intacto al cierre</div>
+                </div>
+                <div className={styles.calcCell}>
+                  <div className="clbl">Costo del adelanto</div>
+                  <div className={`cval ${styles.mintText}`}>$0.00</div>
+                  <div className="csub">Buy Now, Pay Never</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary} ${styles.calcCta}`}
+                onClick={start}
+                disabled={busy}
+              >
+                {creating ? 'Preparando…' : `Comenzar con $${fmtInt(heroDeposit)} →`}
+              </button>
+            </div>
+
+            <div className={styles.calcDisclosure}>
+              Tasa CETES referencia · puede variar al alza o a la baja diariamente
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA final oscuro */}
-      <section className="bg-black px-4 py-16 text-center text-white sm:py-20">
-        <h2 className="text-2xl font-black tracking-tight sm:text-3xl">{SEYF_LANDING_FOOTER_CTA_TITLE}</h2>
-        <p className="mx-auto mt-3 max-w-lg text-sm text-zinc-400">{SEYF_LANDING_TAGLINE}</p>
-        <div className="mt-8">
-          <PrimaryCta
-            disabled={busy}
-            onClick={start}
-            label={label}
-            className="bg-white text-black hover:bg-zinc-200"
-          />
+      {/* ============================ MARQUEE ============================ */}
+      <div className={styles.marquee}>
+        <div className={styles.marqueeTrack}>
+          {[0, 1].map((rep) => (
+            <Fragment key={rep}>
+              <span>
+                BUY NOW <span className="sep">●</span> PAY NEVER
+              </span>
+              <span className="sep">/</span>
+              <span>SIN INTERESES</span>
+              <span className="sep">/</span>
+              <span>SIN AVAL</span>
+              <span className="sep">/</span>
+              <span>SIN BURÓ</span>
+              <span className="sep">/</span>
+              <span>CAPITAL INTACTO</span>
+              <span className="sep">/</span>
+              <span>CETES TOKENIZADOS</span>
+              <span className="sep">/</span>
+            </Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* ============================ PROBLEMA (light) ============================ */}
+      <section className={`${styles.band} ${styles.bandLight}`}>
+        <div className={styles.container}>
+          <div className={styles.sectionEyebrow}>01 · El problema</div>
+          <h2 className={`${styles.sectionHead} ${styles.darkSectionHead}`}>
+            El dinero llega tarde. <span className={styles.softInk}>La oportunidad no espera.</span>
+          </h2>
+          <p className={styles.sectionSub}>
+            El comerciante informal vive entre tasas imposibles, prestamistas de piso y ahorro
+            inmovilizado. Treinta días sin liquidez es media oportunidad perdida.
+          </p>
+
+          <div className={styles.painGrid}>
+            <div className={styles.painCard}>
+              <div className="pcEyebrow">Bancos formales</div>
+              <div className="pcNum">
+                60<span className="pcSmall">–</span>120<span className="pcMint">%</span>
+              </div>
+              <div className="pcBody">
+                Tasa anual efectiva. Requisitos imposibles para un comerciante que mueve efectivo
+                todos los días.
+              </div>
+              <div className="pcTag">CONDUSEF · Banxico 2024</div>
+            </div>
+            <div className={styles.painCard}>
+              <div className="pcEyebrow">Prestamistas en la CEDA</div>
+              <div className="pcNum">
+                81<span className="pcMint">%</span>
+              </div>
+              <div className="pcBody">
+                O más. El capital de trabajo se consume antes de generar ganancia. Una sola semana
+                mala y se pierde el ciclo.
+              </div>
+              <div className="pcTag">Trabajo de campo · 2026</div>
+            </div>
+            <div className={styles.painCard}>
+              <div className="pcEyebrow">Ahorro tradicional · CETES</div>
+              <div className="pcNum">
+                28<span className="pcSmall"> días</span>
+              </div>
+              <div className="pcBody">
+                Mínimo para ver una sola ganancia. La liquidez queda congelada y la oportunidad no
+                espera.
+              </div>
+              <div className="pcTag">Banxico · Tesofe</div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <SeyfScrollGallery />
+      {/* ============================ TESTIMONIAL ============================ */}
+      <section className={`${styles.band} ${styles.bandMidnight}`}>
+        <div className={styles.container}>
+          <div className={styles.sectionEyebrow}>Voz de campo · Central de Abastos CDMX</div>
+          <div className={styles.testi}>
+            <div className={styles.testiInner}>
+              <div>
+                <blockquote>
+                  <span className="quote">“</span>Todo mi ahorro
+                  <br />
+                  está aquí<span className="quote">.”</span>
+                </blockquote>
+                <cite>
+                  — Braulio · vendedor de granos · Señala bajo su terminal de ventas · Abril 2026
+                </cite>
+              </div>
+              <div className={styles.testiPhoto}>
+                [ FOTO CEDA ]
+                <br />
+                <br />
+                BRAULIO · PUESTO DE GRANOS
+                <br />
+                CDMX
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <footer className="border-t border-zinc-200 px-4 py-8 text-center text-xs text-zinc-500 dark:border-zinc-800">
-        <p>© {new Date().getFullYear()} Seyf. Todos los derechos reservados.</p>
+      {/* ============================ CÓMO FUNCIONA ============================ */}
+      <section
+        id="como"
+        className={`${styles.band} ${styles.bandMidnight}`}
+        style={{ paddingTop: 0 }}
+      >
+        <div className={styles.container}>
+          <div className={styles.sectionEyebrow}>02 · Cómo funciona</div>
+          <h2 className={styles.sectionHead}>
+            Cuatro pasos. <span className={styles.muteInk}>Cero papeles.</span>
+          </h2>
+          <p className={styles.sectionSub}>
+            Desde un depósito SPEI familiar hasta un adelanto on-chain — sin que el usuario tenga
+            que entender ni una línea de código.
+          </p>
+
+          <div className={styles.steps}>
+            <div>
+              <div className={styles.step}>
+                <div className={styles.stepNum}>01</div>
+                <h3>Depositas por SPEI</h3>
+                <p>
+                  Usa el mismo rail que ya usas todos los días. Pesos mexicanos, transferencia
+                  familiar, sin nuevos hábitos.
+                </p>
+              </div>
+              <div className={styles.step}>
+                <div className={styles.stepNum}>02</div>
+                <h3>Convertimos a CETES tokenizados</h3>
+                <p>
+                  Tu depósito se convierte en Stablebonds de Etherfuse — bonos soberanos custodiados
+                  en INDEVAL. Sin volatilidad cripto.
+                </p>
+              </div>
+              <div className={styles.step}>
+                <div className={styles.stepNum}>03</div>
+                <h3>Proyectamos tu rendimiento on-chain</h3>
+                <p>
+                  Soroban ejecuta de forma transparente la proyección de ganancias en tiempo real.
+                  Tú lo ves crecer en la app.
+                </p>
+              </div>
+              <div className={styles.step}>
+                <div className={styles.stepNum}>04</div>
+                <h3>Te adelantamos hasta 5%</h3>
+                <p>
+                  Recibes una parte de tu rendimiento <em>hoy</em> — sin tocar tu capital. El
+                  adelanto se liquida al vencimiento del plazo.
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.stepsVisual}>
+              <div className={styles.svFrame}>
+                <svg viewBox="0 0 360 480" className={styles.svSvg}>
+                  <defs>
+                    <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#7fe8cc" stopOpacity="0" />
+                      <stop offset="50%" stopColor="#7fe8cc" stopOpacity="0.7" />
+                      <stop offset="100%" stopColor="#7fe8cc" stopOpacity="0" />
+                    </linearGradient>
+                    <filter id="glow">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+
+                  <line x1="60" y1="40" x2="60" y2="460" stroke="url(#lineGrad)" strokeWidth="2" />
+
+                  <g transform="translate(60, 60)">
+                    <circle r="20" fill="#07100d" stroke="#45b596" strokeWidth="2" />
+                    <text
+                      x="0"
+                      y="5"
+                      textAnchor="middle"
+                      fill="#45b596"
+                      fontFamily="Geist Mono"
+                      fontWeight="700"
+                      fontSize="13"
+                    >
+                      01
+                    </text>
+                  </g>
+                  <g transform="translate(120, 60)">
+                    <rect
+                      x="0"
+                      y="-22"
+                      width="200"
+                      height="44"
+                      rx="10"
+                      fill="rgba(69,181,150,0.06)"
+                      stroke="#2a4039"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x="14"
+                      y="-4"
+                      fill="#7fe8cc"
+                      fontFamily="Geist Mono"
+                      fontSize="9"
+                      letterSpacing="2"
+                    >
+                      SPEI · MXN
+                    </text>
+                    <text x="14" y="14" fill="#f3f7f5" fontFamily="Geist" fontWeight="600" fontSize="14">
+                      Depósito tradicional
+                    </text>
+                  </g>
+
+                  <g transform="translate(60, 180)">
+                    <circle r="20" fill="#07100d" stroke="#45b596" strokeWidth="2" />
+                    <text
+                      x="0"
+                      y="5"
+                      textAnchor="middle"
+                      fill="#45b596"
+                      fontFamily="Geist Mono"
+                      fontWeight="700"
+                      fontSize="13"
+                    >
+                      02
+                    </text>
+                  </g>
+                  <g transform="translate(120, 180)">
+                    <rect
+                      x="0"
+                      y="-22"
+                      width="220"
+                      height="44"
+                      rx="10"
+                      fill="rgba(69,181,150,0.06)"
+                      stroke="#2a4039"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x="14"
+                      y="-4"
+                      fill="#7fe8cc"
+                      fontFamily="Geist Mono"
+                      fontSize="9"
+                      letterSpacing="2"
+                    >
+                      ETHERFUSE · STELLAR
+                    </text>
+                    <text x="14" y="14" fill="#f3f7f5" fontFamily="Geist" fontWeight="600" fontSize="14">
+                      CETES tokenizados
+                    </text>
+                  </g>
+
+                  <g transform="translate(60, 300)">
+                    <circle r="20" fill="#07100d" stroke="#45b596" strokeWidth="2" />
+                    <text
+                      x="0"
+                      y="5"
+                      textAnchor="middle"
+                      fill="#45b596"
+                      fontFamily="Geist Mono"
+                      fontWeight="700"
+                      fontSize="13"
+                    >
+                      03
+                    </text>
+                  </g>
+                  <g transform="translate(120, 300)">
+                    <rect
+                      x="0"
+                      y="-22"
+                      width="200"
+                      height="44"
+                      rx="10"
+                      fill="rgba(69,181,150,0.06)"
+                      stroke="#2a4039"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x="14"
+                      y="-4"
+                      fill="#7fe8cc"
+                      fontFamily="Geist Mono"
+                      fontSize="9"
+                      letterSpacing="2"
+                    >
+                      SOROBAN
+                    </text>
+                    <text x="14" y="14" fill="#f3f7f5" fontFamily="Geist" fontWeight="600" fontSize="14">
+                      Proyección on-chain
+                    </text>
+                  </g>
+
+                  <g transform="translate(60, 420)">
+                    <circle r="22" fill="#45b596" stroke="#7fe8cc" strokeWidth="2" filter="url(#glow)" />
+                    <text
+                      x="0"
+                      y="5"
+                      textAnchor="middle"
+                      fill="#07100d"
+                      fontFamily="Geist Mono"
+                      fontWeight="800"
+                      fontSize="13"
+                    >
+                      04
+                    </text>
+                  </g>
+                  <g transform="translate(120, 420)">
+                    <rect
+                      x="0"
+                      y="-24"
+                      width="220"
+                      height="48"
+                      rx="10"
+                      fill="rgba(127,232,204,0.12)"
+                      stroke="#45b596"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x="14"
+                      y="-6"
+                      fill="#7fe8cc"
+                      fontFamily="Geist Mono"
+                      fontSize="9"
+                      letterSpacing="2"
+                    >
+                      BUY NOW, PAY NEVER
+                    </text>
+                    <text x="14" y="14" fill="#f3f7f5" fontFamily="Geist" fontWeight="700" fontSize="15">
+                      Adelanto en un tap
+                    </text>
+                  </g>
+
+                  <circle r="3" fill="#7fe8cc" filter="url(#glow)">
+                    <animateMotion dur="6s" repeatCount="indefinite" path="M 60,60 L 60,420" />
+                  </circle>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================ BIG CALCULATOR ============================ */}
+      <section id="calc" className={`${styles.band} ${styles.bandMidnight}`}>
+        <div className={styles.container}>
+          <div className={styles.sectionEyebrow}>03 · Tu dinero, claro</div>
+          <h2 className={styles.sectionHead}>
+            ¿Cuánto adelantarías <span className={styles.mintText}>hoy</span>?
+          </h2>
+          <p className={styles.sectionSub}>
+            Mueve el depósito. Sin trampa. Sin asterisco que te cobre después. Todo lo que ves es lo
+            que recibes.
+          </p>
+
+          <div className={styles.bigCalc}>
+            <div className={styles.bigCalcSide}>
+              <div className={`${styles.sectionEyebrow} ${styles.bigCalcSideEyebrow}`}>
+                Sin intereses · sin avales · sin buró
+              </div>
+              <h3>
+                El adelanto se paga <span className="mint">solo</span>, con tu rendimiento
+                bloqueado.
+              </h3>
+              <p>
+                Tu capital nunca sale del protocolo. Si no repagas, el plazo vence y el adelanto se
+                absorbe del rendimiento acumulado. Para ti, el costo siempre es cero.
+              </p>
+              <ul className={styles.bigCalcList}>
+                <li>
+                  <span className="ic">✓</span> El capital regresa íntegro al cierre del ciclo
+                </li>
+                <li>
+                  <span className="ic">✓</span> El rendimiento neto compensa el adelanto recibido
+                </li>
+                <li>
+                  <span className="ic">✓</span> Tasa CETES referencia, vigilada por Banxico
+                </li>
+                <li>
+                  <span className="ic">✓</span> Custodia regulada · cero exposición a volatilidad
+                  cripto
+                </li>
+              </ul>
+            </div>
+
+            <div className={styles.calc}>
+              <div className={styles.calcHead}>
+                <span className="label">Simulador detallado</span>
+                <span className="live">
+                  <span className="dot" /> Tasa de hoy
+                </span>
+              </div>
+
+              <div className={styles.calcRow}>
+                <div className="rowLabel">
+                  <span className="lbl">Depósito (MXN)</span>
+                  <span className="lblHint">Plazo · 28 días</span>
+                </div>
+                <div className="amount">
+                  ${fmtInt(bigDeposit)}
+                  <span className="cents">.00</span>
+                </div>
+                <input
+                  type="range"
+                  min={1000}
+                  max={200000}
+                  step={1000}
+                  value={bigDeposit}
+                  onChange={(e) => setBigDeposit(Number(e.target.value))}
+                  style={bigDepositStyle}
+                  aria-label="Depósito"
+                />
+                <div className={styles.calcTick}>
+                  <span>$1K</span>
+                  <span>$50K</span>
+                  <span>$100K</span>
+                  <span>$200K</span>
+                </div>
+              </div>
+
+              <div className={styles.calcRow}>
+                <div className="rowLabel">
+                  <span className="lbl">% Adelanto solicitado</span>
+                  <span className="lblHint">Máx · 5% del rendimiento</span>
+                </div>
+                <div className="amount">{bigPercent}%</div>
+                <input
+                  type="range"
+                  min={1}
+                  max={5}
+                  step={0.5}
+                  value={bigPercent}
+                  onChange={(e) => setBigPercent(Number(e.target.value))}
+                  style={bigPercentStyle}
+                  aria-label="Porcentaje de adelanto"
+                />
+                <div className={styles.calcTick}>
+                  <span>1%</span>
+                  <span>2%</span>
+                  <span>3%</span>
+                  <span>4%</span>
+                  <span>5%</span>
+                </div>
+              </div>
+
+              <div className={styles.calcResults}>
+                <div className={styles.calcResultsGrid}>
+                  <div className={styles.calcCell}>
+                    <div className="clbl">Recibes hoy</div>
+                    <div className={`cval ${styles.mintText}`} style={{ fontSize: 38 }}>
+                      ${fmt(big.advance)}
+                    </div>
+                    <div className="csub">SPEI al instante</div>
+                  </div>
+                  <div className={styles.calcCell}>
+                    <div className="clbl">A los 28 días</div>
+                    <div className="cval">${fmt(big.final)}</div>
+                    <div className="csub">Capital + rendimiento neto</div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary} ${styles.calcCta}`}
+                onClick={start}
+                disabled={busy}
+              >
+                {creating ? 'Preparando…' : `Comenzar con $${fmtInt(bigDeposit)} →`}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================ TARJETA / PRODUCT ============================ */}
+      <section id="tarjeta" className={styles.productSection}>
+        <div className={`${styles.container} ${styles.productInner}`}>
+          <div>
+            <div className={styles.sectionEyebrow}>04 · Tarjeta de Abastos Comerciales</div>
+            <h2 className={styles.sectionHead} style={{ marginTop: 16 }}>
+              Identidad de gremio. <span className={styles.mintText}>Medio de pago.</span>
+            </h2>
+            <p className={`${styles.sectionSub} ${styles.productSubLight}`}>
+              Tu cuenta SEYF viene con tarjeta física diseñada para el piso del mercado. Acepta
+              pagos, recibe depósitos, cobra ventas — todo conectado a tu rendimiento on-chain.
+            </p>
+            <div style={{ marginTop: 32 }}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnLight} ${styles.btnLg}`}
+                onClick={start}
+                disabled={busy}
+              >
+                {creating ? 'Preparando…' : 'Quiero mi tarjeta →'}
+              </button>
+            </div>
+          </div>
+          <div className={styles.cardStack}>
+            <div className={`${styles.seyfCard} ${styles.seyfCardBack}`}>
+              <div className="top">
+                <div className="chip" />
+                <div className="brand">Seyf</div>
+              </div>
+              <div>
+                <div className="meta">Tarjeta de Abastos Comerciales</div>
+                <div className="num">2026 ·· 11 / 28</div>
+              </div>
+            </div>
+            <div className={`${styles.seyfCard} ${styles.seyfCardFront}`}>
+              <div className="top">
+                <div className="chip" />
+                <div className="brand">Seyf</div>
+              </div>
+              <div>
+                <div className="meta">Tarjeta de Abastos Comerciales</div>
+                <div className="num">●●●● ●●●● ●●●● 4720</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================ SEGURIDAD ============================ */}
+      <section id="seguridad" className={`${styles.band} ${styles.bandMidnight}`}>
+        <div className={styles.container}>
+          <div className={styles.sectionEyebrow}>05 · Seguridad y custodia</div>
+          <h2 className={styles.sectionHead}>
+            Tu dinero, donde <span className={styles.mintText}>debe estar.</span>
+          </h2>
+          <p className={styles.sectionSub}>
+            No somos una caja. Somos infraestructura sobre instrumentos soberanos custodiados.
+            Auditable, regulado, transparente.
+          </p>
+
+          <div className={styles.trustGrid}>
+            <div className={styles.trustCard}>
+              <div className="tcEyebrow">CETES</div>
+              <div className="tcTitle">Bonos soberanos</div>
+              <div className="tcBody">
+                Tu depósito se respalda con deuda del Gobierno Federal Mexicano custodiada en
+                INDEVAL.
+              </div>
+            </div>
+            <div className={styles.trustCard}>
+              <div className="tcEyebrow">Etherfuse</div>
+              <div className="tcTitle">Stablebonds</div>
+              <div className="tcBody">
+                Tokenización institucional. Cero exposición a stablecoins privados o a volatilidad
+                cripto.
+              </div>
+            </div>
+            <div className={styles.trustCard}>
+              <div className="tcEyebrow">Stellar · Soroban</div>
+              <div className="tcTitle">Liquidación on-chain</div>
+              <div className="tcBody">
+                Movimientos auditables en una red consolidada con relación directa al SDF.
+              </div>
+            </div>
+            <div className={styles.trustCard}>
+              <div className="tcEyebrow">CNBV</div>
+              <div className="tcTitle">Sandbox regulatorio</div>
+              <div className="tcBody">
+                Aplicación en curso. Estructura legal y KYC/AML alineados desde el primer usuario.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================ FINAL CTA ============================ */}
+      <section className={styles.finalCta}>
+        <div className={`${styles.container} ${styles.finalCtaInner}`}>
+          <div className={styles.finalCtaEyebrow}>
+            El capital de quien mueve la economía real
+          </div>
+          <h2>
+            Tu futuro,
+            <br />
+            <span className={styles.ital}>pagado por adelantado.</span>
+          </h2>
+          <p>
+            Activa tu cuenta SEYF en minutos. Sin score crediticio. Sin estados bancarios. Sin
+            papeles. Solo tu identidad y tu primer depósito.
+          </p>
+          <div className={styles.finalCtaRow}>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnDark} ${styles.btnLg}`}
+              onClick={start}
+              disabled={busy}
+            >
+              {creating ? 'Preparando…' : 'Crear cuenta gratis →'}
+            </button>
+            <a
+              className={`${styles.btn} ${styles.btnGhost} ${styles.btnLg} ${styles.btnGhostLight}`}
+              href="#calc"
+            >
+              Calcular mi adelanto
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================ FOOTER ============================ */}
+      <footer className={styles.footer}>
+        <div className={styles.container}>
+          <div className={styles.footerInner}>
+            <div>
+              <Link href="/" className={styles.logo}>
+                <span className={styles.logoGlyph}>S</span>
+                S E Y F
+              </Link>
+              <p className={styles.footerLead}>
+                Liquidez inmediata respaldada por el rendimiento de CETES tokenizados. Una
+                infraestructura de Seyfert Labs para la economía real mexicana.
+              </p>
+            </div>
+            <div className={styles.footerCol}>
+              <h5>Producto</h5>
+              <a href="#como">Cómo funciona</a>
+              <a href="#calc">Calculadora</a>
+              <a href="#tarjeta">Tarjeta SEYF</a>
+              <a href="#seguridad">Seguridad</a>
+            </div>
+            <div className={styles.footerCol}>
+              <h5>Empresa</h5>
+              <a href="#">Sobre nosotros</a>
+              <a href="#">Blog</a>
+              <a href="#">Prensa</a>
+              <a href="#">Trabaja con nosotros</a>
+            </div>
+            <div className={styles.footerCol}>
+              <h5>Legal</h5>
+              <a href="#">Términos</a>
+              <a href="#">Privacidad</a>
+              <a href="#">Cumplimiento</a>
+              <a href="#">Contacto</a>
+            </div>
+          </div>
+          <div className={styles.footerBottom}>
+            <div>© {new Date().getFullYear()} Seyfert Labs · CDMX</div>
+            <div>Hecho con cuidado en el corazón de la economía informal</div>
+          </div>
+        </div>
       </footer>
     </div>
   )
