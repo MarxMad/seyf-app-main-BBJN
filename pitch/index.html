@@ -937,7 +937,9 @@
     min-height: 0;
   }
   .team-photo {
-    flex: 1; min-height: 200px;
+    aspect-ratio: 4 / 5;
+    width: 100%;
+    flex: none;
     overflow: hidden;
     background: #0a1613;
   }
@@ -1279,20 +1281,40 @@
       </div>
       <div class="team-grid">
         <div class="team-card">
-          <p class="team-role">CEO</p>
-          <p class="team-name">Gerardo Vela</p>
+          <div class="team-photo team-photo--gerardo">
+            <img src="/pitch/assets/team/gerardovela.jpeg" alt="Gerardo Vela" width="400" height="500" />
+          </div>
+          <div class="team-meta">
+            <p class="team-role">CEO</p>
+            <p class="team-name">Gerardo Vela</p>
+          </div>
         </div>
         <div class="team-card">
-          <p class="team-role">CTO</p>
-          <p class="team-name">Andrés Rodríguez</p>
+          <div class="team-photo team-photo--andres">
+            <img src="/pitch/assets/team/andresrodrigez.jpeg" alt="Andrés Rodríguez" width="400" height="500" />
+          </div>
+          <div class="team-meta">
+            <p class="team-role">CTO</p>
+            <p class="team-name">Andrés Rodríguez</p>
+          </div>
         </div>
         <div class="team-card">
-          <p class="team-role">CMO</p>
-          <p class="team-name">Miriam Mejía</p>
+          <div class="team-photo team-photo--miriam">
+            <img src="/pitch/assets/team/miriammejia.jpeg" alt="Miriam Mejía" width="400" height="500" />
+          </div>
+          <div class="team-meta">
+            <p class="team-role">CMO</p>
+            <p class="team-name">Miriam Mejía</p>
+          </div>
         </div>
         <div class="team-card">
-          <p class="team-role">CPO</p>
-          <p class="team-name">Ian Hernández</p>
+          <div class="team-photo team-photo--ian">
+            <img src="/pitch/assets/team/ianhernandex.jpeg" alt="Ian Hernández" width="400" height="500" />
+          </div>
+          <div class="team-meta">
+            <p class="team-role">CPO</p>
+            <p class="team-name">Ian Hernández</p>
+          </div>
         </div>
       </div>
     </div>
