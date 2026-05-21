@@ -34,6 +34,9 @@
     --t-roadmap-item: 26px;
     --t-roadmap-sub: 15px;
     --t-roadmap-gap: 20px;
+    --t-model-tile: 34px;
+    --t-model-desc: 15px;
+    --t-model-num: 72px;
   }
   html, body { background: var(--bg); margin: 0; padding: 0; }
   body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); }
@@ -645,63 +648,127 @@
   }
   .dyn-stat-card.wide .big { font-size: clamp(56px, 6vw, 92px); color: var(--mint-2); }
 
-  /* 05 — tres pilares */
-  .dyn-model {
-    flex: 1; display: flex; flex-direction: column; justify-content: center;
-    padding: 40px 72px 16px; gap: 28px;
+  /* 05 — modelo de negocio (tarjetas grandes · px fijos) */
+  .slide-model .dyn-model {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 32px 56px 14px;
+    gap: 22px;
+    min-height: 0;
   }
-  .dyn-model-head { text-align: center; }
-  .dyn-tiles {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
-    flex: 1; align-items: stretch; max-height: 380px;
-  }
-  .dyn-tile {
-    border-radius: 28px; padding: clamp(28px, 3vw, 44px) clamp(20px, 2vw, 28px);
-    background: linear-gradient(180deg, rgba(21,83,74,0.45) 0%, rgba(7,16,13,0.9) 100%);
-    border: 1px solid var(--line-2);
-    display: flex; flex-direction: column; justify-content: space-between;
-    position: relative; overflow: hidden;
-  }
-  .dyn-tile::after {
-    content: ""; position: absolute; top: -40%; right: -30%;
-    width: 120px; height: 120px; border-radius: 50%;
-    background: var(--mint); opacity: 0.08; filter: blur(30px);
-  }
-  .dyn-tile:nth-child(2) { transform: translateY(-12px); border-color: rgba(127,232,204,0.35); }
-  .dyn-tiles.model-5 {
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto auto;
-    max-height: none;
-    gap: 14px;
-  }
-  .dyn-tiles.model-5 .dyn-tile:nth-child(2) { transform: translateY(-8px); }
-  .dyn-tiles.model-5 .dyn-tile:nth-child(4) { grid-column: 1; }
-  .dyn-tiles.model-5 .dyn-tile:nth-child(5) { grid-column: 2 / -1; }
-  .dyn-tiles.model-5 .dyn-tile .n { font-size: clamp(56px, 6vw, 88px); }
-  .dyn-tiles.model-5 .dyn-tile .t { font-size: clamp(26px, 2.6vw, 40px); }
-  .dyn-tiles.model-5 .dyn-tile .d { font-size: 10px; line-height: 1.35; }
-  .dyn-model-tagline {
+  .slide-model .dyn-model-head {
     text-align: center;
-    font-family: 'Geist Mono', monospace;
-    font-size: 11px;
+    flex: none;
+  }
+  .slide-model .dyn-model-head .dyn-sans,
+  .slide-model .dyn-model-head .dyn-xl {
+    display: inline;
+  }
+  .slide-model .dyn-tiles.model-5 {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr 1fr;
+    gap: 16px;
+    min-height: 0;
+    max-height: none;
+    align-items: stretch;
+  }
+  .slide-model .dyn-tile {
+    border-radius: 24px;
+    padding: 22px 20px 20px;
+    background: linear-gradient(165deg, rgba(26,107,92,0.35) 0%, rgba(7,16,13,0.92) 65%);
+    border: 1px solid rgba(127,232,204,0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+    box-shadow:
+      0 0 0 1px rgba(69,181,150,0.06),
+      0 20px 48px rgba(0,0,0,0.35);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .slide-model .dyn-tile::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--mint), transparent);
+    opacity: 0.5;
+  }
+  .slide-model .dyn-tile::after {
+    content: "";
+    position: absolute;
+    top: -30%;
+    right: -20%;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: var(--mint);
+    opacity: 0.12;
+    filter: blur(36px);
+  }
+  .slide-model .dyn-tile.is-feature {
+    border-color: rgba(127,232,204,0.45);
+    background: linear-gradient(155deg, rgba(69,181,150,0.28) 0%, rgba(7,16,13,0.94) 70%);
+    box-shadow:
+      0 0 0 1px rgba(127,232,204,0.15),
+      0 0 48px rgba(69,181,150,0.18),
+      0 24px 56px rgba(0,0,0,0.4);
+    transform: translateY(-4px);
+  }
+  .slide-model .dyn-tile.is-feature::before {
+    opacity: 1;
+    background: linear-gradient(90deg, var(--mint-2), var(--mint), var(--mint-2));
+  }
+  .slide-model .dyn-tiles.model-5 .dyn-tile:nth-child(4) { grid-column: 1; }
+  .slide-model .dyn-tiles.model-5 .dyn-tile:nth-child(5) { grid-column: 2 / -1; }
+  .slide-model .dyn-tile .n {
+    font-family: 'Fraunces', serif;
+    font-size: var(--t-model-num);
+    font-weight: 600;
+    line-height: 0.8;
+    color: rgba(127,232,204,0.22);
+    margin: 0 0 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .slide-model .dyn-tile.is-feature .n {
+    color: rgba(127,232,204,0.38);
+  }
+  .slide-model .dyn-tile .t {
+    font-size: var(--t-model-title);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin: 0;
+    color: var(--ink);
+    position: relative;
+    z-index: 1;
+  }
+  .slide-model .dyn-tile.is-feature .t {
+    color: var(--mint-2);
+  }
+  .slide-model .dyn-tile .d {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: var(--t-model-desc);
+    font-weight: 500;
     color: var(--ink-mute);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin: -8px 0 0;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    line-height: 1.35;
+    margin-top: 10px;
+    position: relative;
+    z-index: 1;
   }
-  .dyn-model-tagline strong { color: var(--mint-2); }
-  .dyn-tile .n {
-    font-family: 'Fraunces', serif; font-size: clamp(72px, 8vw, 120px);
-    font-weight: 600; line-height: 0.85; color: rgba(127,232,204,0.2); margin: 0;
-  }
-  .dyn-tile .t {
-    font-size: var(--t-tile); font-weight: 800;
-    letter-spacing: -0.03em; line-height: 1; margin: 0;
-  }
-  .dyn-tile .d {
-    font-family: 'Geist Mono', monospace; font-size: 11px;
-    color: var(--ink-mute); letter-spacing: 0.1em; text-transform: uppercase;
-    margin-top: 12px;
+  .slide-model .dyn-tile.is-feature .d {
+    color: rgba(243,247,245,0.85);
   }
 
   /* 06 — tracción: stats + fotos CEDA */
@@ -1221,7 +1288,7 @@
           <p class="t">Spread</p>
           <p class="d">yield compartido · CETES</p>
         </div>
-        <div class="dyn-tile">
+        <div class="dyn-tile is-feature">
           <p class="n">2</p>
           <p class="t">Adelanto</p>
           <p class="d">comisión fija · sin intereses</p>
@@ -1231,7 +1298,7 @@
           <p class="t">Cero mora</p>
           <p class="d">colateral = rendimiento</p>
         </div>
-        <div class="dyn-tile">
+        <div class="dyn-tile is-feature">
           <p class="n">4</p>
           <p class="t">Tarjeta</p>
           <p class="d">comisión al pagar · gastas rendimiento adelantado</p>
