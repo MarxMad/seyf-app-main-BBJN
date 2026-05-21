@@ -8,15 +8,6 @@ const __dirname = path.resolve(path.dirname(__filename))
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async redirects() {
-    return [
-      {
-        source: '/pitch',
-        destination: '/pitch/',
-        permanent: true,
-      },
-    ]
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
