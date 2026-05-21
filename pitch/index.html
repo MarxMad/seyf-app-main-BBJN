@@ -800,10 +800,75 @@
   }
   .dyn-bento .b.mainnet .val { font-size: clamp(48px, 5.2vw, 72px); color: var(--mint-2); }
 
-  /* 07 — cierre split */
+  /* 07 — cierre + roadmap */
   .dyn-close {
-    flex: 1; display: grid; grid-template-columns: 1.05fr 0.95fr;
-    gap: 48px; align-items: center; padding: 48px 72px 20px;
+    flex: 1; display: grid; grid-template-columns: 0.82fr 1.18fr;
+    gap: 40px; align-items: stretch; padding: 40px 64px 16px;
+    min-height: 0;
+  }
+  .dyn-close-lead { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+  .dyn-close-ask {
+    margin-top: 28px; padding-top: 24px;
+    border-top: 1px solid var(--line-2);
+  }
+  .roadmap-panel {
+    display: flex; flex-direction: column; gap: 16px;
+    padding: 28px 28px 24px;
+    border-radius: 28px;
+    border: 1px solid var(--line-2);
+    background: rgba(69,181,150,0.06);
+    min-height: 0;
+  }
+  .roadmap-panel .roadmap-title {
+    font-family: 'Geist Mono', monospace;
+    font-size: var(--t-dyn-label);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin: 0;
+  }
+  .roadmap-years {
+    flex: 1; display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; min-height: 0;
+  }
+  .roadmap-year {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 18px 16px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(127,232,204,0.14);
+    background: rgba(7,16,13,0.45);
+  }
+  .roadmap-year .yr {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(28px, 2.6vw, 40px);
+    font-weight: 600;
+    line-height: 1;
+    margin: 0;
+    color: var(--mint-2);
+  }
+  .roadmap-year .yr-sub {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: -4px 0 6px;
+  }
+  .roadmap-item {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(42,64,57,0.6);
+    background: rgba(0,0,0,0.2);
+    font-size: clamp(13px, 1.15vw, 17px);
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  .roadmap-item strong { color: var(--mint-2); font-weight: 700; }
+  .roadmap-item.milestone {
+    border-color: var(--mint);
+    background: rgba(69,181,150,0.12);
   }
   .dyn-ask-mega {
     font-family: 'Fraunces', serif; font-size: var(--t-ask);
@@ -845,6 +910,15 @@
     padding: 44px 72px 16px; gap: 36px; min-height: 0;
   }
   .slide-team .team-head { max-width: 900px; }
+  .slide-team .team-title-only {
+    font-family: 'Fraunces', serif;
+    font-size: var(--t-dyn-xl);
+    font-weight: 600;
+    line-height: 0.95;
+    margin: 8px 0 0;
+    color: #0a1613;
+  }
+  .slide-team .team-title-only .em { color: #15534a; }
   .team-grid {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;
   }
@@ -1129,31 +1203,56 @@
   </div>
 </section>
 
-<!-- 07 CIERRE -->
-<section class="slide-ref slide-dyn slide-cover slide-dark" data-screen-label="07 Cierre">
+<!-- 07 CIERRE + ROADMAP -->
+<section class="slide-ref slide-dyn slide-cover slide-dark slide-close" data-screen-label="07 Cierre">
   <div class="grid-bg"></div>
   <div class="glow" style="width:720px;height:720px;background:#15534a;bottom:-200px;right:-120px;"></div>
   <div class="dyn-ring" style="width:560px;height:560px;top:-20%;left:-15%;"></div>
 
   <div class="frame frame-grid">
     <div class="dyn-close">
-      <div>
+      <div class="dyn-close-lead">
         <p class="dyn-label">Cierre</p>
         <p class="dyn-sans">CETES.</p>
         <p class="dyn-sans">Capital.</p>
         <p class="dyn-xl"><span class="em">Diario.</span></p>
-        <p class="dyn-xl" style="margin-top:20px;">
+        <p class="dyn-xl" style="margin-top:16px;">
           Esa herramienta es <span class="em">Seyf.</span>
         </p>
         <p class="dyn-foot-tag"><strong>Sin deuda</strong> · sin tocar lo que construyeron</p>
+        <div class="dyn-close-ask">
+          <p class="dyn-label">Pre-seed</p>
+          <p class="dyn-ask-mega">100</p>
+          <p class="dyn-sans" style="font-size:clamp(28px,2.8vw,40px);margin-top:-6px;">cuentas · CEDA</p>
+        </div>
       </div>
-      <div>
-        <p class="dyn-label">Pre-seed</p>
-        <p class="dyn-ask-mega">100</p>
-        <p class="dyn-sans" style="font-size:clamp(32px,3.4vw,48px);margin-top:-8px;">cuentas · CEDA</p>
-        <div class="dyn-ask-stack">
-          <div class="dyn-ask-chip">Auditoría mainnet</div>
-          <div class="dyn-ask-chip">Compliance</div>
+      <div class="roadmap-panel">
+        <p class="roadmap-title">Roadmap · 3 años</p>
+        <div class="roadmap-years">
+          <div class="roadmap-year">
+            <p class="yr">Año 1</p>
+            <p class="yr-sub">2026 · fundación</p>
+            <p class="roadmap-item milestone"><strong>Mainnet</strong> · auditoría y cumplimiento</p>
+            <p class="roadmap-item">100 cuentas activas en la CEDA</p>
+            <p class="roadmap-item">SPEI → CETES → adelanto en producción</p>
+            <p class="roadmap-item">Rendimiento diario estable en pesos</p>
+          </div>
+          <div class="roadmap-year">
+            <p class="yr">Año 2</p>
+            <p class="yr-sub">2027 · producto</p>
+            <p class="roadmap-item milestone"><strong>Tarjeta SEYF</strong> · gastas el rendimiento</p>
+            <p class="roadmap-item">Préstamos colateralizados · bajo riesgo</p>
+            <p class="roadmap-item">Colateral = rendimiento · sin mora</p>
+            <p class="roadmap-item">Más mercados · bonos MX, BR, US</p>
+          </div>
+          <div class="roadmap-year">
+            <p class="yr">Año 3</p>
+            <p class="yr-sub">2028 · escala</p>
+            <p class="roadmap-item milestone"><strong>Tipo de cambio real</strong> · Stellar</p>
+            <p class="roadmap-item">Expansión a más ciudades y centrales</p>
+            <p class="roadmap-item">Crédito con historial de piso</p>
+            <p class="roadmap-item">Alianzas · licencias · institucional</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1167,9 +1266,8 @@
   <div class="frame frame-grid">
     <div class="team-layout">
       <div class="team-head">
-        <p class="dyn-label">Equipo</p>
-        <p class="dyn-sans">Operativos</p>
-        <p class="dyn-xl"><span class="em">en piso.</span></p>
+        <p class="dyn-label">Seyfert Labs</p>
+        <p class="team-title-only"><span class="em">El equipo</span></p>
       </div>
       <div class="team-grid">
         <div class="team-card">
@@ -1189,9 +1287,6 @@
           <p class="team-name">Ian Hernández</p>
         </div>
       </div>
-      <p class="team-quote">
-        Web3 avanzado con ejecución directa en la economía real — Seyfert Labs, CDMX.
-      </p>
     </div>
     <div class="bar-foot">Seyf by Seyfert Labs</div>
     <span class="slide-num">08 / 08</span>
