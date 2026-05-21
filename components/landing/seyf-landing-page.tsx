@@ -1,9 +1,16 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
+import {
+  SEYF_LANDING_FIELD_IMAGE,
+  SEYF_LANDING_FIELD_QUOTE_ATTRIBUTION,
+  SEYF_LANDING_FIELD_QUOTE_LINES,
+  SEYF_LANDING_FOOTER_INVESTORS,
+} from '@/lib/seyf/landing-copy'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import styles from './seyf-landing-page.module.css'
 
@@ -70,29 +77,20 @@ export default function SeyfLandingPage() {
   const heroSliderStyle = useSliderPercent(1000, 200000, heroDeposit)
   const heroYearsStyle = useSliderPercent(1, 10, heroYears)
 
-  // Big calculator state — deposit + percent + plazo (años).
-  const [bigDeposit, setBigDeposit] = useState(25000)
-  const [bigPercent, setBigPercent] = useState(5)
-  const [bigYears, setBigYears] = useState(1)
-  const big = useMemo(() => {
-    const yieldYear = bigDeposit * RATE_ANNUAL
-    const yieldMonth = yieldYear * (TERM_DAYS / 365)
-    const yieldTotal = yieldYear * bigYears // interés simple
-    const advance = yieldTotal * (bigPercent / 100)
-    return { yieldMonth, yieldTotal, advance, final: bigDeposit + yieldTotal }
-  }, [bigDeposit, bigPercent, bigYears])
-  const bigDepositStyle = useSliderPercent(1000, 200000, bigDeposit)
-  const bigPercentStyle = useSliderPercent(1, 5, bigPercent)
-  const bigYearsStyle = useSliderPercent(1, 10, bigYears)
-
   return (
     <div className={styles.root}>
       {/* ============================ NAV ============================ */}
       <nav className={styles.nav}>
         <div className={styles.navInner}>
-          <Link href="/" className={styles.logo}>
-            <span className={styles.logoGlyph}>S</span>
-            S E Y F
+          <Link href="/" className={styles.logo} aria-label="Seyf — inicio">
+            <Image
+              src="/SEYF.png"
+              alt="Seyf"
+              width={869}
+              height={881}
+              className={styles.logoImg}
+              priority
+            />
           </Link>
           <div className={styles.navLinks}>
             <a href="#como">Cómo funciona</a>
@@ -173,7 +171,7 @@ export default function SeyfLandingPage() {
           </div>
 
           {/* Live calculator card */}
-          <div className={styles.calc}>
+          <div className={styles.calc} id="calc">
             <div className={styles.calcHead}>
               <span className="label">Simulador de adelanto</span>
               <span className="live">
@@ -361,21 +359,22 @@ export default function SeyfLandingPage() {
             <div className={styles.testiInner}>
               <div>
                 <blockquote>
-                  <span className="quote">“</span>Todo mi ahorro
+                  <span className="quote">“</span>
+                  {SEYF_LANDING_FIELD_QUOTE_LINES[0]}
                   <br />
-                  está aquí<span className="quote">.”</span>
+                  {SEYF_LANDING_FIELD_QUOTE_LINES[1]}
+                  <span className="quote">”</span>
                 </blockquote>
-                <cite>
-                  — Braulio · vendedor de granos · Señala bajo su terminal de ventas · Abril 2026
-                </cite>
+                <cite>{SEYF_LANDING_FIELD_QUOTE_ATTRIBUTION}</cite>
               </div>
               <div className={styles.testiPhoto}>
-                [ FOTO CEDA ]
-                <br />
-                <br />
-                BRAULIO · PUESTO DE GRANOS
-                <br />
-                CDMX
+                <Image
+                  src={SEYF_LANDING_FIELD_IMAGE.src}
+                  alt={SEYF_LANDING_FIELD_IMAGE.alt}
+                  fill
+                  sizes="(max-width: 800px) 100vw, 40vw"
+                  className={styles.testiPhotoImg}
+                />
               </div>
             </div>
           </div>
@@ -625,15 +624,15 @@ export default function SeyfLandingPage() {
       </section>
 
       {/* ============================ BIG CALCULATOR ============================ */}
-      <section id="calc" className={`${styles.band} ${styles.bandMidnight}`}>
+      <section className={`${styles.band} ${styles.bandMidnight}`}>
         <div className={styles.container}>
           <div className={styles.sectionEyebrow}>03 · Tu dinero, claro</div>
           <h2 className={styles.sectionHead}>
             ¿Cuánto adelantarías <span className={styles.mintText}>hoy</span>?
           </h2>
           <p className={styles.sectionSub}>
-            Mueve el depósito. Sin trampa. Sin asterisco que te cobre después. Todo lo que ves es lo
-            que recibes.
+            Usa el simulador del inicio para ver tu escenario. Sin trampa: lo que calculas es lo que
+            recibes — capital intacto, adelanto del rendimiento.
           </p>
 
           <div className={styles.bigCalc}>
@@ -664,120 +663,13 @@ export default function SeyfLandingPage() {
                   cripto
                 </li>
               </ul>
-            </div>
-
-            <div className={styles.calc}>
-              <div className={styles.calcHead}>
-                <span className="label">Simulador detallado</span>
-                <span className="live">
-                  <span className="dot" /> Tasa de hoy
-                </span>
-              </div>
-
-              <div className={styles.calcRow}>
-                <div className="rowLabel">
-                  <span className="lbl">Depósito (MXN)</span>
-                  <span className="lblHint">Stablebonds · 10.4% anual</span>
-                </div>
-                <div className="amount">
-                  ${fmtInt(bigDeposit)}
-                  <span className="cents">.00</span>
-                </div>
-                <input
-                  type="range"
-                  min={1000}
-                  max={200000}
-                  step={1000}
-                  value={bigDeposit}
-                  onChange={(e) => setBigDeposit(Number(e.target.value))}
-                  style={bigDepositStyle}
-                  aria-label="Depósito"
-                />
-                <div className={styles.calcTick}>
-                  <span>$1K</span>
-                  <span>$50K</span>
-                  <span>$100K</span>
-                  <span>$200K</span>
-                </div>
-              </div>
-
-              <div className={styles.calcRow}>
-                <div className="rowLabel">
-                  <span className="lbl">% Adelanto solicitado</span>
-                  <span className="lblHint">Máx · 5% del rendimiento</span>
-                </div>
-                <div className="amount">{bigPercent}%</div>
-                <input
-                  type="range"
-                  min={1}
-                  max={5}
-                  step={0.5}
-                  value={bigPercent}
-                  onChange={(e) => setBigPercent(Number(e.target.value))}
-                  style={bigPercentStyle}
-                  aria-label="Porcentaje de adelanto"
-                />
-                <div className={styles.calcTick}>
-                  <span>1%</span>
-                  <span>2%</span>
-                  <span>3%</span>
-                  <span>4%</span>
-                  <span>5%</span>
-                </div>
-              </div>
-
-              <div className={styles.calcRow}>
-                <div className="rowLabel">
-                  <span className="lbl">Plazo (años)</span>
-                  <span className="lblHint">Interés simple</span>
-                </div>
-                <div className="amount">
-                  {bigYears}
-                  <span className="cents"> {bigYears === 1 ? 'año' : 'años'}</span>
-                </div>
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  step={1}
-                  value={bigYears}
-                  onChange={(e) => setBigYears(Number(e.target.value))}
-                  style={bigYearsStyle}
-                  aria-label="Plazo en años"
-                />
-                <div className={styles.calcTick}>
-                  <span>1</span>
-                  <span>3</span>
-                  <span>5</span>
-                  <span>10</span>
-                </div>
-              </div>
-
-              <div className={styles.calcResults}>
-                <div className={styles.calcResultsGrid}>
-                  <div className={styles.calcCell}>
-                    <div className="clbl">Recibes hoy</div>
-                    <div className={`cval ${styles.mintText}`} style={{ fontSize: 38 }}>
-                      ${fmt(big.advance)}
-                    </div>
-                    <div className="csub">SPEI al instante</div>
-                  </div>
-                  <div className={styles.calcCell}>
-                    <div className="clbl">Al cierre · {bigYears} {bigYears === 1 ? 'año' : 'años'}</div>
-                    <div className="cval">${fmt(big.final)}</div>
-                    <div className="csub">Capital + rendimiento total</div>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnPrimary} ${styles.calcCta}`}
-                onClick={start}
-                disabled={busy}
+              <a
+                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnLg}`}
+                href="#calc"
+                style={{ marginTop: 32, alignSelf: 'flex-start' }}
               >
-                {creating ? 'Preparando…' : `Comenzar con $${fmtInt(bigDeposit)} →`}
-              </button>
+                Abrir simulador ↑
+              </a>
             </div>
           </div>
         </div>
@@ -916,9 +808,14 @@ export default function SeyfLandingPage() {
         <div className={styles.container}>
           <div className={styles.footerInner}>
             <div>
-              <Link href="/" className={styles.logo}>
-                <span className={styles.logoGlyph}>S</span>
-                S E Y F
+              <Link href="/" className={styles.logo} aria-label="Seyf — inicio">
+                <Image
+                  src="/SEYF.png"
+                  alt="Seyf"
+                  width={869}
+                  height={881}
+                  className={styles.logoImg}
+                />
               </Link>
               <p className={styles.footerLead}>
                 Liquidez inmediata respaldada por el rendimiento de Stablebonds. Una
@@ -938,6 +835,12 @@ export default function SeyfLandingPage() {
               <a href="#">Blog</a>
               <a href="#">Prensa</a>
               <a href="#">Trabaja con nosotros</a>
+            </div>
+            <div className={styles.footerCol}>
+              <h5>{SEYF_LANDING_FOOTER_INVESTORS.columnTitle}</h5>
+              <a href={SEYF_LANDING_FOOTER_INVESTORS.pitchHref}>
+                {SEYF_LANDING_FOOTER_INVESTORS.pitchLabel}
+              </a>
             </div>
             <div className={styles.footerCol}>
               <h5>Legal</h5>

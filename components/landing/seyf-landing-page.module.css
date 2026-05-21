@@ -57,26 +57,16 @@
   gap: 16px;
 }
 .logo {
-  display: inline-flex; align-items: center; gap: 12px;
-  font-family: var(--font-geist-mono), 'Geist Mono', monospace;
-  font-weight: 600;
-  letter-spacing: 0.42em;
-  font-size: 14px;
-  color: var(--ink);
-  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 0;
   flex-shrink: 0;
   background: transparent;
+  line-height: 0;
 }
-.logoGlyph {
-  width: 22px; height: 22px;
-  border-radius: 6px;
-  background: var(--mint);
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--bg);
-  font-family: var(--font-geist-mono), 'Geist Mono', monospace;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0;
+.logoImg {
+  height: clamp(32px, 4vw, 40px);
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 .navLinks {
   display: flex; gap: 36px;
@@ -550,12 +540,8 @@
 /* ========================== BIG CALCULATOR ========================== */
 .bigCalc {
   margin-top: 64px;
-  display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  gap: 48px;
-  align-items: stretch;
+  max-width: 720px;
 }
-@media (max-width: 980px) { .bigCalc { grid-template-columns: 1fr; } }
 .bigCalcSide {
   background: var(--bg);
   color: var(--paper);
@@ -795,20 +781,17 @@
   text-transform: uppercase;
 }
 .testiPhoto {
+  position: relative;
   aspect-ratio: 4 / 5;
   border-radius: 20px;
-  background:
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.018) 0 14px, transparent 14px 28px),
-    linear-gradient(180deg, #122520 0%, #0a1815 100%);
   border: 1px solid var(--line-2);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--ink-dim);
-  font-family: var(--font-geist-mono), 'Geist Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-align: center;
-  padding: 16px;
+  overflow: hidden;
+  background: #0a1815;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+.testiPhotoImg {
+  object-fit: cover;
+  object-position: center 35%;
 }
 
 /* ========================== FINAL CTA ========================== */
@@ -870,7 +853,7 @@
 }
 .footerInner {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
   gap: 40px;
 }
 @media (max-width: 800px) { .footerInner { grid-template-columns: 1fr 1fr; } }
@@ -1030,7 +1013,7 @@
 @media (max-width: 380px) {
   .container { padding: 0 14px; }
   .navInner { padding: 12px 14px; }
-  .logo { letter-spacing: 0.28em; font-size: 13px; gap: 8px; }
+  .logoImg { height: 28px; }
   .btn { padding: 9px 13px; font-size: 13px; }
   .huge { font-size: clamp(40px, 13vw, 52px); }
   .heroSub { font-size: 15px; }

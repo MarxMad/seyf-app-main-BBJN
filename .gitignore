@@ -41,3 +41,6 @@ next-env.d.ts
 
 # local MVP server state
 /data/*.json
+
+# pitch deck (fuente en pitch/; se copia a public/pitch en build/dev)
+/public/pitch/

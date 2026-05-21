@@ -12,6 +12,22 @@
   :root {
     --bg: #07100d; --ink: #f3f7f5; --ink-mute: #8da39b; --ink-dim: #5b716b;
     --line: #1d2e29; --line-2: #2a4039; --mint: #45b596; --mint-2: #7fe8cc; --warn: #e7b75c;
+    /* Escala tipográfica — legible en proyector */
+    --t-cover: clamp(76px, 8.5vw, 128px);
+    --t-problem-k: clamp(60px, 6.2vw, 92px);
+    --t-problem: clamp(66px, 6.8vw, 108px);
+    --t-dyn-sans: clamp(62px, 6.8vw, 104px);
+    --t-dyn-xl: clamp(66px, 7.2vw, 112px);
+    --t-dyn-label: 13px;
+    --t-dyn-foot: 14px;
+    --t-stat-num: clamp(54px, 5.4vw, 80px);
+    --t-stat-desc: clamp(15px, 1.45vw, 20px);
+    --t-step: clamp(26px, 2.8vw, 42px);
+    --t-tile: clamp(32px, 3.4vw, 52px);
+    --t-bento-hero: clamp(116px, 13vw, 200px);
+    --t-bento-val: clamp(56px, 6vw, 84px);
+    --t-ask: clamp(156px, 17vw, 260px);
+    --t-team-name: clamp(32px, 3.2vw, 48px);
   }
   html, body { background: var(--bg); margin: 0; padding: 0; }
   body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); }
@@ -69,27 +85,61 @@
   .slide-cover, .slide-problem { padding: 0; }
   .slide-cover .grid-bg { opacity: 0.7; }
 
-  /* 02 Problema — diseño Andrés (fondo claro, no tocar copy) */
-  .slide-problem {
+  /* —— Alternancia: claro (#dff2f0) / oscuro (#07100d) —— */
+  .slide-light {
     background: #dff2f0;
     color: #0a1613;
   }
-  .slide-problem .grid-bg,
-  .slide-problem .glow { display: none; }
+  .slide-light .grid-bg,
+  .slide-light .glow,
+  .slide-light .dyn-ring { display: none; }
+  .slide-light .slide-num { color: rgba(13,58,51,0.45); }
+  .slide-light .dyn-label { color: #0d3a33; }
+  .slide-light .dyn-sans { color: #0a1613; }
+  .slide-light .dyn-xl { color: #0a1613; }
+  .slide-light .dyn-xl .em { color: #15534a; }
+  .slide-light .dyn-foot-tag { color: #5b716b; }
+  .slide-light .dyn-foot-tag strong { color: #0d3a33; }
+  .slide-light .tag-ya {
+    background: rgba(13,58,51,0.06);
+    border-color: #45b596;
+    color: #0d3a33;
+  }
+  /* Tarjetas verdes sobre fondo claro (mismo lenguaje que diap. 2) */
+  .slide-light .stat-float,
+  .slide-light .dyn-stat-card,
+  .slide-light .dyn-bento .b {
+    background: linear-gradient(165deg, #15534a 0%, #0d3a33 100%);
+    border-color: rgba(127,232,204,0.15);
+    box-shadow: 0 20px 50px rgba(13,58,51,0.22);
+  }
+  .slide-light .stat-float .num,
+  .slide-light .dyn-stat-card .big,
+  .slide-light .dyn-bento .b .val,
+  .slide-light .dyn-bento .b.hero .mega { color: #f3f7f5; }
+  .slide-light .stat-float .num .unit,
+  .slide-light .dyn-stat-card .big .u,
+  .slide-light .dyn-stat-card.wide .big,
+  .slide-light .dyn-bento .b .val.mint,
+  .slide-light .dyn-bento .b.hero .mega span { color: #7fe8cc; }
+  .slide-light .stat-float .desc,
+  .slide-light .dyn-stat-card .lbl { color: rgba(243,247,245,0.88); }
+  .slide-light .dyn-bento .b .cap { color: #7fe8cc; }
+  .slide-light .dyn-bento .b .dyn-foot-tag { color: rgba(243,247,245,0.72); }
+  .slide-light .dyn-bento .b .dyn-foot-tag strong { color: #7fe8cc; }
+  .slide-light .dyn-bento .b.mainnet {
+    background: linear-gradient(165deg, #1a6b5c 0%, #0d3a33 100%);
+  }
+
+  /* 02 Problema — Andrés (copy fijo) */
   .slide-problem .problem-kicker {
     font-family: 'Geist', sans-serif;
-    font-size: clamp(48px, 5vw, 72px);
-    font-weight: 800;
+    font-size: var(--t-problem-k);
     color: #0d3a33;
-    margin: 0 0 36px;
   }
   .slide-problem .problem-lines {
-    font-family: 'Fraunces', serif;
-    font-weight: 500;
-    font-size: clamp(52px, 5.4vw, 84px);
-    line-height: 1.08;
-    letter-spacing: -0.028em;
     color: #0a1613;
+    font-size: var(--t-problem);
   }
   .slide-problem .problem-lines .no {
     text-decoration: underline;
@@ -97,19 +147,22 @@
     text-underline-offset: 10px;
     text-decoration-color: #45b596;
   }
-  .slide-problem .stat-float {
-    background: linear-gradient(165deg, #15534a 0%, #0d3a33 100%);
-    border: 1px solid rgba(127,232,204,0.15);
-    box-shadow: 0 20px 50px rgba(13,58,51,0.25);
-  }
-  .slide-problem .stat-float .num { color: #f3f7f5; }
-  .slide-problem .stat-float .num .unit { color: #7fe8cc; }
-  .slide-problem .stat-float .desc { color: rgba(243,247,245,0.9); }
   .slide-problem .problem-photo {
     border-color: rgba(13,58,51,0.2);
     box-shadow: 0 40px 80px rgba(13,58,51,0.2);
+    filter: contrast(1.05) saturate(1.08);
   }
-  .slide-problem .slide-num { color: rgba(13,58,51,0.45); }
+  .slide-problem .stat-float .num { font-size: var(--t-stat-num); }
+  .slide-problem .stat-float .desc { font-size: var(--t-stat-desc); }
+
+  /* 04 Mercado — foto grande + stats */
+  .slide-market .dyn-sans { font-size: var(--t-dyn-sans); }
+  .slide-market .dyn-xl { font-size: var(--t-dyn-xl); }
+  .slide-market .dyn-label { font-size: var(--t-dyn-label); margin-bottom: 24px; }
+  .slide-market .stat-float .num { font-size: var(--t-stat-num); }
+  .slide-market .stat-float .desc { font-size: var(--t-stat-desc); }
+
+  .slide-dark .grid-bg { opacity: 0.65; }
 
   .cover-layout {
     flex: 1; display: grid; grid-template-columns: 0.95fr 1.05fr;
@@ -127,7 +180,7 @@
     filter: drop-shadow(0 24px 48px rgba(0,0,0,0.45));
   }
   .cover-founders {
-    margin-top: 32px; font-size: 15px; line-height: 1.7; color: var(--ink-mute);
+    margin-top: 32px; font-size: 17px; line-height: 1.7; color: var(--ink-mute);
   }
   .cover-founders strong { color: var(--ink); font-weight: 600; }
   .cover-founders .role { color: var(--ink-dim); font-weight: 400; font-size: 13px; }
@@ -152,17 +205,17 @@
     padding: 48px 64px 48px 24px; height: 100%;
   }
   .cover-tagline-sans {
-    font-size: clamp(64px, 7.2vw, 108px); font-weight: 800; line-height: 0.98;
+    font-size: var(--t-cover); font-weight: 800; line-height: 0.98;
     letter-spacing: -0.045em; margin: 0; color: var(--ink);
   }
   .cover-tagline-serif {
     font-family: 'Fraunces', serif; font-style: italic; font-weight: 500;
-    font-size: clamp(64px, 7.2vw, 108px); line-height: 1.02;
+    font-size: var(--t-cover); line-height: 1.02;
     letter-spacing: -0.035em; margin: 0; color: var(--mint-2);
   }
   .cover-meta {
     margin-top: auto; padding-top: 40px;
-    font-size: 15px; line-height: 1.65; color: var(--ink-mute);
+    font-size: 17px; line-height: 1.65; color: var(--ink-mute);
   }
   .cover-meta strong { color: var(--ink); font-weight: 600; }
   .cover-meta .event { color: var(--mint-2); font-weight: 700; letter-spacing: 0.02em; }
@@ -181,7 +234,7 @@
   }
   .problem-lines {
     font-family: 'Fraunces', serif; font-weight: 500;
-    font-size: clamp(52px, 5.4vw, 84px); line-height: 1.08;
+    font-size: var(--t-problem); line-height: 1.08;
     letter-spacing: -0.028em; margin: 0; color: var(--ink);
   }
   .problem-lines .line { display: block; margin-bottom: 8px; }
@@ -189,16 +242,29 @@
     text-decoration: underline; text-decoration-thickness: 4px;
     text-underline-offset: 10px; text-decoration-color: var(--mint);
   }
-  .problem-visual {
-    position: relative; display: flex; align-items: center; justify-content: center;
-    min-height: 420px;
+  .problem-visual,
+  .market-visual {
+    position: relative; display: flex; align-items: stretch; justify-content: center;
+    min-height: 460px; height: 100%;
   }
-  .problem-photo {
-    width: 72%; max-width: 380px; aspect-ratio: 3/4; border-radius: 28px;
-    object-fit: cover; object-position: center top;
+  .problem-photo,
+  .market-photo {
+    width: 100%; max-width: none; min-height: 460px;
+    max-height: min(82vh, 680px);
+    border-radius: 28px;
+    object-fit: cover; object-position: center;
     border: 1px solid var(--line-2);
-    box-shadow: 0 40px 80px rgba(0,0,0,0.55);
-    filter: grayscale(1) contrast(1.05);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.35);
+  }
+  .problem-visual .stat-float,
+  .market-visual .stat-float {
+    left: 0; right: auto;
+    width: min(360px, 92%);
+  }
+  .market-visual .stat-float.mid { top: 42%; bottom: auto; }
+  .market-visual .stat-float .num.sm {
+    font-size: clamp(32px, 3.2vw, 48px);
+    line-height: 1.05;
   }
   .problem-photo-fallback {
     width: 72%; max-width: 380px; aspect-ratio: 3/4; border-radius: 28px;
@@ -216,12 +282,12 @@
   .stat-float.top { top: 8%; }
   .stat-float.bottom { bottom: 10%; }
   .stat-float .num {
-    font-family: 'Fraunces', serif; font-size: clamp(40px, 4vw, 56px);
+    font-family: 'Fraunces', serif; font-size: var(--t-stat-num);
     font-weight: 600; line-height: 1; color: var(--ink); margin: 0;
   }
   .stat-float .num .unit { font-size: 0.55em; color: var(--mint-2); }
   .stat-float .desc {
-    font-size: clamp(13px, 1.2vw, 16px); color: rgba(243,247,245,0.85);
+    font-size: var(--t-stat-desc); color: rgba(243,247,245,0.85);
     line-height: 1.35; margin: 10px 0 0; font-weight: 500;
   }
   .bar-foot {
@@ -378,23 +444,23 @@
     padding: 48px 72px 24px; min-height: 0; position: relative; z-index: 1;
   }
   .dyn-label {
-    font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--mint);
+    font-family: 'Geist Mono', monospace; font-size: var(--t-dyn-label); color: var(--mint);
     letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 20px;
   }
   .dyn-xl {
     font-family: 'Fraunces', serif; font-weight: 500;
-    font-size: clamp(56px, 6.2vw, 96px); line-height: 0.95;
+    font-size: var(--t-dyn-xl); line-height: 0.95;
     letter-spacing: -0.03em; margin: 0;
   }
   .dyn-xl .em { color: var(--mint-2); font-style: italic; }
   .dyn-xl .strike { text-decoration: line-through; text-decoration-color: var(--warn); text-decoration-thickness: 5px; }
   .dyn-sans {
-    font-size: clamp(52px, 5.8vw, 88px); font-weight: 900;
+    font-size: var(--t-dyn-sans); font-weight: 900;
     line-height: 0.92; letter-spacing: -0.045em; margin: 0;
   }
   .dyn-foot-tag {
     margin-top: auto; padding-top: 32px;
-    font-family: 'Geist Mono', monospace; font-size: 12px;
+    font-family: 'Geist Mono', monospace; font-size: var(--t-dyn-foot);
     color: var(--ink-mute); letter-spacing: 0.14em; text-transform: uppercase;
   }
   .dyn-foot-tag strong { color: var(--mint-2); font-weight: 600; }
@@ -433,7 +499,7 @@
     transform: scale(1.06);
   }
   .dyn-step .word {
-    font-size: clamp(22px, 2.4vw, 36px); font-weight: 800; letter-spacing: -0.03em;
+    font-size: var(--t-step); font-weight: 800; letter-spacing: -0.03em;
   }
   .dyn-step.on .word { color: var(--mint-2); }
   .dyn-step.hl .orb {
@@ -441,10 +507,126 @@
     font-size: clamp(11px, 1.1vw, 14px);
   }
 
-  /* 04 — muro de stats */
+  /* 03 — pasos + iPhone demo */
+  .slide-solution .dyn-flow-wrap {
+    grid-template-columns: 0.58fr 1.42fr;
+    gap: 36px;
+  }
+  .solution-left {
+    display: flex; flex-direction: column; justify-content: center; gap: 8px;
+  }
+  .solution-right {
+    display: grid;
+    grid-template-columns: 1fr minmax(240px, 340px);
+    gap: 28px;
+    align-items: center;
+    min-height: 420px;
+  }
+  .solution-steps.dyn-flow-rail { width: 100%; }
+  .solution-steps .dyn-step .orb {
+    width: clamp(52px, 5.5vw, 72px);
+    height: clamp(52px, 5.5vw, 72px);
+    font-size: clamp(11px, 1vw, 14px);
+  }
+  .solution-steps .dyn-step.hl .orb {
+    width: clamp(60px, 6vw, 80px);
+    height: clamp(60px, 6vw, 80px);
+  }
+  .solution-steps .dyn-step .word {
+    font-size: clamp(18px, 1.8vw, 28px);
+  }
+  .phone-demo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 0;
+  }
+  .phone-frame {
+    position: relative;
+    width: clamp(240px, 22vw, 320px);
+    aspect-ratio: 9 / 19.5;
+    padding: 14px;
+    border-radius: 52px;
+    background: linear-gradient(155deg, #3d3d42 0%, #121214 38%, #1a1a1e 100%);
+    border: 2px solid #4a4a52;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.1),
+      0 48px 96px rgba(0,0,0,0.55),
+      inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  .phone-frame::before {
+    content: "";
+    position: absolute;
+    right: -3px;
+    top: 28%;
+    width: 3px;
+    height: 56px;
+    border-radius: 0 2px 2px 0;
+    background: #2a2a2e;
+    box-shadow: inset -1px 0 0 rgba(255,255,255,0.06);
+  }
+  .phone-screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 40px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid rgba(0,0,0,0.8);
+  }
+  .phone-island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 34%;
+    max-width: 120px;
+    height: 30px;
+    background: #0a0a0c;
+    border-radius: 18px;
+    z-index: 3;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .phone-screen video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    background: #07100d;
+  }
+  .phone-home {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36%;
+    max-width: 120px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.35);
+    z-index: 3;
+  }
+  .phone-cap {
+    margin-top: 14px;
+    text-align: center;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .phone-cap strong { color: var(--mint-2); }
+
+  /* 04 — mercado (texto + foto) */
   .dyn-market {
-    flex: 1; display: grid; grid-template-columns: 1fr 1.15fr;
-    gap: 36px; align-items: center; padding: 48px 72px 20px;
+    flex: 1; display: grid; grid-template-columns: 0.82fr 1.18fr;
+    gap: 40px; align-items: stretch; padding: 48px 72px 20px; min-height: 0;
+  }
+  .market-copy {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 8px 0;
   }
   .dyn-stat-wall {
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto;
@@ -495,12 +677,34 @@
     background: var(--mint); opacity: 0.08; filter: blur(30px);
   }
   .dyn-tile:nth-child(2) { transform: translateY(-12px); border-color: rgba(127,232,204,0.35); }
+  .dyn-tiles.model-5 {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto auto;
+    max-height: none;
+    gap: 14px;
+  }
+  .dyn-tiles.model-5 .dyn-tile:nth-child(2) { transform: translateY(-8px); }
+  .dyn-tiles.model-5 .dyn-tile:nth-child(4) { grid-column: 1; }
+  .dyn-tiles.model-5 .dyn-tile:nth-child(5) { grid-column: 2 / -1; }
+  .dyn-tiles.model-5 .dyn-tile .n { font-size: clamp(56px, 6vw, 88px); }
+  .dyn-tiles.model-5 .dyn-tile .t { font-size: clamp(26px, 2.6vw, 40px); }
+  .dyn-tiles.model-5 .dyn-tile .d { font-size: 10px; line-height: 1.35; }
+  .dyn-model-tagline {
+    text-align: center;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: -8px 0 0;
+  }
+  .dyn-model-tagline strong { color: var(--mint-2); }
   .dyn-tile .n {
     font-family: 'Fraunces', serif; font-size: clamp(72px, 8vw, 120px);
     font-weight: 600; line-height: 0.85; color: rgba(127,232,204,0.2); margin: 0;
   }
   .dyn-tile .t {
-    font-size: clamp(28px, 3vw, 44px); font-weight: 800;
+    font-size: var(--t-tile); font-weight: 800;
     letter-spacing: -0.03em; line-height: 1; margin: 0;
   }
   .dyn-tile .d {
@@ -509,7 +713,52 @@
     margin-top: 12px;
   }
 
-  /* 06 — bento tracción */
+  /* 06 — tracción: stats + fotos CEDA */
+  .slide-traction .traction-layout {
+    flex: 1; display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 22px; padding: 40px 72px 16px; min-height: 0;
+    align-items: stretch;
+  }
+  .traction-left {
+    display: flex; flex-direction: column; gap: 18px; min-height: 0;
+  }
+  .slide-traction .traction-bento.dyn-bento {
+    padding: 0;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr 1fr;
+  }
+  .traction-bento {
+    flex: 1; display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr 1fr;
+    gap: 12px; min-height: 0;
+  }
+  .traction-bento .b.hero { grid-column: 1 / -1; grid-row: auto; min-height: 120px; }
+  .traction-photos {
+    display: grid; grid-template-rows: 1fr 1fr; gap: 14px;
+    min-height: 420px;
+  }
+  .traction-photo {
+    position: relative; border-radius: 22px; overflow: hidden;
+    border: 1px solid rgba(13,58,51,0.18);
+    box-shadow: 0 22px 48px rgba(13,58,51,0.18);
+    min-height: 0;
+  }
+  .traction-photo img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .traction-photo.aerial img { object-position: center 40%; }
+  .traction-photo.floor img { object-position: center 35%; }
+  .traction-photo .photo-cap {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 12px 14px;
+    background: linear-gradient(transparent, rgba(7,16,13,0.85));
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: rgba(243,247,245,0.9);
+  }
+
   .dyn-bento {
     flex: 1; display: grid;
     grid-template-columns: 1.1fr 0.9fr 0.9fr;
@@ -530,12 +779,12 @@
     box-shadow: 0 32px 80px rgba(0,0,0,0.4);
   }
   .dyn-bento .b.hero .mega {
-    font-family: 'Fraunces', serif; font-size: clamp(100px, 12vw, 180px);
+    font-family: 'Fraunces', serif; font-size: var(--t-bento-hero);
     font-weight: 600; line-height: 0.85; margin: 0;
   }
   .dyn-bento .b.hero .mega span { font-size: 0.35em; color: var(--mint-2); display: block; margin-top: 8px; }
   .dyn-bento .b .val {
-    font-family: 'Fraunces', serif; font-size: clamp(48px, 5vw, 72px);
+    font-family: 'Fraunces', serif; font-size: var(--t-bento-val);
     font-weight: 600; line-height: 1; margin: 0;
   }
   .dyn-bento .b .val.mint { color: var(--mint-2); }
@@ -549,7 +798,7 @@
     border-color: var(--mint);
     background: linear-gradient(135deg, rgba(69,181,150,0.25), #07100d);
   }
-  .dyn-bento .b.mainnet .val { font-size: clamp(40px, 4.5vw, 64px); color: var(--mint-2); }
+  .dyn-bento .b.mainnet .val { font-size: clamp(48px, 5.2vw, 72px); color: var(--mint-2); }
 
   /* 07 — cierre split */
   .dyn-close {
@@ -557,7 +806,7 @@
     gap: 48px; align-items: center; padding: 48px 72px 20px;
   }
   .dyn-ask-mega {
-    font-family: 'Fraunces', serif; font-size: clamp(140px, 16vw, 240px);
+    font-family: 'Fraunces', serif; font-size: var(--t-ask);
     font-weight: 600; line-height: 0.82; margin: 0;
     background: linear-gradient(180deg, var(--ink) 20%, var(--mint-2) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -567,7 +816,7 @@
   .dyn-ask-chip {
     padding: 18px 24px; border-radius: 16px;
     border: 1px solid var(--line-2);
-    font-size: clamp(20px, 2vw, 28px); font-weight: 700;
+    font-size: clamp(24px, 2.4vw, 34px); font-weight: 700;
     background: rgba(69,181,150,0.08);
   }
   .dyn-ask-chip:first-child { border-color: var(--mint); color: var(--mint-2); }
@@ -575,13 +824,71 @@
     position: absolute; border-radius: 50%; border: 1px solid rgba(127,232,204,0.12);
     pointer-events: none;
   }
+
+  /* Cierre oscuro: gradiente en el 100 */
+  .slide-dark .dyn-ask-mega {
+    background: linear-gradient(180deg, var(--ink) 20%, var(--mint-2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .slide-light .dyn-ask-mega {
+    background: linear-gradient(180deg, #0a1613 10%, #15534a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* 08 — Equipo (sin fotos) */
+  .slide-team .team-layout {
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+    padding: 44px 72px 16px; gap: 36px; min-height: 0;
+  }
+  .slide-team .team-head { max-width: 900px; }
+  .team-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;
+  }
+  @media (max-width: 1100px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+  .team-card {
+    padding: clamp(28px, 3vw, 44px) clamp(22px, 2vw, 32px);
+    border-radius: 24px;
+    border: 1px solid rgba(13,58,51,0.14);
+    background: rgba(255,255,255,0.55);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    min-height: 140px;
+  }
+  .team-card .team-role {
+    font-family: 'Geist Mono', monospace;
+    font-size: var(--t-dyn-label);
+    color: #0d3a33;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+  .team-card .team-name {
+    font-size: var(--t-team-name);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin: 0;
+    color: #0a1613;
+  }
+  .team-quote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: clamp(22px, 2.2vw, 32px);
+    color: #5b716b;
+    line-height: 1.35;
+    margin: 0;
+    max-width: 1100px;
+  }
 </style>
 </head>
 <body>
 <deck-stage>
 
 <!-- 01 PORTADA — layout referencia -->
-<section class="slide-ref slide-cover" data-screen-label="01 Portada">
+<section class="slide-ref slide-cover slide-dark" data-screen-label="01 Portada">
   <div class="grid-bg"></div>
   <div class="glow" style="width:720px;height:720px;background:#15534a;top:-120px;left:-80px;"></div>
   <div class="glow" style="width:500px;height:500px;background:#45b596;opacity:0.15;bottom:-80px;right:10%;"></div>
@@ -590,7 +897,7 @@
     <div class="cover-layout">
       <div class="cover-brand">
         <div class="cover-logo-wrap">
-          <img src="../public/SEYF.png" alt="Seyf" width="320" height="320" />
+          <img src="/SEYF.png" alt="Seyf" width="320" height="320" />
         </div>
         <p class="cover-byline">Seyf by Seyfert Labs</p>
         <div class="cover-founders">
@@ -610,12 +917,12 @@
     </div>
 
     <div class="bar-foot">Seyf by Seyfert Labs</div>
-    <span class="slide-num">01 / 07</span>
+    <span class="slide-num">01 / 08</span>
   </div>
 </section>
 
 <!-- 02 PROBLEMA — diseño Andrés (sin cambios de copy) -->
-<section class="slide-ref slide-problem" data-screen-label="02 Problema">
+<section class="slide-ref slide-problem slide-light" data-screen-label="02 Problema">
   <div class="frame frame-grid" style="padding:48px 72px 0;">
     <div class="problem-layout">
       <div class="problem-copy">
@@ -628,7 +935,7 @@
       </div>
 
       <div class="problem-visual">
-        <img class="problem-photo" src="assets/problem-merchant.png" alt="Comerciante informal" />
+        <img class="problem-photo" src="/bodegas.jpg" alt="Central de Abasto — bodegas CEDA" />
         <div class="stat-float top">
           <p class="num">$9,000 <span class="unit">M</span></p>
           <p class="desc">USD en transacciones anuales<br>solo en la CEDA</p>
@@ -641,83 +948,97 @@
     </div>
 
     <div class="bar-foot">Seyf by Seyfert Labs</div>
-    <span class="slide-num">02 / 07</span>
+    <span class="slide-num">02 / 08</span>
   </div>
 </section>
 
-<!-- 03 SOLUCIÓN — flujo -->
-<section class="slide-ref slide-dyn" data-screen-label="03 Solución">
+<!-- 03 SOLUCIÓN — demo iPhone -->
+<section class="slide-ref slide-dyn slide-dark slide-solution" data-screen-label="03 Solución">
   <div class="grid-bg"></div>
   <div class="glow" style="width:520px;height:520px;background:#15534a;bottom:-120px;right:-80px;"></div>
   <div class="dyn-ring" style="width:480px;height:480px;top:10%;left:-120px;"></div>
 
   <div class="frame frame-grid">
     <div class="dyn-flow-wrap">
-      <div>
+      <div class="solution-left">
         <p class="dyn-label">La solución</p>
         <p class="dyn-sans">Nunca</p>
         <p class="dyn-xl"><span class="em">inmóvil.</span></p>
         <p class="dyn-foot-tag"><strong>Sin deuda</strong> · principal intacto · ahorrar y actuar</p>
       </div>
-      <div class="dyn-flow-rail">
-        <div class="dyn-step on">
-          <div class="orb">01</div>
-          <span class="word">SPEI</span>
+      <div class="solution-right">
+        <div class="dyn-flow-rail solution-steps">
+          <div class="dyn-step on">
+            <div class="orb">01</div>
+            <span class="word">SPEI</span>
+          </div>
+          <div class="dyn-step on">
+            <div class="orb">02</div>
+            <span class="word">CETES</span>
+          </div>
+          <div class="dyn-step on">
+            <div class="orb">03</div>
+            <span class="word">Rinde</span>
+          </div>
+          <div class="dyn-step hl on">
+            <div class="orb">04</div>
+            <span class="word">Adelantas</span>
+          </div>
         </div>
-        <div class="dyn-step on">
-          <div class="orb">02</div>
-          <span class="word">CETES</span>
-        </div>
-        <div class="dyn-step on">
-          <div class="orb">03</div>
-          <span class="word">Rinde</span>
-        </div>
-        <div class="dyn-step hl on">
-          <div class="orb">04</div>
-          <span class="word">Adelantas</span>
+        <div class="phone-demo">
+          <div>
+            <div class="phone-frame">
+              <div class="phone-screen">
+                <div class="phone-island" aria-hidden="true"></div>
+                <video autoplay muted loop playsinline preload="auto" aria-label="Demo Seyf">
+                  <source src="assets/demo.mp4" type="video/mp4" />
+                </video>
+                <div class="phone-home" aria-hidden="true"></div>
+              </div>
+            </div>
+            <p class="phone-cap"><strong>Demo</strong> · flujo testnet</p>
+          </div>
         </div>
       </div>
     </div>
     <div class="bar-foot">Seyf by Seyfert Labs</div>
-    <span class="slide-num">03 / 07</span>
+    <span class="slide-num">03 / 08</span>
   </div>
 </section>
 
-<!-- 04 MERCADO — stats -->
-<section class="slide-ref slide-dyn" data-screen-label="04 Mercado">
-  <div class="grid-bg"></div>
-  <div class="glow" style="width:600px;height:600px;background:#45b596;opacity:0.12;top:-100px;left:20%;"></div>
-
+<!-- 04 MERCADO — claro + subastas -->
+<section class="slide-ref slide-dyn slide-light slide-market" data-screen-label="04 Mercado">
   <div class="frame frame-grid">
     <div class="dyn-market">
-      <div>
+      <div class="market-copy">
         <p class="dyn-label">El mercado</p>
         <p class="dyn-sans">Excedente</p>
         <p class="dyn-xl">parado.</p>
-        <span class="tag-ya" style="margin-top:28px;">Ya adentro · CEDA</span>
+        <span class="tag-ya" style="margin-top:32px;">Ya adentro · CEDA</span>
       </div>
-      <div class="dyn-stat-wall">
-        <div class="dyn-stat-card">
-          <p class="big">$9,000<span class="u">M</span></p>
-          <p class="lbl">USD / año · CEDA</p>
+      <div class="market-visual">
+        <img class="market-photo" src="/subastas.png" alt="Subastas CEDA — produce" />
+        <div class="stat-float top">
+          <p class="num">$9,000 <span class="unit">M</span></p>
+          <p class="desc">USD / año · CEDA</p>
         </div>
-        <div class="dyn-stat-card">
-          <p class="big">55<span class="u">%</span></p>
-          <p class="lbl">informal · México</p>
+        <div class="stat-float mid">
+          <p class="num">55<span class="unit">%</span></p>
+          <p class="desc">informal · México</p>
         </div>
-        <div class="dyn-stat-card wide">
-          <p class="big">Nadie lo atiende.</p>
-          <p class="lbl">mayoristas · abarroteros · distribuidores</p>
+        <div class="stat-float bottom">
+          <p class="num sm">Nadie lo atiende.</p>
+          <p class="desc">mayoristas · abarroteros</p>
         </div>
       </div>
     </div>
     <div class="bar-foot">Seyf by Seyfert Labs</div>
-    <span class="slide-num">04 / 07</span>
+    <span class="slide-num">04 / 08</span>
   </div>
 </section>
 
 <!-- 05 MODELO — tiles -->
-<section class="slide-ref slide-dyn" data-screen-label="05 Modelo">
+<section class="slide-ref slide-dyn slide-dark slide-model" data-screen-label="05 Modelo">
   <div class="grid-bg"></div>
   <div class="glow" style="width:400px;height:400px;background:#15534a;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.2;"></div>
 
@@ -727,64 +1048,89 @@
         <p class="dyn-label">Modelo de negocio</p>
         <p class="dyn-sans" style="display:inline;">Depósitos.</p>
         <p class="dyn-xl" style="display:inline;margin-left:12px;"><span class="em">No deuda.</span></p>
+        
       </div>
-      <div class="dyn-tiles">
+      <div class="dyn-tiles model-5">
         <div class="dyn-tile">
           <p class="n">1</p>
           <p class="t">Spread</p>
-          <p class="d">yield · CETES</p>
+          <p class="d">yield compartido · CETES</p>
         </div>
         <div class="dyn-tile">
           <p class="n">2</p>
-          <p class="t">Comisión</p>
-          <p class="d">adelanto · fija</p>
+          <p class="t">Adelanto</p>
+          <p class="d">comisión fija · sin intereses</p>
         </div>
         <div class="dyn-tile">
           <p class="n">3</p>
           <p class="t">Cero mora</p>
           <p class="d">colateral = rendimiento</p>
         </div>
+        <div class="dyn-tile">
+          <p class="n">4</p>
+          <p class="t">Tarjeta</p>
+          <p class="d">comisión al pagar · gastas rendimiento adelantado</p>
+        </div>
+        <div class="dyn-tile">
+          <p class="n">5</p>
+          <p class="t">Tipo de cambio real</p>
+          <p class="d">Stellar · stablecoins · sin markup vs mercado</p>
+        </div>
       </div>
     </div>
     <div class="bar-foot">Seyf by Seyfert Labs</div>
-    <span class="slide-num">05 / 07</span>
+    <span class="slide-num">05 / 08</span>
   </div>
 </section>
 
-<!-- 06 TRACCIÓN — bento -->
-<section class="slide-ref slide-dyn" data-screen-label="06 Tracción">
-  <div class="grid-bg"></div>
-  <div class="glow" style="width:480px;height:480px;background:#45b596;opacity:0.15;bottom:-60px;left:-40px;"></div>
-  <div class="dyn-ring" style="width:320px;height:320px;bottom:15%;right:8%;"></div>
-
+<!-- 06 TRACCIÓN — claro + fotos CEDA -->
+<section class="slide-ref slide-dyn slide-light slide-traction" data-screen-label="06 Tracción">
   <div class="frame frame-grid">
-    <div class="dyn-bento">
-      <div class="b hero">
-        <p class="cap">BAF × Stellar</p>
-        <p class="mega">2º<span>lugar LATAM</span></p>
+    <div class="traction-layout">
+      <div class="traction-left">
+        <div>
+          <p class="dyn-label">Tracción</p>
+          <p class="dyn-sans">En la CEDA.</p>
+        </div>
+        <div class="traction-bento dyn-bento">
+          <div class="b hero">
+            <p class="cap">BAF × Stellar</p>
+            <p class="mega">2º<span>lugar LATAM</span></p>
+          </div>
+          <div class="b">
+            <p class="cap">CEDA</p>
+            <p class="val">3 · 5</p>
+            <p class="dyn-foot-tag" style="padding:0;margin-top:8px;">visitas · entrevistas</p>
+          </div>
+          <div class="b">
+            <p class="cap">Testers</p>
+            <p class="val mint">12+</p>
+            <p class="dyn-foot-tag" style="padding:0;margin-top:8px;">flujo E2E</p>
+          </div>
+          <div class="b mainnet">
+            <p class="cap">MVP completo</p>
+            <p class="val">→ Mainnet</p>
+          </div>
+        </div>
       </div>
-      <div class="b">
-        <p class="cap">CEDA</p>
-        <p class="val">3 · 5</p>
-        <p class="dyn-foot-tag" style="padding:0;margin-top:8px;">visitas · entrevistas</p>
-      </div>
-      <div class="b">
-        <p class="cap">Testers</p>
-        <p class="val mint">12+</p>
-        <p class="dyn-foot-tag" style="padding:0;margin-top:8px;">flujo E2E</p>
-      </div>
-      <div class="b mainnet">
-        <p class="cap">MVP completo</p>
-        <p class="val">→ Mainnet</p>
+      <div class="traction-photos">
+        <div class="traction-photo aerial">
+          <img src="assets/central-de-abasto-cdmx.jpeg" alt="Vista aérea Central de Abasto CDMX" />
+          <span class="photo-cap">Central de Abasto · CDMX</span>
+        </div>
+        <div class="traction-photo floor">
+          <img src="assets/central-de-abastos.jpg" alt="Piso de la CEDA — comercio" />
+          <span class="photo-cap">Piso · comerciantes</span>
+        </div>
       </div>
     </div>
     <div class="bar-foot">Seyf by Seyfert Labs</div>
-    <span class="slide-num">06 / 07</span>
+    <span class="slide-num">06 / 08</span>
   </div>
 </section>
 
 <!-- 07 CIERRE -->
-<section class="slide-ref slide-dyn slide-cover" data-screen-label="07 Cierre">
+<section class="slide-ref slide-dyn slide-cover slide-dark" data-screen-label="07 Cierre">
   <div class="grid-bg"></div>
   <div class="glow" style="width:720px;height:720px;background:#15534a;bottom:-200px;right:-120px;"></div>
   <div class="dyn-ring" style="width:560px;height:560px;top:-20%;left:-15%;"></div>
@@ -796,7 +1142,7 @@
         <p class="dyn-sans">CETES.</p>
         <p class="dyn-sans">Capital.</p>
         <p class="dyn-xl"><span class="em">Diario.</span></p>
-        <p class="dyn-xl" style="margin-top:20px;font-size:clamp(44px,5vw,72px);">
+        <p class="dyn-xl" style="margin-top:20px;">
           Esa herramienta es <span class="em">Seyf.</span>
         </p>
         <p class="dyn-foot-tag"><strong>Sin deuda</strong> · sin tocar lo que construyeron</p>
@@ -804,7 +1150,7 @@
       <div>
         <p class="dyn-label">Pre-seed</p>
         <p class="dyn-ask-mega">100</p>
-        <p class="dyn-sans" style="font-size:clamp(28px,3vw,40px);margin-top:-8px;">cuentas · CEDA</p>
+        <p class="dyn-sans" style="font-size:clamp(32px,3.4vw,48px);margin-top:-8px;">cuentas · CEDA</p>
         <div class="dyn-ask-stack">
           <div class="dyn-ask-chip">Auditoría mainnet</div>
           <div class="dyn-ask-chip">Compliance</div>
@@ -812,10 +1158,64 @@
       </div>
     </div>
     <div class="bar-foot">Seyf by Seyfert Labs</div>
-    <span class="slide-num">07 / 07</span>
+    <span class="slide-num">07 / 08</span>
+  </div>
+</section>
+
+<!-- 08 EQUIPO -->
+<section class="slide-ref slide-dyn slide-light slide-team" data-screen-label="08 Equipo">
+  <div class="frame frame-grid">
+    <div class="team-layout">
+      <div class="team-head">
+        <p class="dyn-label">Equipo</p>
+        <p class="dyn-sans">Operativos</p>
+        <p class="dyn-xl"><span class="em">en piso.</span></p>
+      </div>
+      <div class="team-grid">
+        <div class="team-card">
+          <p class="team-role">CEO</p>
+          <p class="team-name">Gerardo Vela</p>
+        </div>
+        <div class="team-card">
+          <p class="team-role">CTO</p>
+          <p class="team-name">Andrés Rodríguez</p>
+        </div>
+        <div class="team-card">
+          <p class="team-role">CMO</p>
+          <p class="team-name">Miriam Mejía</p>
+        </div>
+        <div class="team-card">
+          <p class="team-role">CPO</p>
+          <p class="team-name">Ian Hernández</p>
+        </div>
+      </div>
+      <p class="team-quote">
+        Web3 avanzado con ejecución directa en la economía real — Seyfert Labs, CDMX.
+      </p>
+    </div>
+    <div class="bar-foot">Seyf by Seyfert Labs</div>
+    <span class="slide-num">08 / 08</span>
   </div>
 </section>
 
 </deck-stage>
+<script>
+  (function () {
+    const stage = document.querySelector('deck-stage');
+    if (!stage) return;
+    function syncDemoVideo(slide) {
+      stage.querySelectorAll('video').forEach((v) => {
+        v.pause();
+        v.currentTime = 0;
+      });
+      const v = slide?.querySelector('.phone-screen video');
+      if (v) v.play().catch(function () {});
+    }
+    stage.addEventListener('slidechange', function (e) {
+      syncDemoVideo(e.detail?.slide);
+    });
+    syncDemoVideo(stage.querySelector('[data-deck-active]') || stage.querySelector('.slide-solution'));
+  })();
+</script>
 </body>
 </html>

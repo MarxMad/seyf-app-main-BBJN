@@ -37,7 +37,28 @@ export const SEYF_LANDING_SECURITY_TITLE = 'El espacio seguro de tu capital'
 export const SEYF_LANDING_SECURITY_BODY =
   'Separas gastar de comprometer tu ahorro: lo invertido sigue trabajando mientras usas lo que ya ganaste. Claridad y control, sin el ritual eterno del banco.'
 
+/** Voz de campo · CEDA — tono indirecto (no cita literal del puesto). */
+export const SEYF_LANDING_FIELD_QUOTE_LINES = [
+  'Entre una venta y la otra,',
+  'el colchón sigue aquí — quieto.',
+] as const
+
+export const SEYF_LANDING_FIELD_QUOTE_ATTRIBUTION =
+  '— Braulio · vendedor de granos · Central de Abastos · Abril 2026'
+
+export const SEYF_LANDING_FIELD_IMAGE = {
+  src: '/subastas.png',
+  alt: 'Central de Abasto — subastas y bodegas, CDMX',
+} as const
+
 export const SEYF_LANDING_FOOTER_CTA_TITLE = '¿Listo para empezar?'
+
+/** Footer · enlace al pitch deck estático (`/pitch/`). */
+export const SEYF_LANDING_FOOTER_INVESTORS = {
+  columnTitle: 'Inversionistas',
+  pitchLabel: 'Presentación pre-seed',
+  pitchHref: '/pitch/',
+} as const
 
 /** Sección “tarjetas en perspectiva” (estilo Revolut: hero oscuro + render 3D). */
 export const SEYF_LANDING_CARDS_SHOWCASE_TITLE = 'Gasta con intención'
