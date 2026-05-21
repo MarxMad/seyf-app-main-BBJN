@@ -27,7 +27,7 @@
     --t-bento-hero: clamp(116px, 13vw, 200px);
     --t-bento-val: clamp(56px, 6vw, 84px);
     --t-ask: clamp(156px, 17vw, 260px);
-    --t-team-name: clamp(32px, 3.2vw, 48px);
+    --t-team-name: clamp(20px, 1.75vw, 28px);
   }
   html, body { background: var(--bg); margin: 0; padding: 0; }
   body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); }
@@ -366,21 +366,6 @@
   .day.on .dot { background: var(--mint); border-color: var(--mint); color: #07100d; }
   .day .lbl { font-size: clamp(16px, 1.6vw, 22px); font-weight: 700; margin-top: 12px; }
   .day .sub { font-size: 12px; color: var(--ink-mute); margin-top: 4px; }
-
-  .team-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; width: 100%; max-width: 520px; }
-  .team-card {
-    padding: 18px; border-radius: 16px; border: 1px solid var(--line-2);
-    background: linear-gradient(160deg, rgba(21,83,74,0.2), transparent);
-    text-align: center;
-  }
-  .team-card .av {
-    width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 12px;
-    background: linear-gradient(135deg, #15534a, #0a1a16);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Geist Mono', monospace; font-size: 22px; font-weight: 700; color: var(--mint-2);
-  }
-  .team-card .role { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--mint); letter-spacing: 0.12em; }
-  .team-card .name { font-size: 18px; font-weight: 700; margin-top: 6px; }
 
   .ask-block .ask-num {
     font-family: 'Fraunces', serif; font-size: clamp(100px, 11vw, 160px);
@@ -907,69 +892,95 @@
     background-clip: text;
   }
 
-  /* 08 — Equipo */
+  /* 08 — Equipo (4 columnas · ancho completo) */
   .slide-team .team-layout {
-    flex: 1; display: flex; flex-direction: column; justify-content: center;
-    padding: 36px 72px 16px; gap: 28px; min-height: 0;
+    flex: 1;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    width: 100%;
+    padding: 28px 56px 12px;
+    gap: 22px;
+    min-height: 0;
+    box-sizing: border-box;
   }
-  .slide-team .team-head { max-width: 900px; }
+  .slide-team .team-head {
+    width: 100%;
+    max-width: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
   .slide-team .team-title-only {
     font-family: 'Fraunces', serif;
-    font-size: var(--t-dyn-xl);
+    font-size: clamp(48px, 5vw, 72px);
     font-weight: 600;
     line-height: 0.95;
-    margin: 8px 0 0;
+    margin: 4px 0 0;
     color: #0a1613;
   }
   .slide-team .team-title-only .em { color: #15534a; }
-  .team-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;
-    flex: 1; min-height: 0; align-items: stretch;
+  .slide-team .team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(16px, 1.6vw, 28px);
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    align-items: stretch;
   }
-  @media (max-width: 1100px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
-  .team-card {
+  .slide-team .team-card {
+    min-width: 0;
     padding: 0;
-    border-radius: 24px;
+    border-radius: 22px;
     border: 1px solid rgba(13,58,51,0.14);
-    background: rgba(255,255,255,0.55);
-    display: flex; flex-direction: column;
+    background: rgba(255,255,255,0.6);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     min-height: 0;
+    box-shadow: 0 12px 40px rgba(7,16,13,0.06);
   }
-  .team-photo {
-    aspect-ratio: 4 / 5;
+  .slide-team .team-photo {
+    flex: 1;
+    min-height: 0;
+    aspect-ratio: auto;
     width: 100%;
-    flex: none;
     overflow: hidden;
     background: #0a1613;
   }
-  .team-photo img {
-    width: 100%; height: 100%;
+  .slide-team .team-photo img {
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
     object-fit: cover;
     display: block;
   }
-  .team-photo--gerardo img { object-position: center 12%; }
-  .team-photo--andres img { object-position: center 18%; }
-  .team-photo--miriam img { object-position: center 22%; }
-  .team-photo--ian img { object-position: center 20%; }
-  .team-card .team-meta {
-    padding: clamp(16px, 1.6vw, 22px) clamp(18px, 1.8vw, 26px) clamp(20px, 2vw, 28px);
+  .slide-team .team-photo--gerardo img { object-position: center 12%; }
+  .slide-team .team-photo--andres img { object-position: center 18%; }
+  .slide-team .team-photo--miriam img { object-position: center 22%; }
+  .slide-team .team-photo--ian img { object-position: center 20%; }
+  .slide-team .team-card .team-meta {
+    flex: none;
+    padding: clamp(14px, 1.4vw, 20px) clamp(14px, 1.3vw, 18px) clamp(16px, 1.5vw, 22px);
   }
-  .team-card .team-role {
+  .slide-team .team-card .team-role {
     font-family: 'Geist Mono', monospace;
-    font-size: var(--t-dyn-label);
+    font-size: 11px;
     color: #0d3a33;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    margin: 0 0 8px;
+    margin: 0 0 6px;
   }
-  .team-card .team-name {
+  .slide-team .team-card .team-name {
     font-size: var(--t-team-name);
     font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
     margin: 0;
     color: #0a1613;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   .team-quote {
     font-family: 'Fraunces', serif;
