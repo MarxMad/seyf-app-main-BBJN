@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "pitch:sync": "mkdir -p public/pitch && rsync -a --delete pitch/ public/pitch/",
+    "pitch:sync": "node scripts/sync-pitch.mjs",
     "dev": "npm run pitch:sync && next dev --webpack",
     "dev:turbo": "npm run pitch:sync && next dev",
     "dev:webpack": "npm run pitch:sync && next dev --webpack",
