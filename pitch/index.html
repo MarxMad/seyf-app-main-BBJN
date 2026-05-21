@@ -28,10 +28,11 @@
     --t-bento-val: clamp(56px, 6vw, 84px);
     --t-ask: clamp(156px, 17vw, 260px);
     --t-team-name: clamp(20px, 1.75vw, 28px);
-    --t-roadmap-title: clamp(26px, 2.2vw, 36px);
-    --t-roadmap-yr: clamp(20px, 1.75vw, 26px);
-    --t-roadmap-item: clamp(14px, 1.2vw, 17px);
-    --t-roadmap-sub: 11px;
+    /* Roadmap: px fijos (evitar vw — se infla fuera del canvas 1920) */
+    --t-roadmap-title: 24px;
+    --t-roadmap-yr: 17px;
+    --t-roadmap-item: 13px;
+    --t-roadmap-sub: 10px;
   }
   html, body { background: var(--bg); margin: 0; padding: 0; }
   body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); }
@@ -789,76 +790,85 @@
   }
   .dyn-bento .b.mainnet .val { font-size: clamp(48px, 5.2vw, 72px); color: var(--mint-2); }
 
-  /* 07 — roadmap (pantalla completa) */
-  .dyn-close {
+  /* 07 — roadmap (px fijos · legible en proyector) */
+  .slide-close .dyn-close {
     flex: 1; display: flex; flex-direction: column;
-    padding: 44px 72px 20px; min-height: 0;
+    padding: 48px 80px 24px; min-height: 0;
   }
-  .roadmap-panel {
-    flex: 1; display: flex; flex-direction: column; gap: 20px;
-    padding: 32px 36px 28px;
-    border-radius: 28px;
+  .slide-close .roadmap-panel {
+    flex: 1; display: flex; flex-direction: column; gap: 12px;
+    padding: 22px 26px 20px;
+    border-radius: 22px;
     border: 1px solid var(--line-2);
     background: rgba(69,181,150,0.06);
     min-height: 0;
   }
-  .roadmap-panel .roadmap-title {
-    font-family: 'Fraunces', serif;
-    font-size: clamp(36px, 3.6vw, 56px);
-    font-weight: 600;
-    line-height: 1;
+  .slide-close .roadmap-panel .roadmap-title {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: var(--t-roadmap-title);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
     margin: 0;
     color: var(--ink);
   }
-  .roadmap-panel .roadmap-title .em { color: var(--mint-2); }
-  .roadmap-panel .roadmap-sub {
+  .slide-close .roadmap-panel .roadmap-title .em {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--mint-2);
+  }
+  .slide-close .roadmap-panel .roadmap-sub {
     font-family: 'Geist Mono', monospace;
-    font-size: var(--t-dyn-label);
-    letter-spacing: 0.18em;
+    font-size: var(--t-roadmap-sub);
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--mint);
-    margin: 8px 0 0;
+    margin: 2px 0 0;
   }
-  .roadmap-years {
+  .slide-close .roadmap-years {
     flex: 1; display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 14px; min-height: 0;
+    gap: 14px; min-height: 0; align-content: start;
   }
-  .roadmap-year {
-    display: flex; flex-direction: column; gap: 10px;
-    padding: 18px 16px 16px;
-    border-radius: 20px;
+  .slide-close .roadmap-year {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 12px 11px 11px;
+    border-radius: 16px;
     border: 1px solid rgba(127,232,204,0.14);
     background: rgba(7,16,13,0.45);
   }
-  .roadmap-year .yr {
-    font-family: 'Fraunces', serif;
-    font-size: clamp(28px, 2.6vw, 40px);
-    font-weight: 600;
-    line-height: 1;
+  .slide-close .roadmap-year .yr {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: var(--t-roadmap-yr);
+    font-weight: 700;
+    line-height: 1.2;
     margin: 0;
     color: var(--mint-2);
   }
-  .roadmap-year .yr-sub {
+  .slide-close .roadmap-year .yr-sub {
     font-family: 'Geist Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.12em;
+    font-size: var(--t-roadmap-sub);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-mute);
-    margin: -4px 0 6px;
+    margin: 0 0 2px;
   }
-  .roadmap-item {
+  .slide-close .roadmap-item {
     margin: 0;
-    padding: 10px 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(42,64,57,0.6);
-    background: rgba(0,0,0,0.2);
-    font-size: clamp(13px, 1.15vw, 17px);
-    font-weight: 600;
-    line-height: 1.25;
-    color: var(--ink);
+    padding: 7px 9px;
+    border-radius: 8px;
+    border: 1px solid rgba(42,64,57,0.55);
+    background: rgba(0,0,0,0.18);
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: var(--t-roadmap-item);
+    font-weight: 500;
+    line-height: 1.35;
+    color: rgba(243,247,245,0.92);
   }
-  .roadmap-item strong { color: var(--mint-2); font-weight: 700; }
-  .roadmap-item.milestone {
+  .slide-close .roadmap-item strong {
+    color: var(--mint-2);
+    font-weight: 650;
+  }
+  .slide-close .roadmap-item.milestone {
     border-color: var(--mint);
     background: rgba(69,181,150,0.12);
   }
