@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>SEYF — Pre-seed Pitch</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&family=Fraunces:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="deck-stage.js"></script>
+<style>
+  :root {
+    --bg:        #07100d;
+    --bg-2:      #0c1a16;
+    --ink:       #f3f7f5;
+    --ink-mute:  #8da39b;
+    --ink-dim:   #5b716b;
+    --line:      #1d2e29;
+    --line-2:    #2a4039;
+    --teal:      #15534a;
+    --teal-deep: #0d3a33;
+    --mint:      #45b596;
+    --mint-2:    #7fe8cc;
+    --paper:     #f1ece1;
+    --paper-2:   #e8e1d1;
+    --warn:      #e7b75c;
+  }
+  html, body { background: var(--bg); margin:0; padding:0; }
+  body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); }
+  deck-stage { --slide-bg: var(--bg); --slide-fg: var(--ink); }
+  section {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Geist', system-ui, sans-serif;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: -0.005em;
+  }
+  .mono { font-family: 'Geist Mono', ui-monospace, monospace; letter-spacing: 0.02em; }
+  .serif { font-family: 'Fraunces', serif; font-variation-settings: "SOFT" 30, "WONK" 0; }
+
+  /* ---- Chrome frame shared by most slides ---- */
+  .frame {
+    position: absolute; inset: 0;
+    padding: 60px 80px;
+    display: flex; flex-direction: column;
+    gap: 24px;
+  }
+  .frame-grid {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100%;
+  }
+  .frame-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 14px;
+    color: var(--ink-mute);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .frame-head > * { white-space: nowrap; }
+  .frame-head .num {
+    color: var(--mint);
+    display: inline-flex; align-items: center; gap: 14px;
+  }
+  .frame-head .num::before {
+    content: ""; width: 10px; height: 10px; border-radius: 2px;
+    background: var(--mint);
+    box-shadow: 0 0 0 4px rgba(69,181,150,0.15);
+  }
+  .frame-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Geist Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-dim);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+  }
+
+  /* logo wordmark */
+  .seyf-wordmark {
+    font-family: 'Geist Mono', monospace;
+    font-weight: 600;
+    letter-spacing: 0.62em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .seyf-wordmark .dot { color: var(--mint); }
+
+  /* numbers */
+  .figure {
+    font-family: 'Geist', sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.92;
+  }
+
+  /* utility */
+  .grid-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0.2) 80%);
+  }
+  .scan {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,0.012) 3px 4px);
+  }
+  .glow {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    filter: blur(80px); opacity: 0.5;
+  }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .pill.mint { color: var(--mint-2); border-color: rgba(69,181,150,0.4); background: rgba(69,181,150,0.06); }
+  .pill .led { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 8px var(--mint); }
+
+  /* placeholders */
+  .placeholder {
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.018) 0 14px, transparent 14px 28px),
+      linear-gradient(180deg, #122520 0%, #0a1815 100%);
+    border: 1px solid var(--line-2);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-dim);
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 16px;
+  }
+
+  /* deck stage handles scaling, hide scrollbars */
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+<deck-stage>
+
+<!-- =================== SLIDE 1 — TITLE =================== -->
+<section data-screen-label="01 Cover">
+  <div class="grid-bg"></div>
+  <div class="scan"></div>
+  <div class="glow" style="width: 700px; height: 700px; background: #15534a; bottom:-200px; right:-200px;"></div>
+  <div class="glow" style="width: 500px; height: 500px; background: #0d3a33; top:-150px; left:-100px;"></div>
+
+  <div class="frame frame-grid">
+    <div class="frame-head">
+      <div class="seyf-wordmark"><span class="dot">●</span> S E Y F</div>
+      <div>Pre-seed · Round 01 · 2026</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; justify-content:center; gap: 28px; max-width: 1400px;">
+      <div class="pill mint"><span class="led"></span> Etherfuse · Stellar · Soroban</div>
+      <h1 style="font-family: 'Geist'; font-weight: 900; font-size: 192px; line-height: 0.86; letter-spacing: -0.055em; margin: 0;">
+        Buy Now,<br>
+        <span style="color: var(--mint-2);">Pay Never.</span>
+      </h1>
+      <p style="font-family: 'Geist Mono'; font-size: 22px; line-height: 1.4; color: var(--ink-mute); max-width: 920px; margin: 0; letter-spacing: 0.01em;">
+        Liquidez inmediata respaldada por el rendimiento de <span style="color: var(--mint);">CETES tokenizados</span>.<br>
+        Ahorro con adelanto de ganancias futuras — sin tocar tu capital.
+      </p>
+    </div>
+
+    <div class="frame-foot">
+      <div>The Open Deal · Ledger Leaders Week</div>
+      <div>Torre BBVA · CDMX · 2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SLIDE 2 — PROBLEM =================== -->
+<section data-screen-label="02 Problema">
+  <div class="grid-bg"></div>
+  <div class="frame frame-grid">
+    <div class="frame-head">
+      <div class="num">01 / Problema</div>
+      <div>El dinero del comerciante informal</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap: 48px; justify-content:center;">
+      <h2 style="font-family: 'Geist'; font-weight: 800; font-size: 110px; line-height: 0.92; letter-spacing: -0.045em; margin: 0; max-width: 1500px;">
+        El dinero llega tarde.<br>
+        <span style="color: var(--ink-mute);">La oportunidad no espera.</span>
+      </h2>
+
+      <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+        <div style="border: 1px solid var(--line-2); border-radius: 20px; padding: 36px; background: linear-gradient(180deg, rgba(231,183,92,0.06), transparent);">
+          <div class="mono" style="font-size: 12px; color: var(--warn); letter-spacing: 0.18em; text-transform: uppercase;">Bancos formales</div>
+          <div class="figure" style="font-size: 96px; color: var(--ink); margin: 16px 0 12px;">60<span style="color: var(--ink-mute); font-size: 56px;">–</span>120<span style="color: var(--mint); font-size: 56px;">%</span></div>
+          <div style="font-size: 18px; color: var(--ink-mute); line-height: 1.4;">Tasa anual efectiva. Requisitos imposibles para el comerciante informal de la CEDA.</div>
+        </div>
+
+        <div style="border: 1px solid var(--line-2); border-radius: 20px; padding: 36px; background: linear-gradient(180deg, rgba(231,183,92,0.10), transparent);">
+          <div class="mono" style="font-size: 12px; color: var(--warn); letter-spacing: 0.18em; text-transform: uppercase;">Prestamistas en el mercado</div>
+          <div class="figure" style="font-size: 96px; color: var(--ink); margin: 16px 0 12px;">81<span style="color: var(--mint); font-size: 56px;">%</span></div>
+          <div style="font-size: 18px; color: var(--ink-mute); line-height: 1.4;">O más. El capital de trabajo se consume antes de generar ganancia.</div>
+        </div>
+
+        <div style="border: 1px solid var(--line-2); border-radius: 20px; padding: 36px; background: linear-gradient(180deg, rgba(69,181,150,0.06), transparent);">
+          <div class="mono" style="font-size: 12px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">Ahorro tradicional · CETES</div>
+          <div class="figure" style="font-size: 96px; color: var(--ink); margin: 16px 0 12px;">28<span style="color: var(--ink-mute); font-size: 56px;"> días</span></div>
+          <div style="font-size: 18px; color: var(--ink-mute); line-height: 1.4;">Mínimo para ver una sola ganancia. La liquidez del trabajador queda congelada.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-foot">
+      <div>Fuente · INEGI 2024 · Banxico · Trabajo de campo CEDA</div>
+      <div>02 / 10</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SLIDE 3 — FIELD INSIGHT =================== -->
+<section data-screen-label="03 Insight">
+  <div class="grid-bg"></div>
+  <div class="frame">
+    <div class="frame-head">
+      <div class="num">01.1 / Trabajo de campo</div>
+      <div>Central de Abastos · CDMX · Abril 2026</div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1.15fr 1fr; gap: 56px; flex:1; align-items: center; padding: 12px 0;">
+      <div style="display:flex; flex-direction:column; gap: 28px;">
+        <div class="mono" style="color: var(--mint); font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase;">— Cita de campo</div>
+        <p class="serif" style="font-size: 88px; line-height: 1.02; font-weight: 500; letter-spacing: -0.025em; margin: 0;">
+          <span style="color: var(--mint-2);">“</span>Todo mi ahorro<br>está aquí<span style="color: var(--mint-2);">.”</span>
+        </p>
+        <p style="font-size: 21px; color: var(--ink-mute); line-height: 1.45; max-width: 580px; margin: 0;">
+          <em style="color: var(--ink);">Braulio</em>, vendedor de granos. Señala debajo de su terminal de ventas — el efectivo del día, sin instrumento, sin protección, sin rendimiento.
+        </p>
+
+        <div style="display:grid; grid-template-columns: repeat(3, auto); gap: 36px; margin-top: 16px;">
+          <div>
+            <div class="figure" style="font-size: 56px; color: var(--mint-2);">3</div>
+            <div class="mono" style="font-size: 12px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: 0.16em; margin-top: 6px;">Visitas de campo</div>
+          </div>
+          <div>
+            <div class="figure" style="font-size: 56px; color: var(--mint-2);">5+</div>
+            <div class="mono" style="font-size: 12px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: 0.16em; margin-top: 6px;">Entrevistas profundas</div>
+          </div>
+          <div>
+            <div class="figure" style="font-size: 56px; color: var(--mint-2);">8–30</div>
+            <div class="mono" style="font-size: 12px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: 0.16em; margin-top: 6px;">Días · ciclo de crédito informal</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="placeholder" style="height: 680px; background-size: auto">
+        <div>
+          [ FOTO CEDA ]<br><br>
+          Braulio · puesto de granos<br>
+          Central de Abastos CDMX
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-foot">
+      <div>Patrón consistente · asfixia de liquidez sin acceso a servicios financieros formales</div>
+      <div>03 / 10</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SLIDE 4 — SOLUTION =================== -->
+<section data-screen-label="04 Solución">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width: 500px; height: 500px; background: #15534a; bottom:-200px; right:10%;"></div>
+  <div class="frame frame-grid">
+    <div class="frame-head">
+      <div class="num">02 / Solución</div>
+      <div>SEYF · Sistema de adelanto sobre rendimiento</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap: 56px; justify-content:center;">
+      <div style="display:grid; grid-template-columns: 1fr auto; gap: 56px; align-items: end;">
+        <h2 style="font-family: 'Geist'; font-weight: 800; font-size: 96px; line-height: 0.94; letter-spacing: -0.04em; margin: 0;">
+          Ahorro con rendimiento <span style="color: var(--mint);">+</span><br>
+          adelanto de ganancias futuras,<br>
+          <span style="color: var(--ink-mute);">sin tocar tu capital.</span>
+        </h2>
+        <div style="border-left: 2px solid var(--mint); padding-left: 22px; max-width: 320px;">
+          <div class="mono" style="font-size: 12px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">No es crédito</div>
+          <p style="font-size: 16px; color: var(--ink-mute); line-height: 1.5; margin: 10px 0 0;">El capital nunca sale del protocolo. El adelanto se liquida al vencimiento del plazo — o el usuario lo repaga antes.</p>
+        </div>
+      </div>
+
+      <!-- 4-step flow diagram -->
+      <div style="position: relative;">
+        <div style="position:absolute; left: 5%; right: 5%; top: 36px; height: 2px; background: linear-gradient(to right, transparent, var(--mint) 10%, var(--mint) 90%, transparent); opacity: 0.55;"></div>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 24px; position: relative;">
+          <!-- Step 1 -->
+          <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--bg); border: 2px solid var(--mint); display:flex; align-items:center; justify-content:center; color: var(--mint); font-family: 'Geist Mono'; font-weight: 700; font-size: 22px; box-shadow: 0 0 0 6px var(--bg);">01</div>
+            <div class="mono" style="font-size: 12px; color: var(--mint); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 20px;">Depósito SPEI</div>
+            <div style="font-size: 20px; color: var(--ink); margin-top: 14px; line-height: 1.35; max-width: 320px; font-weight: 500;">El usuario deposita pesos por SPEI — el rail que ya usa.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--bg); border: 2px solid var(--mint); display:flex; align-items:center; justify-content:center; color: var(--mint); font-family: 'Geist Mono'; font-weight: 700; font-size: 22px; box-shadow: 0 0 0 6px var(--bg);">02</div>
+            <div class="mono" style="font-size: 12px; color: var(--mint); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 20px;">CETES tokenizados</div>
+            <div style="font-size: 20px; color: var(--ink); margin-top: 14px; line-height: 1.35; max-width: 320px; font-weight: 500;">Convertimos el depósito en Stablebonds Etherfuse sobre Stellar.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--bg); border: 2px solid var(--mint); display:flex; align-items:center; justify-content:center; color: var(--mint); font-family: 'Geist Mono'; font-weight: 700; font-size: 22px; box-shadow: 0 0 0 6px var(--bg);">03</div>
+            <div class="mono" style="font-size: 12px; color: var(--mint); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 20px;">Proyección on-chain</div>
+            <div style="font-size: 20px; color: var(--ink); margin-top: 14px; line-height: 1.35; max-width: 320px; font-weight: 500;">Soroban ejecuta proyecciones de rendimiento en tiempo real.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--mint); border: 2px solid var(--mint); display:flex; align-items:center; justify-content:center; color: #07100d; font-family: 'Geist Mono'; font-weight: 800; font-size: 22px; box-shadow: 0 0 0 6px var(--bg), 0 0 30px rgba(69,181,150,0.45);">04</div>
+            <div class="mono" style="font-size: 12px; color: var(--mint-2); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 20px;">Buy Now, Pay Never</div>
+            <div style="font-size: 20px; color: var(--ink); margin-top: 14px; line-height: 1.35; max-width: 320px; font-weight: 500;">Adelantamos hasta <span style="color: var(--mint-2);">5% del rendimiento proyectado</span>. Capital intacto.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-foot">
+      <div>* Determinado por valor y rendimiento de los RWAs seleccionados en el protocolo</div>
+      <div>04 / 10</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SLIDE 5 — PRODUCT =================== -->
+<section data-screen-label="05 Producto">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width: 600px; height: 600px; background: #15534a; top:-200px; right:-100px;"></div>
+  <div class="frame frame-grid">
+    <div class="frame-head">
+      <div class="num">02.1 / Producto</div>
+      <div>MVP funcional · testnet end-to-end</div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap: 56px; align-items: center;">
+      <div>
+        <h2 style="font-family:'Geist'; font-weight:800; font-size: 80px; line-height: 0.95; letter-spacing: -0.04em; margin: 0;">
+          La app que el<br>comerciante <em style="font-style: italic; color: var(--mint-2); font-family:'Fraunces'; font-weight: 500;">sí</em> usa.
+        </h2>
+        <p style="font-size: 21px; color: var(--ink-mute); line-height: 1.5; margin: 28px 0 36px; max-width: 540px;">
+          Saldo en pesos, depósitos por SPEI, adelantos en segundos, y un puente invisible hacia infraestructura Web3.
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap: 18px;">
+          <div style="display:flex; align-items:flex-start; gap: 16px;">
+            <div style="width:28px; height:28px; border-radius: 50%; border: 1px solid var(--mint); color: var(--mint); display:flex; align-items:center; justify-content:center; font-family: 'Geist Mono'; font-size: 13px; flex-shrink:0; margin-top: 2px;">✓</div>
+            <div>
+              <div style="font-size: 19px; color: var(--ink); font-weight: 600;">KYC integrado con Etherfuse</div>
+              <div style="font-size: 15px; color: var(--ink-mute);">Cumplimiento listo. Sin custodios cripto para el usuario final.</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:flex-start; gap: 16px;">
+            <div style="width:28px; height:28px; border-radius: 50%; border: 1px solid var(--mint); color: var(--mint); display:flex; align-items:center; justify-content:center; font-family: 'Geist Mono'; font-size: 13px; flex-shrink:0; margin-top: 2px;">✓</div>
+            <div>
+              <div style="font-size: 19px; color: var(--ink); font-weight: 600;">Adelanto en un tap</div>
+              <div style="font-size: 15px; color: var(--ink-mute);">Sin score, sin aval, sin papeles. El colateral ya está bloqueado.</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:flex-start; gap: 16px;">
+            <div style="width:28px; height:28px; border-radius: 50%; border: 1px solid var(--mint); color: var(--mint); display:flex; align-items:center; justify-content:center; font-family: 'Geist Mono'; font-size: 13px; flex-shrink:0; margin-top: 2px;">✓</div>
+            <div>
+              <div style="font-size: 19px; color: var(--ink); font-weight: 600;">Tarjeta de Abastos Comerciales</div>
+              <div style="font-size: 15px; color: var(--ink-mute);">Identidad de gremio + medio de pago + acceso al protocolo.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone mockups -->
+      <div style="display:flex; justify-content: center; gap: 32px; align-items: center;">
+        <!-- Phone 1: empty state -->
+        <div style="width: 280px; height: 570px; border-radius: 38px; background: #fafaf7; border: 8px solid #0a0a0a; box-shadow: 0 30px 60px rgba(0,0,0,0.5); position: relative; overflow: hidden; padding: 14px 12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-family: 'Geist Mono'; font-size:9px; color:#0a0a0a; padding: 2px 6px 6px;">
+            <span>9:41</span>
+            <span>·  ·  ·</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap: 6px; padding: 4px;">
+            <div style="width:28px; height:28px; border-radius:50%; background:#eee; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#222;">GE</div>
+            <div style="flex:1; height:28px; border-radius:14px; background:#f0f0ed; display:flex; align-items:center; padding: 0 10px; font-size:10px; color:#888;">⌕ Buscar</div>
+            <div style="width:28px; height:28px; border-radius:50%; background:#f0f0ed;"></div>
+          </div>
+          <div style="margin: 10px 4px; padding: 10px; border-radius: 14px; background: #f4f3ee; border:1px solid #e9e7e0;">
+            <div style="font-size:11px; font-weight:700; color:#111;">Cuenta principal</div>
+            <div style="font-size:9px; color:#666; margin-top:1px;">Última actualización 02:03 a.m.</div>
+            <div style="display:inline-block; margin-top:5px; padding: 2px 6px; border-radius:8px; background:#e9e7e0; font-size:8px; color:#444;">Verificación pendiente</div>
+          </div>
+          <div style="margin: 4px; padding: 18px 14px; border-radius: 16px; background: linear-gradient(180deg, #d6efe1, #c1e3d2); text-align:center;">
+            <div style="font-size:10px; color:#385c52;">Saldo disponible</div>
+            <div style="font-size:36px; font-weight:900; color:#0a0a0a; margin: 4px 0; letter-spacing:-0.02em;">$0<span style="font-size:18px;">.00</span></div>
+            <div style="display:inline-block; padding: 3px 9px; border-radius:10px; background: rgba(255,255,255,0.5); font-size:9px; color:#385c52;">ⓘ · 1.132416 MXN</div>
+            <div style="display:flex; justify-content:space-around; margin-top: 14px;">
+              <div style="text-align:center;"><div style="width:28px; height:28px; border-radius:50%; background:#fff; margin: 0 auto;"></div><div style="font-size:8px; margin-top: 3px; color:#222;">Depositar</div></div>
+              <div style="text-align:center;"><div style="width:28px; height:28px; border-radius:50%; background:#fff; margin: 0 auto;"></div><div style="font-size:8px; margin-top: 3px; color:#222;">Transferir</div></div>
+              <div style="text-align:center;"><div style="width:28px; height:28px; border-radius:50%; background:#fff; margin: 0 auto;"></div><div style="font-size:8px; margin-top: 3px; color:#222;">Movimientos</div></div>
+              <div style="text-align:center;"><div style="width:28px; height:28px; border-radius:50%; background:#fff; margin: 0 auto;"></div><div style="font-size:8px; margin-top: 3px; color:#222;">Verificar</div></div>
+            </div>
+          </div>
+          <div style="margin: 12px 4px 0; padding: 14px; border-radius: 16px; background: linear-gradient(135deg, #15534a, #0e3e37); color: white;">
+            <div style="display:inline-block; padding: 2px 7px; border-radius:8px; background: rgba(255,255,255,0.18); font-size:8px;">COMIENZA HOY</div>
+            <div style="font-size: 16px; font-weight:800; margin-top: 6px; line-height: 1.1;">Deposita tu capital<br>para empezar</div>
+            <div style="font-size:9px; opacity:0.8; margin-top: 6px; line-height:1.4;">Activa tu ciclo con tu primer depósito y desbloquea rendimiento y adelantos.</div>
+            <div style="display:inline-block; margin-top: 10px; padding: 6px 14px; border-radius:20px; background: white; color: #0a0a0a; font-size:10px; font-weight:700;">Depositar ahora</div>
+          </div>
+        </div>
+
+        <!-- Phone 2: active state (dark) -->
+        <div style="width: 280px; height: 570px; border-radius: 38px; background: #000; border: 8px solid #0a0a0a; box-shadow: 0 30px 60px rgba(69,181,150,0.18); position: relative; overflow: hidden; padding: 14px 12px; transform: translateY(-20px);">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-family: 'Geist Mono'; font-size:9px; color:#fff; padding: 2px 6px 6px;">
+            <span>9:41</span>
+            <span>·  ·  ·</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap: 6px; padding: 4px;">
+            <div style="width:28px; height:28px; border-radius:50%; background:#1c1c1c; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff;">GE</div>
+            <div style="flex:1; height:28px; border-radius:14px; background:#101010; border:1px solid #1c1c1c; display:flex; align-items:center; padding: 0 10px; font-size:10px; color:#666;">⌕ Buscar</div>
+            <div style="width:28px; height:28px; border-radius:50%; background:#101010; border:1px solid #1c1c1c;"></div>
+          </div>
+          <div style="margin: 10px 4px; padding: 10px; border-radius: 14px; background: #0a0a0a; border:1px solid #1a1a1a;">
+            <div style="font-size:11px; font-weight:700; color:#fff;">Cuenta principal</div>
+            <div style="font-size:9px; color:#888; margin-top:1px;">Última actualización 01:19 p.m.</div>
+            <div style="display:inline-block; margin-top:5px; padding: 2px 6px; border-radius:8px; background: rgba(69,181,150,0.12); color: #45b596; font-size:8px;">Identidad verificada</div>
+          </div>
+          <div style="margin: 4px; padding: 16px 12px; border-radius: 16px; background: linear-gradient(180deg, #15534a, #0d3a33); text-align:center; position: relative; overflow: hidden;">
+            <div style="position:absolute; inset:0; background-image: linear-gradient(45deg, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(-45deg, rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 12px 12px;"></div>
+            <div style="position:relative;">
+              <div style="font-size:9px; color:#bcd4ca;">Saldo total estimado (MXN)</div>
+              <div style="font-size:30px; font-weight:900; color:#fff; margin: 3px 0; letter-spacing:-0.02em;">$576<span style="font-size:16px; color:#7fe8cc;">.37</span></div>
+              <div style="display:inline-block; padding: 3px 8px; border-radius:10px; background: rgba(0,0,0,0.35); font-size:9px; color:#bcd4ca;">ⓘ · 1.133904 MXN</div>
+              <div style="margin: 10px 6px 0; padding: 8px; border-radius: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(127,232,204,0.15);">
+                <div style="font-size:8px; color:#9bbeb3; letter-spacing: 0.12em;">SALDO INVERTIDO</div>
+                <div style="font-size: 16px; font-weight:800; color:#fff; margin-top:2px;">508.30 <span style="font-size: 10px; color: #7fe8cc;">CETES</span></div>
+                <div style="font-size: 9px; color: #7fe8cc; margin-top: 2px;">≈ $576.37</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin: 10px 4px 0; padding: 12px; border-radius: 14px; background: linear-gradient(180deg, #0d2a25, #0a1f1c); border: 1px solid #1c3530;">
+            <div style="display:inline-block; padding: 2px 7px; border-radius:8px; background: rgba(127,232,204,0.1); color:#7fe8cc; font-size:8px; letter-spacing: 0.1em;">ADELANTO DISPONIBLE</div>
+            <div style="font-size: 28px; font-weight:900; color:#fff; margin-top: 4px; letter-spacing:-0.02em;">$10.70</div>
+            <div style="font-size:9px; color: #9bbeb3; margin-top: 4px;">Recibe parte de tu rendimiento hoy, sin retirar tu capital.</div>
+            <div style="margin-top: 10px; padding: 7px; border-radius: 20px; background: #fff; color: #000; font-size: 11px; font-weight: 700; text-align: center;">Pedir adelanto</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 80px; right: 80px; bottom: 40px; display: flex; justify-content: space-between; font-family: 'Geist Mono'; font-size: 13px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.16em; border-top: 1px solid var(--line); padding-top: 18px;">
+    <div>Producción · iOS + Android (PWA) · Disponible en testnet</div>
+    <div>05 / 10</div>
+  </div>
+</section>
+
+<!-- =================== SLIDE 6 — MERCADO =================== -->
+<section data-screen-label="06 Mercado">
+  <div class="grid-bg"></div>
+  <div class="frame frame-grid">
+    <div class="frame-head">
+      <div class="num">03 / Mercado</div>
+      <div>Economía informal mexicana · TAM</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap: 36px; justify-content:center;">
+      <h2 style="font-family:'Geist'; font-weight: 800; font-size: 84px; line-height: 0.95; letter-spacing: -0.04em; margin: 0; max-width: 1500px;">
+        El mercado más grande<br>
+        <span style="color: var(--ink-mute);">que nadie atiende.</span>
+      </h2>
+
+      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+        <div style="border: 1px solid var(--line-2); border-radius: 20px; padding: 28px; background: linear-gradient(180deg, rgba(69,181,150,0.04), transparent); position: relative; overflow: hidden;">
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">Fuerza laboral</div>
+          <div class="figure" style="font-size: 124px; color: var(--ink); margin: 18px 0 10px;">55<span style="color: var(--mint); font-size: 64px;">%</span></div>
+          <div style="font-size: 16px; color: var(--ink-mute); line-height: 1.4;">De los trabajadores en México operan en la economía informal.</div>
+          <div class="mono" style="font-size: 10px; color: var(--ink-dim); margin-top: 18px; letter-spacing: 0.14em;">INEGI · 2024</div>
+        </div>
+
+        <div style="border: 1px solid var(--line-2); border-radius: 20px; padding: 28px;">
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">Beachhead · CDMX</div>
+          <div class="figure" style="font-size: 124px; color: var(--ink); margin: 18px 0 10px;">2,500<span style="color: var(--mint); font-size: 64px;">+</span></div>
+          <div style="font-size: 16px; color: var(--ink-mute); line-height: 1.4;">Locales y bodegas activos sólo en la Central de Abastos.</div>
+          <div class="mono" style="font-size: 10px; color: var(--ink-dim); margin-top: 18px; letter-spacing: 0.14em;">CEDA · Censo interno</div>
+        </div>
+
+        <div style="border: 1px solid var(--line-2); border-radius: 20px; padding: 28px;">
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">Ingreso neto / mes</div>
+          <div class="figure" style="font-size: 124px; color: var(--ink); margin: 18px 0 10px;"><span style="font-size: 64px; color: var(--mint);">$</span>208<span style="color: var(--mint); font-size: 64px;">K</span></div>
+          <div style="font-size: 16px; color: var(--ink-mute); line-height: 1.4;">MXN, ganancia estimada de un vendedor de granos representativo.</div>
+          <div class="mono" style="font-size: 10px; color: var(--ink-dim); margin-top: 18px; letter-spacing: 0.14em;">Entrevistas · 2026</div>
+        </div>
+
+        <div style="border: 1px solid rgba(231,183,92,0.4); border-radius: 20px; padding: 28px; background: linear-gradient(180deg, rgba(231,183,92,0.06), transparent);">
+          <div class="mono" style="font-size: 11px; color: var(--warn); letter-spacing: 0.18em; text-transform: uppercase;">Lo que pagan hoy</div>
+          <div class="figure" style="font-size: 124px; color: var(--ink); margin: 18px 0 10px;">81<span style="color: var(--warn); font-size: 64px;">%</span></div>
+          <div style="font-size: 16px; color: var(--ink-mute); line-height: 1.4;">Interés anual cobrado por prestamistas en piso de la CEDA.</div>
+          <div class="mono" style="font-size: 10px; color: var(--ink-dim); margin-top: 18px; letter-spacing: 0.14em;">Tasa promedio observada</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 12px;">
+        <div style="padding: 16px 22px; border-radius: 14px; border: 1px dashed var(--line-2); background: rgba(69,181,150,0.04);">
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">SOM · 12 meses</div>
+          <div style="font-size: 22px; color: var(--ink); margin-top: 6px; font-weight: 600;">500 cuentas · CEDA</div>
+        </div>
+        <div style="padding: 16px 22px; border-radius: 14px; border: 1px dashed var(--line-2); background: rgba(69,181,150,0.04);">
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">SAM · 24 meses</div>
+          <div style="font-size: 22px; color: var(--ink); margin-top: 6px; font-weight: 600;">Mercados mayoristas MX</div>
+        </div>
+        <div style="padding: 16px 22px; border-radius: 14px; border: 1px dashed var(--line-2); background: rgba(69,181,150,0.04);">
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">TAM · LatAm</div>
+          <div style="font-size: 22px; color: var(--ink); margin-top: 6px; font-weight: 600;">~160M trabajadores informales</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-foot">
+      <div>Go-to-market: Central de Abastos · CDMX · primer corredor de validación comercial</div>
+      <div>06 / 10</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SLIDE 7 — MODELO DE NEGOCIO + UNIT ECONOMICS =================== -->
+<section data-screen-label="07 Modelo">
+  <div class="grid-bg"></div>
+  <div class="frame frame-grid">
+    <div class="frame-head">
+      <div class="num">04 / Modelo de Negocio</div>
+      <div>Tres fuentes de ingreso · cero riesgo crediticio</div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1.1fr; gap: 56px; align-items: stretch;">
+      <!-- Left: three streams -->
+      <div style="display:flex; flex-direction:column; gap: 18px;">
+        <h2 style="font-family:'Geist'; font-weight: 800; font-size: 56px; line-height: 0.96; letter-spacing: -0.035em; margin: 0 0 8px;">
+          Margen <span style="color: var(--mint);">predecible.</span><br>
+          Default <span style="color: var(--mint);">imposible.</span>
+        </h2>
+
+        <div style="display:flex; gap: 18px; align-items: stretch; padding: 22px; border: 1px solid var(--line-2); border-radius: 16px;">
+          <div class="mono" style="color: var(--mint); font-size: 32px; font-weight: 700; min-width: 40px;">01</div>
+          <div>
+            <div style="font-size: 20px; font-weight: 700; color: var(--ink);">Yield Spread</div>
+            <div style="font-size: 14px; color: var(--ink-mute); margin-top: 4px; line-height: 1.5;">Captamos el rendimiento bruto de CETES y cedemos al usuario una fracción. La diferencia es nuestro margen — predecible y constante.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap: 18px; align-items: stretch; padding: 22px; border: 1px solid var(--line-2); border-radius: 16px;">
+          <div class="mono" style="color: var(--mint); font-size: 32px; font-weight: 700; min-width: 40px;">02</div>
+          <div>
+            <div style="font-size: 20px; font-weight: 700; color: var(--ink);">Flat Fee por adelanto</div>
+            <div style="font-size: 14px; color: var(--ink-mute); margin-top: 4px; line-height: 1.5;">Cobro único transparente por cada adelanto procesado. Sin intereses compuestos. Sin letras pequeñas.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap: 18px; align-items: stretch; padding: 22px; border: 1px solid rgba(69,181,150,0.4); border-radius: 16px; background: linear-gradient(180deg, rgba(69,181,150,0.07), transparent);">
+          <div class="mono" style="color: var(--mint-2); font-size: 32px; font-weight: 700; min-width: 40px;">03</div>
+          <div>
+            <div style="font-size: 20px; font-weight: 700; color: var(--ink);">Cero riesgo de impago</div>
+            <div style="font-size: 14px; color: var(--ink-mute); margin-top: 4px; line-height: 1.5;">El colateral es el rendimiento ya bloqueado en el protocolo. Si el usuario no repaga, el plazo vence y el adelanto se absorbe del rendimiento acumulado.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: unit economics example -->
+      <div style="border: 1px solid var(--mint); border-radius: 20px; background: linear-gradient(180deg, rgba(69,181,150,0.08), rgba(69,181,150,0.02)); padding: 36px; display: flex; flex-direction: column;">
+        <div style="display:flex; justify-content:space-between; align-items: baseline;">
+          <div class="mono" style="font-size: 12px; color: var(--mint); letter-spacing: 0.2em; text-transform: uppercase;">Unit economics · ejemplo</div>
+          <div class="mono" style="font-size: 11px; color: var(--ink-mute); letter-spacing: 0.14em;">Por usuario / 28 días</div>
+        </div>
+
+        <div style="margin-top: 22px; font-size: 14px;">
+          <table style="width: 100%; border-collapse: collapse; font-family: 'Geist Mono'; color: var(--ink);">
+            <tr style="border-bottom: 1px solid var(--line-2);">
+              <td style="padding: 14px 0; color: var(--ink-mute); font-size: 13px;">Depósito promedio</td>
+              <td style="padding: 14px 0; text-align: right; font-weight: 600;">$10,000 MXN</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--line-2);">
+              <td style="padding: 14px 0; color: var(--ink-mute); font-size: 13px;">Rendimiento bruto CETES (10.4% anual)</td>
+              <td style="padding: 14px 0; text-align: right; font-weight: 600; color: var(--mint-2);">+ $79.78</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--line-2);">
+              <td style="padding: 14px 0; color: var(--ink-mute); font-size: 13px;">Adelanto al usuario (5% del rendimiento)</td>
+              <td style="padding: 14px 0; text-align: right; font-weight: 600;">$10.70</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--line-2);">
+              <td style="padding: 14px 0; color: var(--ink-mute); font-size: 13px;">Flat fee por adelanto</td>
+              <td style="padding: 14px 0; text-align: right; font-weight: 600; color: var(--mint-2);">+ $5.00</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--line-2);">
+              <td style="padding: 14px 0; color: var(--ink-mute); font-size: 13px;">Costos on-chain (Stellar/Soroban)</td>
+              <td style="padding: 14px 0; text-align: right; font-weight: 600;">– $0.04</td>
+            </tr>
+            <tr>
+              <td style="padding: 18px 0 6px; color: var(--mint); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase;">Margen SEYF</td>
+              <td style="padding: 18px 0 6px; text-align: right; font-weight: 800; font-size: 28px; color: var(--mint-2);">$8.04 / mes</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="margin-top: auto; padding-top: 22px; display:flex; justify-content:space-between; gap: 20px; border-top: 1px solid var(--line-2);">
+          <div>
+            <div class="mono" style="font-size: 11px; color: var(--ink-mute); letter-spacing: 0.14em;">LTV (12 ciclos)</div>
+            <div class="figure" style="font-size: 40px; color: var(--mint-2); margin-top: 4px;">$96</div>
+          </div>
+          <div>
+            <div class="mono" style="font-size: 11px; color: var(--ink-mute); letter-spacing: 0.14em;">CAC objetivo</div>
+            <div class="figure" style="font-size: 40px; color: var(--ink); margin-top: 4px;">$22</div>
+          </div>
+          <div>
+            <div class="mono" style="font-size: 11px; color: var(--ink-mute); letter-spacing: 0.14em;">LTV / CAC</div>
+            <div class="figure" style="font-size: 40px; color: var(--mint-2); margin-top: 4px;">4.4×</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-foot">
+      <div>Custodia en INDEVAL · cero exposición a volatilidad cripto · todos los pesos están respaldados por deuda soberana mexicana</div>
+      <div>07 / 10</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SLIDE 8 — TRACCIÓN =================== -->
+<section data-screen-label="08 Tracción">
+  <div class="grid-bg"></div>
+  <div class="frame frame-grid">
+    <div class="frame-head">
+      <div class="num">05 / Tracción</div>
+      <div>Validación real · base técnica sólida</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap: 36px; justify-content:center;">
+      <h2 style="font-family:'Geist'; font-weight: 800; font-size: 84px; line-height: 0.94; letter-spacing: -0.04em; margin: 0;">
+        Lo que ya está <span style="color: var(--mint);">construido</span>.<br>
+        <span style="color: var(--ink-mute);">Antes del primer dólar de inversión.</span>
+      </h2>
+
+      <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 22px;">
+        <div style="border: 1px solid var(--line-2); border-radius: 18px; padding: 28px; background: linear-gradient(180deg, rgba(69,181,150,0.05), transparent);">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div class="mono" style="font-size: 12px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">🏆 Hackathon BAF × Stellar</div>
+            <div class="mono" style="font-size: 11px; color: var(--ink-dim);">2024</div>
+          </div>
+          <div class="figure" style="font-size: 64px; color: var(--ink); margin: 14px 0 8px;">2<span style="font-size: 36px; color: var(--mint-2);">do</span> lugar</div>
+          <div style="font-size: 17px; color: var(--ink-mute); line-height: 1.45;">Código Alebrije · SEYF compitió contra equipos de todo México. Reconocimiento técnico del ecosistema Stellar.</div>
+        </div>
+
+        <div style="border: 1px solid var(--line-2); border-radius: 18px; padding: 28px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div class="mono" style="font-size: 12px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">⌖ Validación de campo</div>
+            <div class="mono" style="font-size: 11px; color: var(--ink-dim);">Q1 2026</div>
+          </div>
+          <div class="figure" style="font-size: 64px; color: var(--ink); margin: 14px 0 8px;">3 visitas · 5+ <span style="color: var(--ink-mute);">entrevistas</span></div>
+          <div style="font-size: 17px; color: var(--ink-mute); line-height: 1.45;">Central de Abastos CDMX. Patrón de asfixia de liquidez confirmado en bodegueros reales.</div>
+        </div>
+
+        <div style="border: 1px solid var(--line-2); border-radius: 18px; padding: 28px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div class="mono" style="font-size: 12px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase;">⌬ MVP testnet</div>
+            <div class="mono" style="font-size: 11px; color: var(--ink-dim);">Q2 2026</div>
+          </div>
+          <div class="figure" style="font-size: 64px; color: var(--ink); margin: 14px 0 8px;">End-to-end</div>
+          <div style="font-size: 17px; color: var(--ink-mute); line-height: 1.45;">Depósito SPEI simulado · KYC Etherfuse · inversión en Stablebonds · adelanto on-chain. Flujo completo en producción.</div>
+        </div>
+
+        <div style="border: 1px solid rgba(69,181,150,0.4); border-radius: 18px; padding: 28px; background: linear-gradient(180deg, rgba(69,181,150,0.08), transparent);">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div class="mono" style="font-size: 12px; color: var(--mint-2); letter-spacing: 0.18em; text-transform: uppercase;">★ Networking SDF C-Suite</div>
+            <div class="mono" style="font-size: 11px; color: var(--ink-dim);">Q2 2026</div>
+          </div>
+          <div class="figure" style="font-size: 64px; color: var(--ink); margin: 14px 0 8px; max-width: 600px; line-height: 0.92;">Líneas <span style="color: var(--mint-2);">abiertas</span></div>
+          <div style="font-size: 17px; color: var(--ink-mute); line-height: 1.45;">Acercamiento estratégico con Denelle Dixon y José Fdez. da Ponte. Respaldo para desarrollo en Soroban.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-foot">
+      <div>Siguiente · lanzamiento en mainnet · primeros usuarios reales · CEDA</div>
+      <div>08 / 10</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SLIDE 9 — EQUIPO =================== -->
+<section data-screen-label="09 Equipo">
+  <div class="grid-bg"></div>
+  <div class="frame frame-grid">
+    <div class="frame-head">
+      <div class="num">06 / Equipo</div>
+      <div>Seyfert Labs · founders que entienden el problema</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap: 36px; justify-content:center;">
+      <h2 style="font-family:'Geist'; font-weight: 800; font-size: 72px; line-height: 0.95; letter-spacing: -0.04em; margin: 0; max-width: 1400px;">
+        Multidisciplinarios. <span style="color: var(--ink-mute);">Operativos en piso.</span>
+      </h2>
+
+      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+        <div style="border: 1px solid var(--line-2); border-radius: 18px; padding: 24px; display:flex; flex-direction:column;">
+          <div style="width: 100%; aspect-ratio: 1; border-radius: 12px; background: linear-gradient(135deg, #15534a, #0a1a16); display:flex; align-items:center; justify-content:center; color: var(--mint-2); font-family: 'Geist Mono'; font-size: 56px; font-weight: 700;">GV</div>
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase; margin-top: 18px;">CEO</div>
+          <div style="font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 6px;">Gerardo Vela</div>
+          <div style="font-size: 14px; color: var(--ink-mute); margin-top: 8px; line-height: 1.5;">Economista. Visión estratégica, alianzas institucionales y viabilidad financiera para escalar infraestructura DeFi.</div>
+        </div>
+
+        <div style="border: 1px solid var(--line-2); border-radius: 18px; padding: 24px; display:flex; flex-direction:column;">
+          <div style="width: 100%; aspect-ratio: 1; border-radius: 12px; background: linear-gradient(135deg, #15534a, #0a1a16); display:flex; align-items:center; justify-content:center; color: var(--mint-2); font-family: 'Geist Mono'; font-size: 56px; font-weight: 700;">AR</div>
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase; margin-top: 18px;">CTO</div>
+          <div style="font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 6px;">Andrés Rodríguez</div>
+          <div style="font-size: 14px; color: var(--ink-mute); margin-top: 8px; line-height: 1.5;">Ing. en computación. Arquitectura técnica, seguridad de red y desarrollo blockchain para soluciones descentralizadas.</div>
+        </div>
+
+        <div style="border: 1px solid var(--line-2); border-radius: 18px; padding: 24px; display:flex; flex-direction:column;">
+          <div style="width: 100%; aspect-ratio: 1; border-radius: 12px; background: linear-gradient(135deg, #15534a, #0a1a16); display:flex; align-items:center; justify-content:center; color: var(--mint-2); font-family: 'Geist Mono'; font-size: 56px; font-weight: 700;">MM</div>
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase; margin-top: 18px;">CMO</div>
+          <div style="font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 6px;">Miriam Mejía</div>
+          <div style="font-size: 14px; color: var(--ink-mute); margin-top: 8px; line-height: 1.5;">Traduce infraestructura descentralizada compleja en adopción comercial real para el sector informal.</div>
+        </div>
+
+        <div style="border: 1px solid var(--line-2); border-radius: 18px; padding: 24px; display:flex; flex-direction:column;">
+          <div style="width: 100%; aspect-ratio: 1; border-radius: 12px; background: linear-gradient(135deg, #15534a, #0a1a16); display:flex; align-items:center; justify-content:center; color: var(--mint-2); font-family: 'Geist Mono'; font-size: 56px; font-weight: 700;">IH</div>
+          <div class="mono" style="font-size: 11px; color: var(--mint); letter-spacing: 0.18em; text-transform: uppercase; margin-top: 18px;">CPO</div>
+          <div style="font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 6px;">Ian Hernández</div>
+          <div style="font-size: 14px; color: var(--ink-mute); margin-top: 8px; line-height: 1.5;">Ing. de Redes. Diseña la abstracción técnica y la experiencia de usuario para conectar la blockchain con el mundo real.</div>
+        </div>
+      </div>
+
+      <div style="font-family:'Fraunces'; font-size: 22px; font-style: italic; color: var(--ink-mute); max-width: 1500px; line-height: 1.45; padding-top: 12px; border-top: 1px dashed var(--line-2);">
+        “Equipo multidisciplinario que conecta el desarrollo Web3 avanzado con la ejecución operativa directa en la economía real.”
+      </div>
+    </div>
+
+    <div class="frame-foot">
+      <div>Seyfert Labs · CDMX · 4 founders full-time</div>
+      <div>09 / 10</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SLIDE 10 — ASK =================== -->
+<section data-screen-label="10 Ask">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width: 700px; height: 700px; background: #15534a; bottom:-200px; right:-200px;"></div>
+  <div class="glow" style="width: 500px; height: 500px; background: #45b596; opacity: 0.2; top: 30%; left: 30%;"></div>
+
+  <div class="frame frame-grid">
+    <div class="frame-head">
+      <div class="num">07 / Lo que buscamos</div>
+      <div>Pre-seed · Ronda inicial · 2026</div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;">
+      <div>
+        <div class="mono" style="font-size: 13px; color: var(--mint); letter-spacing: 0.22em; text-transform: uppercase;">Buscamos</div>
+        <div class="figure" style="font-size: 220px; color: var(--ink); line-height: 0.86; margin: 16px 0 8px; letter-spacing: -0.06em;">
+          <span style="color: var(--mint-2); font-size: 100px; vertical-align: super;">USD$</span>150K
+        </div>
+        <div class="mono" style="font-size: 14px; color: var(--ink-mute); letter-spacing: 0.16em; text-transform: uppercase;">Pre-seed · Ronda inicial · Valuación SAFE</div>
+
+        <div style="margin-top: 56px; padding: 28px; border: 1px solid var(--mint); border-radius: 18px; background: linear-gradient(180deg, rgba(69,181,150,0.08), transparent);">
+          <div class="mono" style="font-size: 12px; color: var(--mint-2); letter-spacing: 0.2em; text-transform: uppercase;">Próximos hitos · 12 meses</div>
+          <div style="display:flex; gap: 24px; margin-top: 14px;">
+            <div>
+              <div class="figure" style="font-size: 36px; color: var(--ink);">500</div>
+              <div class="mono" style="font-size: 11px; color: var(--ink-mute); margin-top: 4px;">Cuentas activas</div>
+            </div>
+            <div>
+              <div class="figure" style="font-size: 36px; color: var(--ink);">Mainnet</div>
+              <div class="mono" style="font-size: 11px; color: var(--ink-mute); margin-top: 4px;">Soroban auditado</div>
+            </div>
+            <div>
+              <div class="figure" style="font-size: 36px; color: var(--ink);">CNBV</div>
+              <div class="mono" style="font-size: 11px; color: var(--ink-mute); margin-top: 4px;">Sandbox aplicado</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="mono" style="font-size: 13px; color: var(--mint); letter-spacing: 0.22em; text-transform: uppercase;">Uso de fondos</div>
+
+        <div style="margin-top: 22px; display:flex; flex-direction:column; gap: 16px;">
+          <!-- 40% Dev + audit -->
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items: baseline; margin-bottom: 8px;">
+              <div style="font-size: 18px; color: var(--ink); font-weight: 600;">Desarrollo y auditoría</div>
+              <div class="mono" style="font-size: 22px; color: var(--mint-2); font-weight: 700;">40%</div>
+            </div>
+            <div style="height: 12px; background: var(--line); border-radius: 8px; overflow: hidden;">
+              <div style="height: 100%; width: 40%; background: linear-gradient(to right, var(--mint), var(--mint-2)); border-radius: 8px;"></div>
+            </div>
+            <div style="font-size: 13px; color: var(--ink-mute); margin-top: 6px;">Mainnet, contratos Soroban auditados, seguridad del protocolo.</div>
+          </div>
+
+          <!-- 30% Licencias -->
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items: baseline; margin-bottom: 8px;">
+              <div style="font-size: 18px; color: var(--ink); font-weight: 600;">Licencias y cumplimiento</div>
+              <div class="mono" style="font-size: 22px; color: var(--mint-2); font-weight: 700;">30%</div>
+            </div>
+            <div style="height: 12px; background: var(--line); border-radius: 8px; overflow: hidden;">
+              <div style="height: 100%; width: 30%; background: linear-gradient(to right, var(--mint), var(--mint-2)); border-radius: 8px;"></div>
+            </div>
+            <div style="font-size: 13px; color: var(--ink-mute); margin-top: 6px;">Estructura legal, KYC/AML, relación con Etherfuse y CNBV.</div>
+          </div>
+
+          <!-- 20% GTM -->
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items: baseline; margin-bottom: 8px;">
+              <div style="font-size: 18px; color: var(--ink); font-weight: 600;">Adquisición de usuarios</div>
+              <div class="mono" style="font-size: 22px; color: var(--mint-2); font-weight: 700;">20%</div>
+            </div>
+            <div style="height: 12px; background: var(--line); border-radius: 8px; overflow: hidden;">
+              <div style="height: 100%; width: 20%; background: linear-gradient(to right, var(--mint), var(--mint-2)); border-radius: 8px;"></div>
+            </div>
+            <div style="font-size: 13px; color: var(--ink-mute); margin-top: 6px;">Despliegue en CEDA CDMX y primeras 500 cuentas activas.</div>
+          </div>
+
+          <!-- 10% Ops -->
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items: baseline; margin-bottom: 8px;">
+              <div style="font-size: 18px; color: var(--ink); font-weight: 600;">Operaciones</div>
+              <div class="mono" style="font-size: 22px; color: var(--mint-2); font-weight: 700;">10%</div>
+            </div>
+            <div style="height: 12px; background: var(--line); border-radius: 8px; overflow: hidden;">
+              <div style="height: 100%; width: 10%; background: linear-gradient(to right, var(--mint), var(--mint-2)); border-radius: 8px;"></div>
+            </div>
+            <div style="font-size: 13px; color: var(--ink-mute); margin-top: 6px;">Infraestructura cloud, equipo y costos operativos del primer año.</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 32px; padding: 22px; border-left: 3px solid var(--mint); background: rgba(69,181,150,0.04);">
+          <p style="font-family:'Fraunces'; font-size: 22px; font-style: italic; color: var(--ink); line-height: 1.4; margin: 0; max-width: 560px;">
+            Estamos devolviendo la velocidad al capital de la gente que mueve la economía real.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-foot">
+      <div>Contacto · gerardo@seyfertlabs.mx · andres@seyfertlabs.mx</div>
+      <div>10 / 10</div>
+    </div>
+  </div>
+</section>
+
+</deck-stage>
+<script>
+(async () => {
+  try { await customElements.whenDefined('deck-stage'); } catch (e) {}
+  const ds = document.querySelector('deck-stage');
+  if (ds) {
+    // Weigh only slide children — same filter as deck-stage.length. Skipping
+    // slotted script/style/template keeps inline Babel/CSS from registering
+    // as stable "content" before the framework has mounted anything.
+    const weigh = () => {
+      let text = 0, media = 0;
+      for (const c of ds.children) {
+        const t = c.tagName;
+        if (t === 'SCRIPT' || t === 'STYLE' || t === 'TEMPLATE') continue;
+        text += (c.textContent || '').trim().length;
+        media += c.querySelectorAll('img,svg,canvas,video').length;
+      }
+      return text + media * 100;
+    };
+    const deadline = Date.now() + 15000;
+    let last = -1, stable = 0;
+    while (Date.now() < deadline) {
+      const n = weigh();
+      if (n > 0 && n === last) { if (++stable >= 2) break; } else { stable = 0; }
+      last = n;
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+  try { await document.fonts.ready; } catch (e) {}
+  setTimeout(() => { try { window.print(); } catch (e) {} }, 200);
+})();
+</script>
+</body>
+</html>

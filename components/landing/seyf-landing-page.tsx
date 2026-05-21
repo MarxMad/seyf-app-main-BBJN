@@ -57,27 +57,33 @@ export default function SeyfLandingPage() {
     connect()
   }
 
-  // Hero calculator state — fixed 5% advance, slider over deposit.
+  // Hero calculator state — deposit + plazo (años), fixed 5% advance.
   const [heroDeposit, setHeroDeposit] = useState(10000)
+  const [heroYears, setHeroYears] = useState(1)
   const hero = useMemo(() => {
     const yieldYear = heroDeposit * RATE_ANNUAL
     const yieldMonth = yieldYear * (TERM_DAYS / 365)
-    const advance = yieldMonth * 0.05
-    return { yieldYear, yieldMonth, advance }
-  }, [heroDeposit])
+    const yieldTotal = yieldYear * heroYears // interés simple
+    const advance = yieldTotal * 0.05
+    return { yieldYear, yieldMonth, yieldTotal, advance }
+  }, [heroDeposit, heroYears])
   const heroSliderStyle = useSliderPercent(1000, 200000, heroDeposit)
+  const heroYearsStyle = useSliderPercent(1, 10, heroYears)
 
-  // Big calculator state — deposit + percent.
+  // Big calculator state — deposit + percent + plazo (años).
   const [bigDeposit, setBigDeposit] = useState(25000)
   const [bigPercent, setBigPercent] = useState(5)
+  const [bigYears, setBigYears] = useState(1)
   const big = useMemo(() => {
     const yieldYear = bigDeposit * RATE_ANNUAL
     const yieldMonth = yieldYear * (TERM_DAYS / 365)
-    const advance = yieldMonth * (bigPercent / 100)
-    return { yieldMonth, advance, final: bigDeposit + yieldMonth }
-  }, [bigDeposit, bigPercent])
+    const yieldTotal = yieldYear * bigYears // interés simple
+    const advance = yieldTotal * (bigPercent / 100)
+    return { yieldMonth, yieldTotal, advance, final: bigDeposit + yieldTotal }
+  }, [bigDeposit, bigPercent, bigYears])
   const bigDepositStyle = useSliderPercent(1000, 200000, bigDeposit)
   const bigPercentStyle = useSliderPercent(1, 5, bigPercent)
+  const bigYearsStyle = useSliderPercent(1, 10, bigYears)
 
   return (
     <div className={styles.root}>
@@ -131,7 +137,7 @@ export default function SeyfLandingPage() {
               <span className={styles.ital}>Pay Never.</span>
             </h1>
             <p className={styles.heroSub}>
-              Tu dinero genera rendimiento con <strong>CETES tokenizados</strong>, y nosotros te
+              Tu dinero genera rendimiento con <strong>Stablebonds tokenizados</strong>, y nosotros te
               adelantamos las ganancias futuras — sin tocar tu capital, sin intereses, sin sorpresas.
             </p>
             <div className={styles.heroCta}>
@@ -178,7 +184,7 @@ export default function SeyfLandingPage() {
             <div className={styles.calcRow}>
               <div className="rowLabel">
                 <span className="lbl">Tu depósito</span>
-                <span className="lblHint">CETES · 10.4% anual</span>
+                <span className="lblHint">Stablebonds, promedio de rendimiento - 10.4% anual</span>
               </div>
               <div className="amount">
                 ${fmtInt(heroDeposit)}
@@ -202,22 +208,53 @@ export default function SeyfLandingPage() {
               </div>
             </div>
 
+            <div className={styles.calcRow}>
+              <div className="rowLabel">
+                <span className="lbl">Plazo</span>
+                <span className="lblHint">Interés simple · 10.4% anual</span>
+              </div>
+              <div className="amount">
+                {heroYears}
+                <span className="cents"> {heroYears === 1 ? 'año' : 'años'}</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                step={1}
+                value={heroYears}
+                onChange={(e) => setHeroYears(Number(e.target.value))}
+                style={heroYearsStyle}
+                aria-label="Plazo en años"
+              />
+              <div className={styles.calcTick}>
+                <span>1</span>
+                <span>3</span>
+                <span>5</span>
+                <span>10</span>
+              </div>
+            </div>
+
             <div className={styles.calcResults}>
               <div className={styles.calcResultsGrid}>
                 <div className={styles.calcCell}>
                   <div className="clbl">Adelanto hoy</div>
                   <div className="cval">${fmt(hero.advance)}</div>
-                  <div className="csub">5% del rendimiento proyectado</div>
+                  <div className="csub">
+                    5% del rendimiento a {heroYears} {heroYears === 1 ? 'año' : 'años'}
+                  </div>
                 </div>
                 <div className={styles.calcCell}>
                   <div className="clbl">Rendimiento mensual</div>
                   <div className="cval">${fmt(hero.yieldMonth)}</div>
-                  <div className="csub">CETES soberanos · 28 días</div>
+                  <div className="csub">Stablebonds · 28 días</div>
                 </div>
                 <div className={styles.calcCell}>
-                  <div className="clbl">Ganancia anual</div>
-                  <div className="cval">${fmtInt(hero.yieldYear)}</div>
-                  <div className="csub">Capital intacto al cierre</div>
+                  <div className="clbl">Rendimiento total</div>
+                  <div className="cval">${fmtInt(hero.yieldTotal)}</div>
+                  <div className="csub">
+                    {heroYears} {heroYears === 1 ? 'año' : 'años'} · capital intacto
+                  </div>
                 </div>
                 <div className={styles.calcCell}>
                   <div className="clbl">Costo del adelanto</div>
@@ -236,7 +273,7 @@ export default function SeyfLandingPage() {
             </div>
 
             <div className={styles.calcDisclosure}>
-              Tasa CETES referencia · puede variar al alza o a la baja diariamente
+              Tasa de Stablebonds de referencia · puede variar al alza o a la baja diariamente
             </div>
           </div>
         </div>
@@ -259,7 +296,7 @@ export default function SeyfLandingPage() {
               <span className="sep">/</span>
               <span>CAPITAL INTACTO</span>
               <span className="sep">/</span>
-              <span>CETES TOKENIZADOS</span>
+              <span>STABLEBONDS TOKENIZADOS</span>
               <span className="sep">/</span>
             </Fragment>
           ))}
@@ -373,7 +410,7 @@ export default function SeyfLandingPage() {
               </div>
               <div className={styles.step}>
                 <div className={styles.stepNum}>02</div>
-                <h3>Convertimos a CETES tokenizados</h3>
+                <h3>Convertimos a Stablebonds tokenizados</h3>
                 <p>
                   Tu depósito se convierte en Stablebonds de Etherfuse — bonos soberanos custodiados
                   en INDEVAL. Sin volatilidad cripto.
@@ -493,7 +530,7 @@ export default function SeyfLandingPage() {
                       ETHERFUSE · STELLAR
                     </text>
                     <text x="14" y="14" fill="#f3f7f5" fontFamily="Geist" fontWeight="600" fontSize="14">
-                      CETES tokenizados
+                      Stablebonds tokenizados
                     </text>
                   </g>
 
@@ -640,7 +677,7 @@ export default function SeyfLandingPage() {
               <div className={styles.calcRow}>
                 <div className="rowLabel">
                   <span className="lbl">Depósito (MXN)</span>
-                  <span className="lblHint">Plazo · 28 días</span>
+                  <span className="lblHint">Stablebonds · 10.4% anual</span>
                 </div>
                 <div className="amount">
                   ${fmtInt(bigDeposit)}
@@ -689,6 +726,33 @@ export default function SeyfLandingPage() {
                 </div>
               </div>
 
+              <div className={styles.calcRow}>
+                <div className="rowLabel">
+                  <span className="lbl">Plazo (años)</span>
+                  <span className="lblHint">Interés simple</span>
+                </div>
+                <div className="amount">
+                  {bigYears}
+                  <span className="cents"> {bigYears === 1 ? 'año' : 'años'}</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={bigYears}
+                  onChange={(e) => setBigYears(Number(e.target.value))}
+                  style={bigYearsStyle}
+                  aria-label="Plazo en años"
+                />
+                <div className={styles.calcTick}>
+                  <span>1</span>
+                  <span>3</span>
+                  <span>5</span>
+                  <span>10</span>
+                </div>
+              </div>
+
               <div className={styles.calcResults}>
                 <div className={styles.calcResultsGrid}>
                   <div className={styles.calcCell}>
@@ -699,9 +763,9 @@ export default function SeyfLandingPage() {
                     <div className="csub">SPEI al instante</div>
                   </div>
                   <div className={styles.calcCell}>
-                    <div className="clbl">A los 28 días</div>
+                    <div className="clbl">Al cierre · {bigYears} {bigYears === 1 ? 'año' : 'años'}</div>
                     <div className="cval">${fmt(big.final)}</div>
-                    <div className="csub">Capital + rendimiento neto</div>
+                    <div className="csub">Capital + rendimiento total</div>
                   </div>
                 </div>
               </div>
@@ -781,11 +845,10 @@ export default function SeyfLandingPage() {
 
           <div className={styles.trustGrid}>
             <div className={styles.trustCard}>
-              <div className="tcEyebrow">CETES</div>
+              <div className="tcEyebrow">Stablebonds</div>
               <div className="tcTitle">Bonos soberanos</div>
               <div className="tcBody">
-                Tu depósito se respalda con deuda del Gobierno Federal Mexicano custodiada en
-                INDEVAL.
+                Tu depósito se respalda con deuda de Gobiernos como el Mexicano, Brasileño, Americano y Coreano, respaldada por Bonos reales.
               </div>
             </div>
             <div className={styles.trustCard}>
@@ -858,7 +921,7 @@ export default function SeyfLandingPage() {
                 S E Y F
               </Link>
               <p className={styles.footerLead}>
-                Liquidez inmediata respaldada por el rendimiento de CETES tokenizados. Una
+                Liquidez inmediata respaldada por el rendimiento de Stablebonds. Una
                 infraestructura de Seyfert Labs para la economía real mexicana.
               </p>
             </div>

@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>SEYF — Pre-seed Pitch</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&family=Fraunces:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="deck-stage.js"></script>
+<style>
+  :root {
+    --bg: #07100d; --ink: #f3f7f5; --ink-mute: #8da39b; --ink-dim: #5b716b;
+    --line: #1d2e29; --line-2: #2a4039; --mint: #45b596; --mint-2: #7fe8cc; --warn: #e7b75c;
+  }
+  html, body { background: var(--bg); margin: 0; padding: 0; }
+  body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); }
+  deck-stage { --slide-bg: var(--bg); --slide-fg: var(--ink); }
+  section { background: var(--bg); color: var(--ink); position: relative; overflow: hidden; }
+  .mono { font-family: 'Geist Mono', ui-monospace, monospace; }
+  .serif { font-family: 'Fraunces', serif; font-variation-settings: "SOFT" 30, "WONK" 0; }
+  .frame { position: absolute; inset: 0; padding: 52px 72px; display: flex; flex-direction: column; gap: 20px; }
+  .frame-grid { display: grid; grid-template-rows: auto 1fr auto; height: 100%; }
+  .frame-head {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--ink-mute);
+    letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .frame-head .num { color: var(--mint); display: inline-flex; align-items: center; gap: 10px; }
+  .frame-head .num::before {
+    content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--mint);
+    box-shadow: 0 0 0 3px rgba(69,181,150,0.15);
+  }
+  .frame-foot {
+    display: flex; justify-content: space-between; font-family: 'Geist Mono', monospace;
+    font-size: 11px; color: var(--ink-dim); letter-spacing: 0.14em; text-transform: uppercase;
+    border-top: 1px solid var(--line); padding-top: 14px;
+  }
+  .seyf-wordmark { font-family: 'Geist Mono', monospace; font-weight: 600; letter-spacing: 0.55em; }
+  .seyf-wordmark .dot { color: var(--mint); }
+  .figure { font-weight: 800; letter-spacing: -0.04em; line-height: 0.9; }
+  .grid-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: linear-gradient(to right, rgba(255,255,255,0.022) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.022) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse at center, black 25%, transparent 75%);
+  }
+  .glow { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(80px); opacity: 0.45; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+    border: 1px solid var(--line-2); border-radius: 999px; font-family: 'Geist Mono', monospace;
+    font-size: 10px; color: var(--ink-mute); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .pill.mint { color: var(--mint-2); border-color: rgba(69,181,150,0.35); }
+  .stat {
+    border: 1px solid var(--line-2); border-radius: 18px; padding: 28px 24px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .stat .label { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--mint); letter-spacing: 0.16em; text-transform: uppercase; }
+  .stat .sub { font-size: 14px; color: var(--ink-mute); line-height: 1.3; max-width: 280px; }
+  .h1 { font-size: clamp(100px, 11vw, 160px); font-weight: 900; line-height: 0.88; letter-spacing: -0.05em; margin: 0; }
+  .h2 { font-size: clamp(56px, 6vw, 88px); font-weight: 800; line-height: 0.92; letter-spacing: -0.04em; margin: 0; }
+  .mute { color: var(--ink-mute); }
+  .mint { color: var(--mint-2); }
+  ::-webkit-scrollbar { display: none; }
+
+  /* —— Slides 01–02: layout referencia + tema oscuro —— */
+  .slide-cover, .slide-problem { padding: 0; }
+  .slide-cover .grid-bg, .slide-problem .grid-bg { opacity: 0.7; }
+
+  .cover-layout {
+    flex: 1; display: grid; grid-template-columns: 0.95fr 1.05fr;
+    align-items: center; gap: 48px; min-height: 0;
+  }
+  .cover-brand {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 48px 56px; height: 100%;
+    border-right: 1px solid var(--line-2);
+    background: linear-gradient(135deg, rgba(21,83,74,0.12), transparent 55%);
+  }
+  .cover-logo-wrap {
+    width: min(280px, 42vw); margin-bottom: 28px;
+    filter: drop-shadow(0 24px 48px rgba(0,0,0,0.45));
+  }
+  .cover-logo-wrap img { width: 100%; height: auto; display: block; }
+  .cover-title-emboss {
+    font-size: clamp(88px, 10vw, 140px); font-weight: 900; line-height: 0.9;
+    letter-spacing: -0.04em; margin: 0;
+    color: #0a1613;
+    text-shadow:
+      0 1px 0 rgba(127,232,204,0.35),
+      0 -2px 0 rgba(0,0,0,0.8),
+      0 8px 24px rgba(0,0,0,0.5);
+    -webkit-text-stroke: 1px rgba(69,181,150,0.25);
+  }
+  .cover-byline {
+    font-family: 'Fraunces', serif; font-style: italic; font-weight: 500;
+    font-size: clamp(28px, 3.2vw, 42px); color: var(--ink-mute); margin: 20px 0 0;
+    letter-spacing: -0.02em;
+  }
+  .cover-hero {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 48px 64px 48px 24px; height: 100%;
+  }
+  .cover-tagline-sans {
+    font-size: clamp(64px, 7.2vw, 108px); font-weight: 800; line-height: 0.98;
+    letter-spacing: -0.045em; margin: 0; color: var(--ink);
+  }
+  .cover-tagline-serif {
+    font-family: 'Fraunces', serif; font-style: italic; font-weight: 500;
+    font-size: clamp(64px, 7.2vw, 108px); line-height: 1.02;
+    letter-spacing: -0.035em; margin: 0; color: var(--mint-2);
+  }
+  .cover-meta {
+    margin-top: auto; padding-top: 40px;
+    font-size: 15px; line-height: 1.65; color: var(--ink-mute);
+  }
+  .cover-meta strong { color: var(--ink); font-weight: 600; }
+  .cover-meta .event { color: var(--mint-2); font-weight: 700; letter-spacing: 0.02em; }
+
+  .problem-layout {
+    flex: 1; display: grid; grid-template-columns: 1.05fr 0.95fr;
+    gap: 40px; align-items: stretch; min-height: 0;
+  }
+  .problem-copy {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 8px 0 8px 8px;
+  }
+  .problem-kicker {
+    font-size: clamp(48px, 5vw, 72px); font-weight: 800;
+    letter-spacing: -0.03em; margin: 0 0 36px; color: var(--ink);
+  }
+  .problem-lines {
+    font-family: 'Fraunces', serif; font-weight: 500;
+    font-size: clamp(52px, 5.4vw, 84px); line-height: 1.08;
+    letter-spacing: -0.028em; margin: 0; color: var(--ink);
+  }
+  .problem-lines .line { display: block; margin-bottom: 8px; }
+  .problem-lines .no {
+    text-decoration: underline; text-decoration-thickness: 4px;
+    text-underline-offset: 10px; text-decoration-color: var(--mint);
+  }
+  .problem-visual {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    min-height: 420px;
+  }
+  .problem-photo {
+    width: 72%; max-width: 380px; aspect-ratio: 3/4; border-radius: 28px;
+    object-fit: cover; object-position: center top;
+    border: 1px solid var(--line-2);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.55);
+    filter: grayscale(1) contrast(1.05);
+  }
+  .problem-photo-fallback {
+    width: 72%; max-width: 380px; aspect-ratio: 3/4; border-radius: 28px;
+    background: linear-gradient(160deg, #1a2e28 0%, #0a1412 100%);
+    border: 1px solid var(--line-2);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.55);
+  }
+  .stat-float {
+    position: absolute; right: 0; width: min(340px, 88%);
+    padding: 22px 26px; border-radius: 20px;
+    background: linear-gradient(165deg, #15534a 0%, #07100d 100%);
+    border: 1px solid rgba(127,232,204,0.2);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  }
+  .stat-float.top { top: 8%; }
+  .stat-float.bottom { bottom: 10%; }
+  .stat-float .num {
+    font-family: 'Fraunces', serif; font-size: clamp(40px, 4vw, 56px);
+    font-weight: 600; line-height: 1; color: var(--ink); margin: 0;
+  }
+  .stat-float .num .unit { font-size: 0.55em; color: var(--mint-2); }
+  .stat-float .desc {
+    font-size: clamp(13px, 1.2vw, 16px); color: rgba(243,247,245,0.85);
+    line-height: 1.35; margin: 10px 0 0; font-weight: 500;
+  }
+  .bar-foot {
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 14px 72px; background: linear-gradient(90deg, #0d3a33, #15534a);
+    border-top: 1px solid var(--line-2);
+    font-family: 'Geist Mono', monospace; font-size: 12px;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--mint-2);
+  }
+  /* —— Slides unificadas 01–09 —— */
+  .slide-ref { padding: 0; }
+  .slide-ref .frame-grid { grid-template-rows: 1fr auto; padding: 48px 72px 0; }
+  .slide-cover .frame-grid { padding: 0; }
+  .slide-ref .frame-head, .slide-ref .frame-foot { display: none; }
+  .slide-num {
+    position: absolute; bottom: 18px; left: 72px; z-index: 2;
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    color: var(--ink-dim); letter-spacing: 0.14em;
+  }
+
+  .ref-layout {
+    flex: 1; display: grid; grid-template-columns: 1.05fr 0.95fr;
+    gap: 44px; align-items: center; min-height: 0;
+  }
+  .ref-kicker {
+    font-size: clamp(44px, 4.8vw, 68px); font-weight: 800;
+    letter-spacing: -0.03em; margin: 0 0 28px;
+  }
+  .ref-lines {
+    font-family: 'Fraunces', serif; font-weight: 500;
+    font-size: clamp(40px, 4.2vw, 64px); line-height: 1.1;
+    letter-spacing: -0.025em; margin: 0;
+  }
+  .ref-lines .line { display: block; margin-bottom: 6px; }
+  .ref-lines .em { color: var(--mint-2); font-style: italic; }
+  .ref-visual { position: relative; min-height: 360px; display: flex; align-items: center; justify-content: center; }
+
+  .chip-stack { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 400px; }
+  .chip {
+    padding: 20px 24px; border-radius: 18px;
+    background: linear-gradient(165deg, #15534a 0%, #07100d 100%);
+    border: 1px solid rgba(127,232,204,0.18);
+    display: flex; align-items: center; gap: 20px;
+  }
+  .chip.hl { border-color: var(--mint); box-shadow: 0 0 40px rgba(69,181,150,0.12); }
+  .chip .idx { font-family: 'Geist Mono', monospace; font-size: 13px; color: var(--mint); width: 36px; }
+  .chip .txt { font-size: clamp(22px, 2.2vw, 32px); font-weight: 700; }
+  .chip .txt small { display: block; font-size: 14px; font-weight: 500; color: var(--ink-mute); margin-top: 4px; }
+
+  .panel-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; }
+  .panel-big {
+    padding: 28px 24px; border-radius: 20px;
+    background: linear-gradient(165deg, #15534a 0%, #07100d 100%);
+    border: 1px solid rgba(127,232,204,0.2);
+  }
+  .panel-big .tag { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--mint); letter-spacing: 0.14em; text-transform: uppercase; }
+  .panel-big .val { font-family: 'Fraunces', serif; font-size: clamp(48px, 5vw, 72px); font-weight: 600; margin: 12px 0 0; line-height: 1; }
+  .panel-big .sub { font-size: 14px; color: var(--ink-mute); margin-top: 10px; }
+
+  .mini-table { width: 100%; margin-top: 14px; border-collapse: collapse; font-family: 'Geist Mono'; font-size: 12px; }
+  .mini-table th { text-align: left; padding: 8px 10px; color: var(--mint); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid var(--line-2); }
+  .mini-table td { padding: 10px; border-top: 1px solid var(--line-2); }
+  .mini-table td.r { text-align: right; }
+
+  .week-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; width: 100%; position: relative; }
+  .week-row::before {
+    content: ""; position: absolute; left: 5%; right: 5%; top: 28px; height: 2px;
+    background: var(--mint); opacity: 0.35;
+  }
+  .day { text-align: center; z-index: 1; }
+  .day .dot {
+    width: 56px; height: 56px; margin: 0 auto; border-radius: 50%;
+    border: 2px solid var(--line-2); display: flex; align-items: center; justify-content: center;
+    font-family: 'Geist Mono', monospace; font-weight: 700; font-size: 16px; color: var(--ink-mute);
+  }
+  .day.on .dot { background: var(--mint); border-color: var(--mint); color: #07100d; }
+  .day .lbl { font-size: clamp(16px, 1.6vw, 22px); font-weight: 700; margin-top: 12px; }
+  .day .sub { font-size: 12px; color: var(--ink-mute); margin-top: 4px; }
+
+  .team-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; width: 100%; max-width: 520px; }
+  .team-card {
+    padding: 18px; border-radius: 16px; border: 1px solid var(--line-2);
+    background: linear-gradient(160deg, rgba(21,83,74,0.2), transparent);
+    text-align: center;
+  }
+  .team-card .av {
+    width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 12px;
+    background: linear-gradient(135deg, #15534a, #0a1a16);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Geist Mono', monospace; font-size: 22px; font-weight: 700; color: var(--mint-2);
+  }
+  .team-card .role { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--mint); letter-spacing: 0.12em; }
+  .team-card .name { font-size: 18px; font-weight: 700; margin-top: 6px; }
+
+  .ask-block .ask-num {
+    font-family: 'Fraunces', serif; font-size: clamp(100px, 11vw, 160px);
+    font-weight: 600; line-height: 0.9; margin: 0;
+  }
+  .ask-block .ask-list { margin-top: 28px; font-size: clamp(20px, 2vw, 28px); color: var(--ink-mute); line-height: 1.5; }
+  .ask-block .ask-list span { color: var(--mint-2); margin-right: 8px; }
+
+  .stat-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 440px; }
+
+  .ref-body {
+    font-size: clamp(17px, 1.65vw, 22px); line-height: 1.45; color: var(--ink-mute);
+    margin: 20px 0 0; max-width: 520px;
+  }
+  .ref-body strong { color: var(--ink); font-weight: 600; }
+  .ref-body .hl { color: var(--mint-2); }
+
+  .pillar { display: flex; gap: 18px; align-items: flex-start; padding: 18px 0; border-bottom: 1px solid var(--line-2); }
+  .pillar:last-child { border-bottom: none; }
+  .pillar .n {
+    font-family: 'Fraunces', serif; font-size: clamp(36px, 4vw, 52px); font-weight: 600;
+    color: var(--mint-2); line-height: 1; min-width: 48px;
+  }
+  .pillar .t { font-size: clamp(18px, 1.8vw, 24px); font-weight: 700; color: var(--ink); line-height: 1.25; }
+  .pillar .d { font-size: 14px; color: var(--ink-mute); margin-top: 6px; line-height: 1.35; }
+
+  .proof-hero {
+    padding: 32px 28px; border-radius: 22px; text-align: center;
+    background: linear-gradient(165deg, #15534a, #07100d);
+    border: 1px solid rgba(127,232,204,0.25);
+    margin-bottom: 14px;
+  }
+  .proof-hero .big { font-family: 'Fraunces', serif; font-size: clamp(56px, 6vw, 88px); font-weight: 600; line-height: 1; margin: 0; }
+  .proof-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .proof-row .stat-float { position: relative; width: auto; padding: 18px 20px; }
+
+  .close-serif {
+    font-family: 'Fraunces', serif; font-weight: 500;
+    font-size: clamp(32px, 3.4vw, 52px); line-height: 1.12;
+    letter-spacing: -0.02em; margin: 0;
+  }
+  .close-serif .em { color: var(--mint-2); font-style: italic; }
+  .ask-pills { display: flex; flex-direction: column; gap: 12px; margin-top: 28px; }
+  .ask-pill {
+    padding: 16px 20px; border-radius: 14px; border: 1px solid var(--line-2);
+    font-size: clamp(16px, 1.6vw, 20px); color: var(--ink); font-weight: 600;
+    background: rgba(69,181,150,0.06);
+  }
+  .tag-ya {
+    display: inline-block; margin-top: 16px; padding: 8px 14px; border-radius: 999px;
+    background: rgba(69,181,150,0.15); border: 1px solid var(--mint);
+    font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--mint-2);
+    letter-spacing: 0.12em; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<deck-stage>
+
+<!-- 01 PORTADA — layout referencia -->
+<section class="slide-ref slide-cover" data-screen-label="01 Portada">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width:720px;height:720px;background:#15534a;top:-120px;left:-80px;"></div>
+  <div class="glow" style="width:500px;height:500px;background:#45b596;opacity:0.15;bottom:-80px;right:10%;"></div>
+
+  <div class="frame frame-grid" style="padding:0;">
+    <div class="cover-layout">
+      <div class="cover-brand">
+        <div class="cover-logo-wrap">
+          <img src="../public/SEYF.png" alt="Seyf" width="320" height="320" />
+        </div>
+        <p class="cover-byline">Seyf by Seyfert Labs</p>
+      </div>
+
+      <div class="cover-hero">
+        <p class="cover-tagline-sans">Tienen capital.</p>
+        <p class="cover-tagline-serif">Experiencia. Negocio.</p>
+        <div class="cover-meta">
+          Miles de comerciantes en México.<br>
+          Lo único que no tienen: <strong>un peso generando rendimiento</strong> mientras esperan su próxima compra.<br>
+          <span class="event">Ledger Leaders Week — CDMX</span> · Mayo 2026
+        </div>
+      </div>
+    </div>
+
+    <div class="bar-foot">Seyf by Seyfert Labs</div>
+    <span class="slide-num">01 / 07</span>
+  </div>
+</section>
+
+<!-- 02 PROBLEMA — layout referencia -->
+<section class="slide-ref slide-problem" data-screen-label="02 Problema">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width:480px;height:480px;background:#15534a;bottom:-100px;right:-60px;"></div>
+
+  <div class="frame frame-grid" style="padding:48px 72px 0;">
+    <div class="problem-layout">
+      <div class="problem-copy">
+        <h2 class="problem-kicker">¿Qué tan grande?</h2>
+        <p class="problem-lines">
+          <span class="line">Banco al <span class="no">120%</span>.</span>
+          <span class="line">Prestamista al 60%.</span>
+          <span class="line">Sin contrato.</span>
+        </p>
+        <p class="ref-body" style="margin-top:28px;">
+          Los bancos no los voltean a ver. Los prestamistas los cobran caro.
+          Las fintechs los tratan como ahorradores — no como <strong>operadores de negocio</strong>.
+        </p>
+        <span class="tag-ya">Seyf: sin deuda · sin intereses · sin tocar lo que construyeron</span>
+      </div>
+
+      <div class="problem-visual">
+        <img class="problem-photo" src="assets/problem-merchant.png" alt="Comerciante informal" />
+        <div class="stat-float top">
+          <p class="num">$9,000 <span class="unit">M</span></p>
+          <p class="desc">USD en transacciones anuales<br>solo en la CEDA</p>
+        </div>
+        <div class="stat-float bottom">
+          <p class="num">55<span class="unit">%</span></p>
+          <p class="desc">fuerza laboral · economía informal</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bar-foot">Seyf by Seyfert Labs</div>
+    <span class="slide-num">02 / 07</span>
+  </div>
+</section>
+
+<!-- 03 SOLUCIÓN -->
+<section class="slide-ref" data-screen-label="03 Solución">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width:400px;height:400px;background:#15534a;bottom:-80px;right:0;"></div>
+  <div class="frame frame-grid">
+    <div class="ref-layout">
+      <div>
+        <h2 class="ref-kicker">La Solución:</h2>
+        <p class="ref-lines">
+          <span class="line">Capital que <span class="em">nunca</span></span>
+          <span class="line">se queda inmóvil.</span>
+          <span class="line">Adelantas <span class="em">sin deuda.</span></span>
+        </p>
+        <p class="ref-body">
+          SPEI como siempre → <strong>Stablebonds CETES</strong> → rendimiento desde el día 1.
+          El adelanto se recupera del rendimiento. <span class="hl">Tu principal nunca se toca.</span>
+          Sin préstamo. Sin buró. Ahorrar y actuar al mismo tiempo.
+        </p>
+      </div>
+      <div class="ref-visual">
+        <div class="chip-stack">
+          <div class="chip"><span class="idx">01</span><span class="txt">SPEI<small>Como siempre</small></span></div>
+          <div class="chip"><span class="idx">02</span><span class="txt">CETES<small>Deuda soberana MX</small></span></div>
+          <div class="chip"><span class="idx">03</span><span class="txt">Rinde<small>Desde el día 1</small></span></div>
+          <div class="chip hl"><span class="idx">04</span><span class="txt" style="color:var(--mint-2);">Adelantas<small>Principal intacto</small></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="bar-foot">Seyf by Seyfert Labs</div>
+    <span class="slide-num">03 / 07</span>
+  </div>
+</section>
+
+<!-- 04 MERCADO -->
+<section class="slide-ref" data-screen-label="04 Mercado">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width:500px;height:500px;background:#15534a;top:-80px;right:-100px;"></div>
+  <div class="frame frame-grid">
+    <div class="ref-layout">
+      <div>
+        <h2 class="ref-kicker">El Mercado:</h2>
+        <p class="ref-lines">
+          <span class="line">El <span class="em">excedente</span></span>
+          <span class="line">parado entre semana.</span>
+        </p>
+        <p class="ref-body">
+          <strong>$9 mil millones USD/año</strong> solo en la CEDA — el dinero que ya ganó y deja quieto.
+          Mayoristas, abarroteros, distribuidores: mismo problema, misma brecha.
+          <span class="hl"><strong>55%</strong> de México en informalidad.</span>
+          El mercado más grande que nadie atiende bien.
+        </p>
+        <span class="tag-ya">Ya estamos adentro · CEDA</span>
+      </div>
+      <div class="ref-visual" style="align-items:stretch;">
+        <div style="position:relative;width:100%;max-width:440px;min-height:400px;margin:0 auto;">
+          <div class="stat-float top" style="left:0;right:0;width:100%;">
+            <p class="num">$9,000 <span class="unit">M</span></p>
+            <p class="desc">USD / año · solo la CEDA</p>
+          </div>
+          <div class="stat-float" style="top:42%;bottom:auto;left:0;right:0;width:100%;">
+            <p class="num">55<span class="unit">%</span></p>
+            <p class="desc">fuerza laboral · economía informal</p>
+          </div>
+          <div class="stat-float bottom" style="left:0;right:0;width:100%;border-color:var(--mint);">
+            <p class="num mint" style="font-size:clamp(32px,3.5vw,44px);">Excedente</p>
+            <p class="desc">dinero ganado · parado entre semana</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bar-foot">Seyf by Seyfert Labs</div>
+    <span class="slide-num">04 / 07</span>
+  </div>
+</section>
+
+<!-- 05 MODELO -->
+<section class="slide-ref" data-screen-label="05 Modelo">
+  <div class="grid-bg"></div>
+  <div class="frame frame-grid">
+    <div class="ref-layout">
+      <div>
+        <h2 class="ref-kicker">El Modelo:</h2>
+        <p class="ref-lines">
+          <span class="line">Crece con</span>
+          <span class="line"><span class="em">depósitos.</span></span>
+          <span class="line">No con deuda.</span>
+        </p>
+        <p class="ref-body">Predecible, transparente, sin cartera en mora.</p>
+      </div>
+      <div class="ref-visual" style="flex-direction:column;align-items:stretch;max-width:480px;">
+        <div class="pillar">
+          <span class="n">1</span>
+          <div>
+            <div class="t">Yield spread · CETES</div>
+            <div class="d">Constante. Escala con volumen depositado.</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <span class="n">2</span>
+          <div>
+            <div class="t">Comisión fija · adelanto</div>
+            <div class="d">Transparente. Sin intereses compuestos.</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <span class="n">3</span>
+          <div>
+            <div class="t">Cero riesgo crediticio</div>
+            <div class="d">Colateral = rendimiento ya generado en protocolo.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bar-foot">Seyf by Seyfert Labs</div>
+    <span class="slide-num">05 / 07</span>
+  </div>
+</section>
+
+<!-- 06 TRACCIÓN -->
+<section class="slide-ref" data-screen-label="06 Tracción">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width:420px;height:420px;background:#45b596;opacity:0.12;bottom:0;left:10%;"></div>
+  <div class="frame frame-grid">
+    <div class="ref-layout">
+      <div>
+        <h2 class="ref-kicker">Tracción:</h2>
+        <p class="ref-lines">
+          <span class="line">Listos para</span>
+          <span class="line"><span class="em">mainnet.</span></span>
+        </p>
+        <p class="ref-body">
+          <strong>2º lugar</strong> Hackathon BAF × Stellar — equipos de toda Latinoamérica.
+          <strong>3 visitas CEDA</strong> · <strong>5 entrevistas</strong>: crédito informal, sin servicios que les sirvan.
+          <strong>MVP testnet</strong> con flujo completo — listos para mainnet.
+        </p>
+      </div>
+      <div class="ref-visual" style="flex-direction:column;align-items:stretch;max-width:460px;">
+        <div class="proof-hero">
+          <p class="mono mint" style="font-size:11px;letter-spacing:0.14em;margin:0 0 8px;">HACKATHON BAF × STELLAR</p>
+          <p class="big">2º <span class="mint" style="font-size:0.5em;">lugar</span></p>
+        </div>
+        <div class="proof-row">
+          <div class="stat-float">
+            <p class="num" style="font-size:40px;">3 · 5</p>
+            <p class="desc">visitas · entrevistas CEDA</p>
+          </div>
+          <div class="stat-float" style="border-color:var(--mint);">
+            <p class="num mint" style="font-size:40px;">12+</p>
+            <p class="desc">testers activos · flujo E2E</p>
+          </div>
+        </div>
+        <div class="stat-float" style="position:relative;width:100%;margin-top:12px;">
+          <p class="num" style="font-size:clamp(28px,3vw,40px);">E2E testnet</p>
+          <p class="desc">SPEI · KYC · CETES · adelanto — listos para mainnet</p>
+        </div>
+      </div>
+    </div>
+    <div class="bar-foot">Seyf by Seyfert Labs</div>
+    <span class="slide-num">06 / 07</span>
+  </div>
+</section>
+
+<!-- 07 CIERRE -->
+<section class="slide-ref slide-cover" data-screen-label="07 Cierre">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width:640px;height:640px;background:#15534a;bottom:-160px;right:-80px;"></div>
+  <div class="frame frame-grid" style="padding:48px 72px 0;">
+    <div class="ref-layout">
+      <div>
+        <h2 class="ref-kicker">Cierre:</h2>
+        <p class="close-serif">
+          Los CETES existen.<br>
+          Los merchants tienen capital.<br>
+          La necesidad es <span class="em">diaria.</span>
+        </p>
+        <p class="ref-body" style="margin-top:24px;">
+          Buscamos <strong>pre-seed</strong> para auditoría mainnet, compliance y las primeras
+          <strong class="hl">100 cuentas activas</strong> en la CEDA.
+          Una herramienta que haga crecer su capital y se mueva cuando ellos lo necesitan —
+          <strong class="hl">sin deuda, sin tocar lo que construyeron.</strong>
+        </p>
+        <p class="ref-lines" style="margin-top:28px;font-size:clamp(44px,4.5vw,72px);">
+          <span class="line">Esa herramienta es <span class="em">Seyf.</span></span>
+        </p>
+      </div>
+      <div class="ref-visual" style="align-items:flex-start;">
+        <div class="ask-block" style="width:100%;max-width:420px;">
+          <div class="mono mint" style="font-size:12px;letter-spacing:0.2em;">BUSCAMOS PRE-SEED</div>
+          <p class="ask-num" style="font-size:clamp(72px,8vw,120px);margin-top:12px;">100</p>
+          <p class="mute" style="font-size:18px;margin:0 0 20px;">cuentas activas · CEDA</p>
+          <div class="ask-pills">
+            <div class="ask-pill">Auditoría mainnet</div>
+            <div class="ask-pill">Compliance</div>
+            <div class="ask-pill">Primeras cuentas en la CEDA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bar-foot">Seyf by Seyfert Labs</div>
+    <span class="slide-num">07 / 07</span>
+  </div>
+</section>
+
+</deck-stage>
+</body>
+</html>

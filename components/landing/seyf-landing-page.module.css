@@ -936,3 +936,95 @@
 .softInk { color: #8a9a92; }
 .darkSectionHead { color: var(--bg); }
 .muteInk { color: var(--ink-mute); }
+
+/* ========================== MOBILE ========================== */
+@media (max-width: 640px) {
+  /* layout shell */
+  .container { padding: 0 18px; }
+  .navInner { padding: 14px 18px; gap: 10px; }
+  .navCta { gap: 8px; }
+  .btn { padding: 10px 16px; }
+  .btnLg { padding: 14px 22px; font-size: 15px; }
+
+  /* hero */
+  .hero { padding: 92px 0 48px; min-height: auto; }
+  .huge { font-size: clamp(46px, 14vw, 72px); margin-top: 20px; }
+  .heroSub { font-size: 16px; margin-top: 20px; }
+  .heroCta { margin-top: 28px; gap: 12px; }
+  .heroCta .btn { flex: 1 1 100%; }
+  .heroStrip { gap: 12px 18px; margin-top: 32px; padding-top: 20px; }
+
+  /* calculator card */
+  .calc { padding: 22px 18px; border-radius: 22px; }
+  .calcRow :global(.amount) { font-size: 34px; }
+  .calcRow :global(.amount .cents) { font-size: 16px; }
+  .calcResults { padding: 18px; }
+  .calcResultsGrid { gap: 16px; }
+  .calcCell :global(.cval) { font-size: 24px; }
+  .calcCell :global(.cval[style]) { font-size: 30px !important; }
+
+  /* sections */
+  .band { padding: 72px 0; }
+  .sectionHead { font-size: clamp(32px, 9vw, 44px); }
+  .sectionSub { font-size: 16px; margin-top: 16px; }
+
+  /* pain stats — keep big numbers from overflowing */
+  .painGrid { margin-top: 36px; gap: 16px; }
+  .painCard { padding: 28px 24px; }
+  .painCard :global(.pcNum) { font-size: 64px; margin: 14px 0 8px; }
+  .painCard :global(.pcSmall) { font-size: 38px; }
+
+  /* testimonial */
+  .testi { padding: 32px 22px; border-radius: 24px; }
+  .testiInner { gap: 28px; }
+
+  /* how it works */
+  .steps { margin-top: 40px; gap: 32px; }
+  .step { padding: 24px 0 24px 50px; }
+  .step h3 { font-size: 21px; }
+  .stepsVisual { height: 420px; padding: 18px; position: relative; top: 0; }
+
+  /* big calculator */
+  .bigCalc { margin-top: 40px; gap: 24px; }
+  .bigCalcSide { padding: 30px 24px; }
+  .bigCalcSide h3 { font-size: 32px; }
+  .bigCalcSide p { font-size: 16px; }
+
+  /* trust */
+  .trustGrid { margin-top: 36px; gap: 14px; }
+  .trustCard { padding: 22px; }
+  .trustCard :global(.tcTitle) { font-size: 20px; }
+
+  /* tarjeta / product */
+  .productSection { padding: 80px 0; }
+  .productInner { gap: 40px; }
+  .cardStack { height: 300px; margin: 0 auto; max-width: 320px; }
+  .seyfCard { width: 270px; height: 172px; padding: 20px; }
+  .seyfCard :global(.brand) { font-size: 32px; }
+  .seyfCardFront { transform: rotate(-6deg) translate(0, 28px); }
+  .seyfCardBack { transform: rotate(7deg) translate(36px, -8px); }
+
+  /* final cta */
+  .finalCta { padding: 80px 0 64px; }
+  .finalCta h2 { font-size: clamp(44px, 14vw, 64px); }
+  .finalCta p { font-size: 16px; margin-top: 20px; }
+  .finalCtaRow { margin-top: 28px; }
+  .finalCtaRow .btn { flex: 1 1 100%; }
+
+  /* footer */
+  .footer { padding: 48px 0 28px; }
+  .footerInner { gap: 28px; }
+  .footerBottom { margin-top: 40px; }
+
+  /* marquee */
+  .marqueeTrack { gap: 44px; font-size: 13px; }
+}
+
+@media (max-width: 380px) {
+  .container { padding: 0 14px; }
+  .huge { font-size: clamp(40px, 13vw, 52px); }
+  .painCard :global(.pcNum) { font-size: 54px; }
+  .calcResultsGrid { grid-template-columns: 1fr; }
+  .seyfCard { width: 240px; height: 153px; }
+  .cardStack { max-width: 280px; }
+}
