@@ -29,10 +29,11 @@
     --t-ask: clamp(156px, 17vw, 260px);
     --t-team-name: clamp(20px, 1.75vw, 28px);
     /* Roadmap: px fijos · GRANDE para proyector (canvas 1920) */
-    --t-roadmap-title: 52px;
-    --t-roadmap-yr: 34px;
-    --t-roadmap-item: 22px;
-    --t-roadmap-sub: 14px;
+    --t-roadmap-title: 56px;
+    --t-roadmap-yr: 40px;
+    --t-roadmap-item: 26px;
+    --t-roadmap-sub: 15px;
+    --t-roadmap-gap: 20px;
   }
   html, body { background: var(--bg); margin: 0; padding: 0; }
   body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); }
@@ -790,87 +791,132 @@
   }
   .dyn-bento .b.mainnet .val { font-size: clamp(48px, 5.2vw, 72px); color: var(--mint-2); }
 
-  /* 07 — roadmap (px fijos · legible en proyector) */
-  .slide-close .dyn-close {
-    flex: 1; display: flex; flex-direction: column;
-    padding: 36px 56px 20px; min-height: 0;
-  }
-  .slide-close .roadmap-panel {
-    flex: 1; display: flex; flex-direction: column; gap: 10px;
-    padding: 20px 22px 18px;
-    border-radius: 22px;
-    border: 1px solid var(--line-2);
-    background: rgba(69,181,150,0.06);
+  /* 07 — roadmap + tarjetas (pantalla completa) */
+  .slide-close .dyn-close.roadmap-layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.12fr 0.88fr;
+    gap: 28px;
+    align-items: stretch;
+    padding: 38px 52px 18px;
     min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
-  .slide-close .roadmap-panel .roadmap-title {
+  .slide-close .roadmap-main {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 0;
+    min-width: 0;
+  }
+  .slide-close .roadmap-head { flex: none; }
+  .slide-close .roadmap-title {
     font-family: 'Geist', system-ui, sans-serif;
     font-size: var(--t-roadmap-title);
     font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
     margin: 0;
     color: var(--ink);
   }
-  .slide-close .roadmap-panel .roadmap-title .em {
+  .slide-close .roadmap-title .em {
     font-family: 'Fraunces', serif;
     font-weight: 600;
     color: var(--mint-2);
   }
-  .slide-close .roadmap-panel .roadmap-sub {
+  .slide-close .roadmap-sub {
     font-family: 'Geist Mono', monospace;
     font-size: var(--t-roadmap-sub);
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--mint);
-    margin: 2px 0 0;
+    margin: 10px 0 0;
   }
   .slide-close .roadmap-years {
-    flex: 1; display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 10px; min-height: 0; align-content: start;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    min-height: 0;
+    align-items: stretch;
   }
   .slide-close .roadmap-year {
-    display: flex; flex-direction: column; gap: 5px;
-    padding: 10px 10px 10px;
-    border-radius: 14px;
-    border: 1px solid rgba(127,232,204,0.14);
-    background: rgba(7,16,13,0.45);
+    display: flex;
+    flex-direction: column;
+    gap: var(--t-roadmap-gap);
+    padding: 18px 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(127,232,204,0.16);
+    background: rgba(7,16,13,0.5);
+    min-height: 0;
+  }
+  .slide-close .roadmap-year-head {
+    flex: none;
+    margin-bottom: 4px;
   }
   .slide-close .roadmap-year .yr {
     font-family: 'Geist', system-ui, sans-serif;
     font-size: var(--t-roadmap-yr);
-    font-weight: 700;
-    line-height: 1.2;
+    font-weight: 800;
+    line-height: 1.05;
     margin: 0;
     color: var(--mint-2);
   }
   .slide-close .roadmap-year .yr-sub {
     font-family: 'Geist Mono', monospace;
     font-size: var(--t-roadmap-sub);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--ink-mute);
-    margin: 0 0 2px;
+    margin: 6px 0 0;
+  }
+  .slide-close .roadmap-items {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--t-roadmap-gap);
+    min-height: 0;
   }
   .slide-close .roadmap-item {
     margin: 0;
-    padding: 6px 8px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
     border: 1px solid rgba(42,64,57,0.55);
-    background: rgba(0,0,0,0.18);
+    background: rgba(0,0,0,0.2);
     font-family: 'Geist', system-ui, sans-serif;
     font-size: var(--t-roadmap-item);
     font-weight: 600;
-    line-height: 1.25;
+    line-height: 1.28;
     color: var(--ink);
   }
   .slide-close .roadmap-item strong {
     color: var(--mint-2);
-    font-weight: 700;
+    font-weight: 800;
   }
   .slide-close .roadmap-item.milestone {
     border-color: var(--mint);
-    background: rgba(69,181,150,0.12);
+    background: rgba(69,181,150,0.14);
+  }
+  .slide-close .roadmap-visual {
+    position: relative;
+    min-height: 0;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(127,232,204,0.12);
+    background: linear-gradient(165deg, rgba(21,83,74,0.35) 0%, rgba(7,16,13,0.9) 55%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .slide-close .roadmap-visual img {
+    width: 108%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+    display: block;
+    filter: drop-shadow(0 24px 48px rgba(0,0,0,0.45));
   }
   .dyn-ask-mega {
     font-family: 'Fraunces', serif; font-size: var(--t-ask);
@@ -1259,36 +1305,53 @@
   <div class="dyn-ring" style="width:560px;height:560px;top:-20%;left:-15%;"></div>
 
   <div class="frame frame-grid">
-    <div class="dyn-close">
-      <div class="roadmap-panel">
-        <p class="roadmap-title">Roadmap · <span class="em">3 años</span></p>
-        <p class="roadmap-sub">Seyf · CETES · capital diario · sin deuda</p>
+    <div class="dyn-close roadmap-layout">
+      <div class="roadmap-main">
+        <div class="roadmap-head">
+          <p class="roadmap-title">Roadmap · <span class="em">3 años</span></p>
+          <p class="roadmap-sub">Seyf · CETES · capital diario · sin deuda</p>
+        </div>
         <div class="roadmap-years">
           <div class="roadmap-year">
-            <p class="yr">Año 1</p>
-            <p class="yr-sub">2026 · fundación</p>
-            <p class="roadmap-item milestone"><strong>Mainnet</strong> · auditoría y cumplimiento</p>
-            <p class="roadmap-item">100 cuentas activas en la CEDA</p>
-            <p class="roadmap-item">SPEI → CETES → adelanto en producción</p>
-            <p class="roadmap-item">Rendimiento diario estable en pesos</p>
+            <div class="roadmap-year-head">
+              <p class="yr">Año 1</p>
+              <p class="yr-sub">2026 · fundación</p>
+            </div>
+            <div class="roadmap-items">
+              <p class="roadmap-item milestone"><strong>Mainnet</strong> · auditoría y cumplimiento</p>
+              <p class="roadmap-item">100 cuentas activas en la CEDA</p>
+              <p class="roadmap-item">SPEI → CETES → adelanto en producción</p>
+              <p class="roadmap-item">Rendimiento diario estable en pesos</p>
+            </div>
           </div>
           <div class="roadmap-year">
-            <p class="yr">Año 2</p>
-            <p class="yr-sub">2027 · producto</p>
-            <p class="roadmap-item milestone"><strong>Tarjeta SEYF</strong> · gastas el rendimiento</p>
-            <p class="roadmap-item">Préstamos colateralizados · bajo riesgo</p>
-            <p class="roadmap-item">Colateral = rendimiento · sin mora</p>
-            <p class="roadmap-item">Más mercados · bonos MX, BR, US</p>
+            <div class="roadmap-year-head">
+              <p class="yr">Año 2</p>
+              <p class="yr-sub">2027 · producto</p>
+            </div>
+            <div class="roadmap-items">
+              <p class="roadmap-item milestone"><strong>Tarjeta SEYF</strong> · gastas el rendimiento</p>
+              <p class="roadmap-item">Préstamos colateralizados · bajo riesgo</p>
+              <p class="roadmap-item">Colateral = rendimiento · sin mora</p>
+              <p class="roadmap-item">Más mercados · bonos MX, BR, US</p>
+            </div>
           </div>
           <div class="roadmap-year">
-            <p class="yr">Año 3</p>
-            <p class="yr-sub">2028 · escala</p>
-            <p class="roadmap-item milestone"><strong>Tipo de cambio real</strong> · Stellar</p>
-            <p class="roadmap-item">Expansión a más ciudades y centrales</p>
-            <p class="roadmap-item">Crédito con historial de piso</p>
-            <p class="roadmap-item">Alianzas · licencias · institucional</p>
+            <div class="roadmap-year-head">
+              <p class="yr">Año 3</p>
+              <p class="yr-sub">2028 · escala</p>
+            </div>
+            <div class="roadmap-items">
+              <p class="roadmap-item milestone"><strong>Tipo de cambio real</strong> · Stellar</p>
+              <p class="roadmap-item">Expansión a más ciudades y centrales</p>
+              <p class="roadmap-item">Crédito con historial de piso</p>
+              <p class="roadmap-item">Alianzas · licencias · institucional</p>
+            </div>
           </div>
         </div>
+      </div>
+      <div class="roadmap-visual" aria-hidden="true">
+        <img src="/landing/seyf-cards-showcase.png" alt="" width="900" height="700" />
       </div>
     </div>
     <div class="bar-foot">Seyf by Seyfert Labs</div>
