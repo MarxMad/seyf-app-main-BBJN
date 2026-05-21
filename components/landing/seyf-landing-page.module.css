@@ -948,6 +948,13 @@
 
   /* hero */
   .hero { padding: 92px 0 48px; min-height: auto; }
+  .pill {
+    white-space: normal;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    max-width: 100%;
+  }
   .huge { font-size: clamp(46px, 14vw, 72px); margin-top: 20px; }
   .heroSub { font-size: 16px; margin-top: 20px; }
   .heroCta { margin-top: 28px; gap: 12px; }
@@ -1022,9 +1029,17 @@
 
 @media (max-width: 380px) {
   .container { padding: 0 14px; }
+  .navInner { padding: 12px 14px; }
+  .logo { letter-spacing: 0.28em; font-size: 13px; gap: 8px; }
+  .btn { padding: 9px 13px; font-size: 13px; }
   .huge { font-size: clamp(40px, 13vw, 52px); }
+  .heroSub { font-size: 15px; }
+  .calcRow :global(.amount) { font-size: 30px; }
   .painCard :global(.pcNum) { font-size: 54px; }
+  .painCard :global(.pcSmall) { font-size: 32px; }
+  .bigCalcSide h3 { font-size: 28px; }
   .calcResultsGrid { grid-template-columns: 1fr; }
   .seyfCard { width: 240px; height: 153px; }
-  .cardStack { max-width: 280px; }
+  .seyfCard :global(.brand) { font-size: 28px; }
+  .cardStack { max-width: 260px; height: 270px; }
 }
