@@ -500,18 +500,18 @@
 
   /* 03 — pasos + iPhone demo */
   .slide-solution .dyn-flow-wrap {
-    grid-template-columns: 0.58fr 1.42fr;
-    gap: 36px;
+    grid-template-columns: 0.46fr 1.54fr;
+    gap: 32px;
   }
   .solution-left {
     display: flex; flex-direction: column; justify-content: center; gap: 8px;
   }
   .solution-right {
     display: grid;
-    grid-template-columns: 1fr minmax(240px, 340px);
-    gap: 28px;
+    grid-template-columns: minmax(200px, 1fr) minmax(360px, 500px);
+    gap: 24px;
     align-items: center;
-    min-height: 420px;
+    min-height: 480px;
   }
   .solution-steps.dyn-flow-rail { width: 100%; }
   .solution-steps .dyn-step .orb {
@@ -533,9 +533,9 @@
     height: 100%;
     min-height: 0;
   }
-  .phone-frame {
+  .slide-solution .phone-frame {
     position: relative;
-    width: clamp(240px, 22vw, 320px);
+    width: clamp(320px, 30vw, 440px);
     aspect-ratio: 9 / 19.5;
     padding: 14px;
     border-radius: 52px;
@@ -1078,10 +1078,6 @@
       <div class="cover-hero">
         <p class="cover-tagline-sans">Tienen capital.</p>
         <p class="cover-tagline-serif">Experiencia. Negocio.</p>
-        <div class="cover-meta">
-          Lo único que falta: <strong>un peso generando rendimiento</strong> mientras esperan su próxima compra.<br>
-          <span class="event">Ledger Leaders Week — CDMX</span> · Mayo 2026
-        </div>
       </div>
     </div>
 
@@ -1138,19 +1134,19 @@
       <div class="solution-right">
         <div class="dyn-flow-rail solution-steps">
           <div class="dyn-step on">
-            <div class="orb">01</div>
+            <div class="orb" aria-hidden="true"></div>
             <span class="word">SPEI</span>
           </div>
           <div class="dyn-step on">
-            <div class="orb">02</div>
+            <div class="orb" aria-hidden="true"></div>
             <span class="word">CETES</span>
           </div>
           <div class="dyn-step on">
-            <div class="orb">03</div>
+            <div class="orb" aria-hidden="true"></div>
             <span class="word">Rinde</span>
           </div>
           <div class="dyn-step hl on">
-            <div class="orb">04</div>
+            <div class="orb" aria-hidden="true"></div>
             <span class="word">Adelantas</span>
           </div>
         </div>
