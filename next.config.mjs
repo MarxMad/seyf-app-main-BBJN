@@ -1,10 +1,13 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import createNextIntlPlugin from 'next-intl/plugin'
 
 const __filename = fileURLToPath(import.meta.url)
 // Raíz del proyecto (seyf-app). Evita que Turbopack/Webpack infieran
-// `...\Documents\GitHub` cuando hay otro lockfile en el padre o mezcla pnpm+npm.
+// `...\\Documents\\GitHub` cuando hay otro lockfile en el padre o mezcla pnpm+npm.
 const __dirname = path.resolve(path.dirname(__filename))
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -20,4 +23,4 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default withNextIntl(nextConfig)

@@ -2,7 +2,7 @@
 
 **Seyf** is a **Next.js** web app for savings, yield-based advances, **fiat ↔ crypto** ramps through **Etherfuse**, and **Stellar** custody / signing via **Pollar** (`@pollar/react`). It targets the Mexican market (MXN, CETES / MXNe, SPEI flows in sandbox).
 
-**Product tagline:** *Buy now, Pay never*.
+**Product tagline:** _Buy now, Pay never_.
 
 ---
 
@@ -23,9 +23,10 @@
 13. [Security & production](#security--production)
 14. [Scripts](#scripts)
 15. [Deployment](#deployment)
-16. [External references](#external-references)
-17. [Troubleshooting](#troubleshooting)
-18. [License & contributing](#license--contributing)
+16. [UX & Copy guidelines](#ux--copy-guidelines)
+17. [External references](#external-references)
+18. [Troubleshooting](#troubleshooting)
+19. [License & contributing](#license--contributing)
 
 ---
 
@@ -55,13 +56,13 @@ flowchart TD
 
 **Step-by-step (conceptual)**
 
-| Step | What happens |
-|------|----------------|
-| 1 | User opens the app; marketing / entry on `/` or auth on `/login`, `/registro`. |
-| 2 | User connects **Pollar** (Stellar wallet). Dashboard shows **MXNe** balance and CETES/stablebond reference when applicable. |
-| 3 | For ramps and live CETES valuation, user completes **Etherfuse onboarding** on `/identidad`; server stores an **httpOnly cookie** with ramp context. |
-| 4 | User deposits or withdraws through product routes; **Next.js route handlers** call Etherfuse with the **server-side API key**. |
-| 5 | **History** merges on-chain payments (**Horizon**, both networks) with **Etherfuse** orders; mock ledger rows are omitted in history. |
+| Step | What happens                                                                                                                                         |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | User opens the app; marketing / entry on `/` or auth on `/login`, `/registro`.                                                                       |
+| 2    | User connects **Pollar** (Stellar wallet). Dashboard shows **MXNe** balance and CETES/stablebond reference when applicable.                          |
+| 3    | For ramps and live CETES valuation, user completes **Etherfuse onboarding** on `/identidad`; server stores an **httpOnly cookie** with ramp context. |
+| 4    | User deposits or withdraws through product routes; **Next.js route handlers** call Etherfuse with the **server-side API key**.                       |
+| 5    | **History** merges on-chain payments (**Horizon**, both networks) with **Etherfuse** orders; mock ledger rows are omitted in history.                |
 
 ---
 
@@ -114,15 +115,15 @@ sequenceDiagram
 
 ## Tech stack
 
-| Area | Technology |
-|------|------------|
-| Framework | **Next.js 16** (App Router) |
-| UI | **React 19**, **Tailwind CSS 4**, **Radix UI**, **Framer Motion**, **Lucide** |
-| Language | **TypeScript 5.7** |
-| Wallet / Stellar (client) | **Pollar** (`@pollar/react`, `@pollar/core`) |
-| Stellar (server / tooling) | **@stellar/stellar-sdk** |
-| Forms / validation | **react-hook-form**, **Zod** |
-| Analytics | **@vercel/analytics** (optional in root layout) |
+| Area                       | Technology                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| Framework                  | **Next.js 16** (App Router)                                                   |
+| UI                         | **React 19**, **Tailwind CSS 4**, **Radix UI**, **Framer Motion**, **Lucide** |
+| Language                   | **TypeScript 5.7**                                                            |
+| Wallet / Stellar (client)  | **Pollar** (`@pollar/react`, `@pollar/core`)                                  |
+| Stellar (server / tooling) | **@stellar/stellar-sdk**                                                      |
+| Forms / validation         | **react-hook-form**, **Zod**                                                  |
+| Analytics                  | **@vercel/analytics** (optional in root layout)                               |
 
 Sensitive **Etherfuse** calls run in **route handlers** and `lib/` only (API key never shipped to the client bundle for those paths).
 
@@ -166,36 +167,36 @@ Copy **`.env.example`** → **`.env.local`**. Do not commit secrets.
 
 ### Server — Etherfuse & Seyf flags
 
-| Variable | Purpose |
-|----------|---------|
-| `ETHERFUSE_API_BASE_URL` | API base (e.g. sandbox `https://api.sand.etherfuse.com`). |
-| `ETHERFUSE_API_KEY` | Sent as `Authorization` header **without** a `Bearer` prefix (Etherfuse convention). |
-| `ETHERFUSE_ONBOARDING_MODE` | `hosted` \| `programmatic` — see `lib/etherfuse/integration-model.ts`. |
-| `ETHERFUSE_DEFAULT_BLOCKCHAIN` | e.g. `stellar`. |
-| `ETHERFUSE_MVP_CUSTOMER_ID` | Customer UUID for MVP / dev when no cookie. |
-| `ETHERFUSE_MVP_STELLAR_PUBLIC_KEY` | Stellar public key for MVP identity. |
-| `ETHERFUSE_MVP_BANK_ACCOUNT_ID` | Bank account UUID in Etherfuse. |
-| `ETHERFUSE_MVP_CRYPTO_WALLET_ID` | Optional ramp crypto wallet id. |
-| `ETHERFUSE_ONRAMP_TARGET_ASSET` | Optional; force onramp target (`identifier` from `/ramp/assets`). |
-| `ETHERFUSE_OFFRAMP_SOURCE_ASSET` | Optional; force offramp source asset. |
-| `ETHERFUSE_WEBHOOK_SECRET` | Base64 secret to verify incoming webhooks. |
-| `SEYF_ALLOW_ETHERFUSE_RAMP` | In **production**, set `true` to enable ramp routes. |
-| `SEYF_ALLOW_MOCK_INVEST` | `true` to allow MVP invest / JSON ledger in production. |
-| `SEYF_ALLOW_KYC_RESET` | Enables “reset trial” UI on `/identidad` outside development. |
-| `SEYF_ETHERFUSE_DEV_PANEL` | `true` to show Etherfuse dev panels outside `NODE_ENV=development`. |
-| `SEYF_SPEI_DISPLAY_NAME` | Label for sandbox SPEI UI (default Etherfuse). |
-| `POLLAR_API_KEY` | Server-side Pollar API key for wallet provisioning (never expose as `NEXT_PUBLIC_*`). |
-| `POLLAR_API_BASE_URL` | Server-side Pollar base URL for wallet provisioning requests. |
-| `STELLAR_NETWORK` | Provisioning network for server wallet creation (`testnet` default). |
-| `ADMIN_ALERT_WEBHOOK_URL` | Optional admin alert webhook when wallet provisioning exhausts retries. |
+| Variable                           | Purpose                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------- |
+| `ETHERFUSE_API_BASE_URL`           | API base (e.g. sandbox `https://api.sand.etherfuse.com`).                             |
+| `ETHERFUSE_API_KEY`                | Sent as `Authorization` header **without** a `Bearer` prefix (Etherfuse convention).  |
+| `ETHERFUSE_ONBOARDING_MODE`        | `hosted` \| `programmatic` — see `lib/etherfuse/integration-model.ts`.                |
+| `ETHERFUSE_DEFAULT_BLOCKCHAIN`     | e.g. `stellar`.                                                                       |
+| `ETHERFUSE_MVP_CUSTOMER_ID`        | Customer UUID for MVP / dev when no cookie.                                           |
+| `ETHERFUSE_MVP_STELLAR_PUBLIC_KEY` | Stellar public key for MVP identity.                                                  |
+| `ETHERFUSE_MVP_BANK_ACCOUNT_ID`    | Bank account UUID in Etherfuse.                                                       |
+| `ETHERFUSE_MVP_CRYPTO_WALLET_ID`   | Optional ramp crypto wallet id.                                                       |
+| `ETHERFUSE_ONRAMP_TARGET_ASSET`    | Optional; force onramp target (`identifier` from `/ramp/assets`).                     |
+| `ETHERFUSE_OFFRAMP_SOURCE_ASSET`   | Optional; force offramp source asset.                                                 |
+| `ETHERFUSE_WEBHOOK_SECRET`         | Base64 secret to verify incoming webhooks.                                            |
+| `SEYF_ALLOW_ETHERFUSE_RAMP`        | In **production**, set `true` to enable ramp routes.                                  |
+| `SEYF_ALLOW_MOCK_INVEST`           | `true` to allow MVP invest / JSON ledger in production.                               |
+| `SEYF_ALLOW_KYC_RESET`             | Enables “reset trial” UI on `/identidad` outside development.                         |
+| `SEYF_ETHERFUSE_DEV_PANEL`         | `true` to show Etherfuse dev panels outside `NODE_ENV=development`.                   |
+| `SEYF_SPEI_DISPLAY_NAME`           | Label for sandbox SPEI UI (default Etherfuse).                                        |
+| `POLLAR_API_KEY`                   | Server-side Pollar API key for wallet provisioning (never expose as `NEXT_PUBLIC_*`). |
+| `POLLAR_API_BASE_URL`              | Server-side Pollar base URL for wallet provisioning requests.                         |
+| `STELLAR_NETWORK`                  | Provisioning network for server wallet creation (`testnet` default).                  |
+| `ADMIN_ALERT_WEBHOOK_URL`          | Optional admin alert webhook when wallet provisioning exhausts retries.               |
 
 ### Client — `NEXT_PUBLIC_*`
 
-| Variable | Purpose |
-|----------|---------|
-| `NEXT_PUBLIC_POLLAR_API_KEY` | Pollar publishable API key (alias: `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`). |
+| Variable                             | Purpose                                                                                                                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_POLLAR_API_KEY`         | Pollar publishable API key (alias: `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`).                                                                                                |
 | `NEXT_PUBLIC_POLLAR_STELLAR_NETWORK` | `testnet` \| `mainnet` — Pollar SDK + Horizon default in `lib/seyf/horizon-payments.ts` (fallback: legacy `NEXT_PUBLIC_ACCESLY_NETWORK`, `NEXT_PUBLIC_STELLAR_NETWORK`). |
-| `NEXT_PUBLIC_STELLAR_NETWORK` | Stellar Expert link default in `lib/etherfuse/stellar-tx-url.ts` when movement has no explicit network. |
+| `NEXT_PUBLIC_STELLAR_NETWORK`        | Stellar Expert link default in `lib/etherfuse/stellar-tx-url.ts` when movement has no explicit network.                                                                  |
 
 **Note:** If you rotate `ETHERFUSE_API_KEY` or change Etherfuse org, invalidate the onboarding cookie (`seyf_ef_onboarding`) — use **Reset trial** on `/identidad` or clear the cookie.
 
@@ -235,19 +236,19 @@ scripts/             # verify-etherfuse.mjs, …
 
 ## Routes
 
-| Path | Role |
-|------|------|
-| `/` | Landing / entry; Pollar login as per public flow. |
-| `/login`, `/registro` | Sign-in / sign-up entry. |
-| `/dashboard` | Home: **MXNe** balance, carousel (advance, points), CETES/stablebond ref, **Lo último**, summary. |
-| `/historial` | Unified list: **Stellar testnet + mainnet** + Etherfuse orders (mock **ledger** rows excluded). |
-| `/identidad` | Etherfuse onboarding / KYC (hosted or related flows). |
-| `/anadir`, `/retirar` | Deposit / withdraw product flows (ramp). |
-| `/depositar`, `/gastar` | Additional UX flows wired in navigation. |
-| `/adelanto` | Request advance on yield (product UI). |
-| `/prueba-mxn-cetes` | MXN ↔ CETES experiments. |
-| `/dev/etherfuse-ramp`, `/dev/etherfuse-offramp` | Dev panels (visibility: `isEtherfuseDevPanelEnabled`). |
-| `/dev/poc-omnibus` | In-memory omnibus PoC. |
+| Path                                            | Role                                                                                              |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `/`                                             | Landing / entry; Pollar login as per public flow.                                                 |
+| `/login`, `/registro`                           | Sign-in / sign-up entry.                                                                          |
+| `/dashboard`                                    | Home: **MXNe** balance, carousel (advance, points), CETES/stablebond ref, **Lo último**, summary. |
+| `/historial`                                    | Unified list: **Stellar testnet + mainnet** + Etherfuse orders (mock **ledger** rows excluded).   |
+| `/identidad`                                    | Etherfuse onboarding / KYC (hosted or related flows).                                             |
+| `/anadir`, `/retirar`                           | Deposit / withdraw product flows (ramp).                                                          |
+| `/depositar`, `/gastar`                         | Additional UX flows wired in navigation.                                                          |
+| `/adelanto`                                     | Request advance on yield (product UI).                                                            |
+| `/prueba-mxn-cetes`                             | MXN ↔ CETES experiments.                                                                          |
+| `/dev/etherfuse-ramp`, `/dev/etherfuse-offramp` | Dev panels (visibility: `isEtherfuseDevPanelEnabled`).                                            |
+| `/dev/poc-omnibus`                              | In-memory omnibus PoC.                                                                            |
 
 ---
 
@@ -279,16 +280,16 @@ scripts/             # verify-etherfuse.mjs, …
 
 ## Internal API (`/api`)
 
-| Route (prefix) | Purpose |
-|------------------|---------|
-| `/api/seyf/dashboard` | **DashboardViewModel** JSON. |
-| `/api/seyf/user-movements` | Movements (Etherfuse + optional MVP ledger depending on env). |
-| `/api/seyf/wallet/status` | Current wallet provisioning status for the authenticated `/identidad` session. |
-| `/api/seyf/stellar-movements?account=G...` | Horizon **testnet + mainnet** → `UserMovement[]`. |
-| `/api/seyf/etherfuse/*` | Quotes, orders, assets, ramp context, mxn-cetes trials, sandbox `fiat-received`, … |
-| `/api/seyf/invest`, `/api/seyf/invest/summary` | MVP invest (gated in prod without `SEYF_ALLOW_MOCK_INVEST`). |
-| `/api/seyf/poc/ledger` | Omnibus PoC. |
-| `/api/webhooks/etherfuse` | Etherfuse webhook ingress (secret verification). |
+| Route (prefix)                                 | Purpose                                                                            |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `/api/seyf/dashboard`                          | **DashboardViewModel** JSON.                                                       |
+| `/api/seyf/user-movements`                     | Movements (Etherfuse + optional MVP ledger depending on env).                      |
+| `/api/seyf/wallet/status`                      | Current wallet provisioning status for the authenticated `/identidad` session.     |
+| `/api/seyf/stellar-movements?account=G...`     | Horizon **testnet + mainnet** → `UserMovement[]`.                                  |
+| `/api/seyf/etherfuse/*`                        | Quotes, orders, assets, ramp context, mxn-cetes trials, sandbox `fiat-received`, … |
+| `/api/seyf/invest`, `/api/seyf/invest/summary` | MVP invest (gated in prod without `SEYF_ALLOW_MOCK_INVEST`).                       |
+| `/api/seyf/poc/ledger`                         | Omnibus PoC.                                                                       |
+| `/api/webhooks/etherfuse`                      | Etherfuse webhook ingress (secret verification).                                   |
 
 Most use `dynamic = 'force-dynamic'` and `Cache-Control: no-store` where balances/orders must stay fresh.
 
@@ -304,10 +305,10 @@ Most use `dynamic = 'force-dynamic'` and `Cache-Control: no-store` where balance
 
 ## Security & production
 
-1. Never commit `.env.local` or API keys.  
-2. Review `lib/seyf/etherfuse-ramp-guard.ts` and `SEYF_ALLOW_*` before production.  
-3. Configure `ETHERFUSE_WEBHOOK_SECRET` for webhook verification (`app/api/webhooks/etherfuse/route.ts`).  
-4. Onboarding cookies use `secure` in production.  
+1. Never commit `.env.local` or API keys.
+2. Review `lib/seyf/etherfuse-ramp-guard.ts` and `SEYF_ALLOW_*` before production.
+3. Configure `ETHERFUSE_WEBHOOK_SECRET` for webhook verification (`app/api/webhooks/etherfuse/route.ts`).
+4. Onboarding cookies use `secure` in production.
 5. Keep **Stellar network** env vars aligned with the wallet and Horizon (`NEXT_PUBLIC_POLLAR_STELLAR_NETWORK`, `NEXT_PUBLIC_STELLAR_NETWORK`).
 
 ---
@@ -320,31 +321,45 @@ Most use `dynamic = 'force-dynamic'` and `Cache-Control: no-store` where balance
 
 ## Deployment
 
-- **Vercel** (standard Next.js): set env vars in the project dashboard, `npm run build`.  
-- Next config: `next.config.mjs`.  
+- **Vercel** (standard Next.js): set env vars in the project dashboard, `npm run build`.
+- Next config: `next.config.mjs`.
 - Register webhook URL: `https://<your-domain>/api/webhooks/etherfuse` in Etherfuse when using webhooks.
+
+---
+
+## UX & Copy guidelines
+
+**All user-facing copy must follow:** [`docs/copy-guidelines.md`](./docs/copy-guidelines.md)
+
+Key principles:
+
+- **Voice:** cercano (warm), claro (clear), profesional sin ser frío (professional but not cold)
+- **Zero crypto vocabulary:** no "wallet", "blockchain", "Stellar", "MXNe", "Stablebonds", or "crypto" in user UI
+- **Button verbs:** infinitive form (e.g., "Agregar fondos", "Retirar")
+- **Error messages:** follow "qué pasó → por qué → qué hacer" recipe
+- **Numbers:** use `formatMXN()` from `lib/formatters.ts` for all currency; locale-aware dates
 
 ---
 
 ## External references
 
-- [Etherfuse documentation](https://docs.etherfuse.com)  
-- [Sandbox — fiat received](https://docs.etherfuse.com/sandbox-api/fiat-received)  
-- [Stellar — Horizon](https://developers.stellar.org/docs/data/horizon)  
+- [Etherfuse documentation](https://docs.etherfuse.com)
+- [Sandbox — fiat received](https://docs.etherfuse.com/sandbox-api/fiat-received)
+- [Stellar — Horizon](https://developers.stellar.org/docs/data/horizon)
 - [Pollar](https://docs.pollar.xyz/) — `@pollar/react`, `@pollar/core`
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Check |
-|---------|--------|
-| 403 on Etherfuse routes in prod | `SEYF_ALLOW_ETHERFUSE_RAMP=true`. |
-| Orders / customer “not found” after key rotation | Cookie `seyf_ef_onboarding`; reset on `/identidad`. |
-| Empty Stellar on one “side” | Account may have no ops on that network; API still queries **both**. |
-| Wrong network on explorer | `NEXT_PUBLIC_STELLAR_NETWORK` vs per-movement `stellarNetwork`. |
-| `NonStableAsset` / asset errors | `identifier` in `/ramp/assets` must match forced env assets. |
-| Type errors in CI | Run `npx tsc --noEmit` locally before opening a PR. |
+| Symptom                                          | Check                                                                |
+| ------------------------------------------------ | -------------------------------------------------------------------- |
+| 403 on Etherfuse routes in prod                  | `SEYF_ALLOW_ETHERFUSE_RAMP=true`.                                    |
+| Orders / customer “not found” after key rotation | Cookie `seyf_ef_onboarding`; reset on `/identidad`.                  |
+| Empty Stellar on one “side”                      | Account may have no ops on that network; API still queries **both**. |
+| Wrong network on explorer                        | `NEXT_PUBLIC_STELLAR_NETWORK` vs per-movement `stellarNetwork`.      |
+| `NonStableAsset` / asset errors                  | `identifier` in `/ramp/assets` must match forced env assets.         |
+| Type errors in CI                                | Run `npx tsc --noEmit` locally before opening a PR.                  |
 
 ---
 
@@ -354,4 +369,4 @@ This package is **private** (`"private": true` in `package.json`). Branching, re
 
 ---
 
-*Keep this README in sync when you change critical routes, env vars, or user-visible flows.*
+_Keep this README in sync when you change critical routes, env vars, or user-visible flows._

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Search, BarChart3, CreditCard } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import AppUserAccountPanel from '@/components/app/app-user-account-panel'
 import {
@@ -23,6 +24,7 @@ function avatarLabel(wallet: { email?: string; stellarAddress: string } | null, 
 }
 
 export default function AppTopBar() {
+  const t = useTranslations('components.topBar')
   const { wallet, loading } = useSeyfWallet()
 
   return (
@@ -33,18 +35,18 @@ export default function AppTopBar() {
             <button
               type="button"
               className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-secondary text-sm font-bold tracking-tight text-foreground ring-1 ring-border outline-none transition hover:bg-secondary/80 focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Cuenta de usuario"
+              aria-label={t('ariaAccount')}
             >
               {avatarLabel(wallet, loading)}
             </button>
           </SheetTrigger>
           <SheetContent side="right" className="flex flex-col gap-0 overflow-hidden p-0">
             <SheetHeader className="shrink-0 space-y-1 border-b border-border bg-gradient-to-br from-[#edf6f2] via-[#e5efea] to-[#d6e3dd] px-4 py-4 pr-12 text-left dark:from-[#0d3531]/80 dark:via-[#15534a]/60 dark:to-background">
-              <SheetTitle className="text-lg font-bold tracking-tight">Tu cuenta</SheetTitle>
+              <SheetTitle className="text-lg font-bold tracking-tight">{t('accountTitle')}</SheetTitle>
               <SheetDescription className="sr-only">
-                Perfil, dirección Stellar y sesión Pollar
+                {t('accountDescription')}
               </SheetDescription>
-              <p className="text-xs text-muted-foreground">Perfil y sesión Pollar</p>
+              <p className="text-xs text-muted-foreground">{t('accountSubtitle')}</p>
             </SheetHeader>
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
@@ -53,7 +55,7 @@ export default function AppTopBar() {
                   href="/dashboard"
                   className="mb-4 flex h-11 w-full items-center justify-center rounded-full bg-secondary/70 text-sm font-semibold text-foreground ring-1 ring-border transition hover:bg-secondary"
                 >
-                  Inicio
+                  {t('home')}
                 </Link>
               </SheetClose>
               <AppUserAccountPanel />
@@ -66,20 +68,20 @@ export default function AppTopBar() {
             strokeWidth={2}
           />
           <div className="rounded-full bg-secondary py-2.5 pl-10 pr-4 ring-1 ring-border">
-            <span className="text-sm text-muted-foreground">Buscar</span>
+            <span className="text-sm text-muted-foreground">{t('search')}</span>
           </div>
         </div>
         <Link
           href="/estadisticas"
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary ring-1 ring-border transition hover:bg-secondary/80"
-          aria-label="Estadísticas y tipo de cambio"
+          aria-label={t('ariaStats')}
         >
           <BarChart3 className="size-[1.15rem] text-foreground" strokeWidth={2} />
         </Link>
         <Link
           href="/tarjeta"
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary ring-1 ring-border transition hover:bg-secondary/80"
-          aria-label="Tarjeta virtual"
+          aria-label={t('ariaCard')}
         >
           <CreditCard className="size-[1.15rem] text-foreground" strokeWidth={2} />
         </Link>

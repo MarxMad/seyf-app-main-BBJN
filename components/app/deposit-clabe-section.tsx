@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { Copy, CheckCheck, RefreshCw, ShieldCheck, Clock, AlertCircle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import { cn } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type DepositInfo = {
   ok: boolean
@@ -15,19 +17,8 @@ type DepositInfo = {
   bankAccountStatus: string | null
 }
 
-function parseSeyfErrorPayload(data: unknown): string {
-  if (!data || typeof data !== 'object') return 'No se pudo activar la cuenta.'
-  const o = data as Record<string, unknown>
-  const err = o.error
-  if (err && typeof err === 'object' && err !== null) {
-    const msg = (err as Record<string, unknown>).message_es
-    if (typeof msg === 'string' && msg.trim()) return msg.trim()
-  }
-  if (typeof err === 'string' && err.trim()) return err.trim()
-  return 'No se pudo activar la cuenta.'
-}
-
 export default function DepositClabeSection() {
+  const t = useTranslations('components.depositClabe')
   const { wallet, etherfusePublicKeyHint } = useSeyfWallet()
   const [info, setInfo] = useState<DepositInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -36,6 +27,18 @@ export default function DepositClabeSection() {
   const [error, setError] = useState<string | null>(null)
 
   const walletAddr = etherfusePublicKeyHint?.trim() ?? ''
+
+  function parseSeyfErrorPayload(data: unknown): string {
+    if (!data || typeof data !== 'object') return t('errors.activateFailed')
+    const o = data as Record<string, unknown>
+    const err = o.error
+    if (err && typeof err === 'object' && err !== null) {
+      const msg = (err as Record<string, unknown>).message_es
+      if (typeof msg === 'string' && msg.trim()) return msg.trim()
+    }
+    if (typeof err === 'string' && err.trim()) return err.trim()
+    return t('errors.activateFailed')
+  }
 
   const fetchInfo = async (opts?: { silent?: boolean }) => {
     const quiet = opts?.silent === true
@@ -85,7 +88,7 @@ export default function DepositClabeSection() {
       }
       await fetchInfo({ silent: true })
     } catch {
-      setError('Error de conexión. Intenta de nuevo.')
+      setError(t('errors.connectionError'))
     } finally {
       setActivating(false)
     }
@@ -98,7 +101,24 @@ export default function DepositClabeSection() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  if (loading && !info) return null
+  if (loading && !info)
+    return (
+      <div className="mx-auto w-full max-w-lg px-3 pb-1 pt-3 sm:px-6 sm:pt-4">
+        <div className="rounded-[1.25rem] border border-border bg-card p-3 sm:p-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-9 h-9 w-9 rounded-full" />
+            <div className="flex-1">
+              <Skeleton className="h-4 w-48 rounded-md mb-2" />
+              <Skeleton className="h-3 w-64 rounded-md" />
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            <Skeleton className="h-12 rounded-xl" />
+            <Skeleton className="h-12 rounded-full" />
+          </div>
+        </div>
+      </div>
+    )
   if (!info?.hasContext) return null
 
   const kycReady = info.kycReady
@@ -129,14 +149,14 @@ export default function DepositClabeSection() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold leading-snug text-foreground">
-              Cuenta CLABE de depósito (SPEI)
+              {t('title')}
             </p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
               {kycReady
-                ? 'Envía MXN a esta CLABE para agregar fondos'
+                ? t('kycReady')
                 : kycStatus === 'rejected'
-                  ? 'KYC rechazado — ve a /identidad'
-                  : 'KYC en revisión — disponible al aprobarse'}
+                  ? t('kycRejected')
+                  : t('kycPending')}
             </p>
           </div>
         </div>
@@ -168,10 +188,10 @@ export default function DepositClabeSection() {
                 {activating ? (
                   <>
                     <RefreshCw className="mr-2 size-4 shrink-0 animate-spin" />
-                    Activando…
+                    {t('activating')}
                   </>
                 ) : (
-                  'Activar cuenta CLABE'
+                  t('activate')
                 )}
               </Button>
             )}
@@ -180,7 +200,7 @@ export default function DepositClabeSection() {
             ) : null}
             {info.bankAccountStatus === 'awaitingDepositVerification' ? (
               <p className="text-[10px] leading-snug text-amber-600 dark:text-amber-400">
-                Cuenta en espera de verificación (sandbox: se activa con primer depósito de prueba)
+                {t('awaitingVerification')}
               </p>
             ) : null}
           </>

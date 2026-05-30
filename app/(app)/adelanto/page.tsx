@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Sparkles } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { AppPageBody } from '@/components/app/app-page-body'
 import { AppBackLink } from '@/components/app/app-back-link'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function formatMXN(amount: number) {
   return new Intl.NumberFormat('es-MX', {
@@ -18,6 +20,7 @@ function formatMXN(amount: number) {
 }
 
 export default function AdelantoPage() {
+  const t = useTranslations('adelanto')
   const router = useRouter()
   const [ledger, setLedger] = useState<{
     balances: {
@@ -77,10 +80,10 @@ export default function AdelantoPage() {
         })
       })
       .catch(() => {
-        setUiError('No pudimos cargar tu información de adelanto.')
+        setUiError(t('errors.loadFailed'))
       })
       .finally(() => setInitialLoading(false))
-  }, [])
+  }, [years, t])
 
   useEffect(() => {
     if (initialLoading) return
@@ -91,10 +94,10 @@ export default function AdelantoPage() {
         setSimulation(simData)
       })
       .catch(() => {
-        setUiError('No pudimos actualizar la simulación.')
+        setUiError(t('errors.simFailed'))
       })
       .finally(() => setSimLoading(false))
-  }, [years, initialLoading])
+  }, [years, initialLoading, t])
 
   const refreshAdvanceList = async () => {
     const res = await fetch('/api/seyf/advance/list')
@@ -116,11 +119,11 @@ export default function AdelantoPage() {
   const handleConfirmar = async () => {
     if (!simulation) return
     if (readiness && !readiness.onrampEnabled) {
-      setUiError('Completa tu configuración de cuenta antes de solicitar adelanto.')
+      setUiError(t('errors.setupIncomplete'))
       return
     }
     if (maxAdvanceBusiness <= 0) {
-      setUiError('No tienes saldo disponible para adelanto en este momento.')
+      setUiError(t('errors.noBalance'))
       return
     }
     setConfirming(true)
@@ -140,24 +143,24 @@ export default function AdelantoPage() {
       if (!res.ok) {
         const errMsg =
           typeof data.error === 'object'
-            ? (data.error?.message_es ?? 'Error al procesar el adelanto.')
-            : (data.error ?? data.message_es ?? `No pudimos procesar tu adelanto (HTTP ${res.status}).`)
+            ? (data.error?.message_es ?? t('errors.processFailed'))
+            : (data.error ?? data.message_es ?? t('errors.processFailedHttp', { status: res.status }))
         setUiError(errMsg)
         return
       }
       if (data.status === 'completed') {
-        setTxHash(data.stellar_tx_hash)
+        setTxHash(data.stellar_tx_hash ?? null)
         setExito(true)
         await refreshAdvanceList()
       } else {
         const errMsg =
           typeof data.error === 'object'
-            ? (data.error?.message_es ?? 'No pudimos procesar tu adelanto.')
-            : (data.error ?? 'No pudimos procesar tu adelanto.')
+            ? (data.error?.message_es ?? t('errors.processFailedDefault'))
+            : (data.error ?? t('errors.processFailedDefault'))
         setUiError(errMsg)
       }
     } catch {
-      setUiError('Error de conexión. Intenta nuevamente.')
+      setUiError(t('errors.networkError'))
     } finally {
       setConfirming(false)
     }
@@ -165,8 +168,29 @@ export default function AdelantoPage() {
 
   if (initialLoading) {
     return (
-      <AppPageBody className="flex items-center justify-center pt-20">
-        <p className="text-muted-foreground animate-pulse font-medium">Generando simulación...</p>
+      <AppPageBody className="space-y-6 pt-2">
+        <Skeleton className="h-5 w-24 rounded-full" />
+        <Skeleton className="h-40 rounded-[1.5rem]" />
+        <div className="rounded-[1.5rem] border border-border bg-card p-6 shadow-[0_8px_28px_rgba(0,0,0,0.14)]">
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+            </div>
+            <Skeleton className="h-[5.75rem] rounded-xl" />
+            <Skeleton className="h-12 w-1/2" />
+            <div className="space-y-3 border-t border-border pt-4">
+              <Skeleton className="h-5 rounded-md" />
+              <Skeleton className="h-5 rounded-md" />
+              <Skeleton className="h-5 rounded-md" />
+            </div>
+          </div>
+        </div>
+        <Skeleton className="h-12 rounded-full" />
       </AppPageBody>
     )
   }
@@ -176,9 +200,11 @@ export default function AdelantoPage() {
       <AppPageBody className="space-y-6 pt-2">
         <AppBackLink href="/dashboard" />
         <section className="rounded-[1.5rem] border border-border bg-card p-6 text-center">
-          <h2 className="text-xl font-bold">Sin ciclo activo</h2>
-          <p className="mt-2 text-sm text-muted-foreground">No tienes inversiones activas que califiquen para un adelanto en este momento.</p>
-          <Button onClick={() => router.push('/dashboard')} className="mt-6 rounded-full font-bold">Ir a invertir</Button>
+          <h2 className="text-xl font-bold">{t('noCycle.title')}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{t('noCycle.body')}</p>
+          <Button onClick={() => router.push('/dashboard')} className="mt-6 rounded-full font-bold">
+            {t('noCycle.button')}
+          </Button>
         </section>
       </AppPageBody>
     )
@@ -208,25 +234,25 @@ export default function AdelantoPage() {
               </svg>
             </div>
             <p className="inline-flex rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168] dark:bg-white/15 dark:text-[#d2e9df]">
-              Adelanto activado
+              {t('success.badge')}
             </p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-[#41534b] dark:text-white">Listo</h2>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-[#41534b] dark:text-white">{t('success.title')}</h2>
             <p className="mt-2 text-sm text-[#5f7168] dark:text-[#d2e9df]">
-              Tu adelanto se acreditó correctamente.
+              {t('success.body')}
             </p>
           </div>
         </section>
 
         <div className="space-y-3 rounded-[1.5rem] bg-card p-5 shadow-[0_8px_28px_rgba(0,0,0,0.14)]">
-          <SummaryRow label="Adelanto recibido" value={formatMXN(simulation?.net_to_user_mxn || 0)} bold />
+          <SummaryRow label={t('success.receivedLabel')} value={formatMXN(simulation?.net_to_user_mxn || 0)} bold />
           <div className="border-t border-border/60 pt-3">
-            <SummaryRow label="Referencia de operación" value={txHash?.slice(0, 8) + '...' + txHash?.slice(-8)} dim />
+            <SummaryRow label={t('success.refLabel')} value={txHash ? txHash.slice(0, 8) + '...' + txHash.slice(-8) : '—'} dim />
           </div>
         </div>
 
         <Link href="/tarjeta" className="block">
           <Button className="h-12 w-full rounded-full bg-foreground text-base font-bold text-background shadow-[0_10px_28px_rgba(255,255,255,0.12)] hover:bg-foreground/90">
-            Usar mi adelanto
+            {t('success.useButton')}
           </Button>
         </Link>
         <button
@@ -234,7 +260,7 @@ export default function AdelantoPage() {
           onClick={() => router.push('/dashboard')}
           className="w-full py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
         >
-          Volver al inicio
+          {t('success.backLink')}
         </button>
       </AppPageBody>
     )
@@ -254,12 +280,12 @@ export default function AdelantoPage() {
         <div className="relative">
           <p className="inline-flex items-center gap-1.5 rounded-full border border-[#b8b8b5]/60 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5f7168] dark:border-white/20 dark:bg-white/15 dark:text-[#d2e9df]">
             <Sparkles className="size-3 text-[#5f7168] dark:text-[#d2e9df]" />
-            Adelanto de rendimiento
+            {t('hero.badge')}
           </p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-[#41534b] dark:text-white">Obtén liquidez hoy</h1>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-[#41534b] dark:text-white">{t('hero.title')}</h1>
           <p className="mt-1.5 text-sm text-[#7b8f86] dark:text-[#d2e9df]">
-            Adelanta una parte de tu rendimiento proyectado sin esperar al vencimiento.
-            <span className="mt-1 block font-bold text-[#41534b] dark:text-white">Tu saldo se mantiene protegido por reglas de bloqueo.</span>
+            {t('hero.body')}
+            <span className="mt-1 block font-bold text-[#41534b] dark:text-white">{t('hero.bold')}</span>
           </p>
         </div>
       </section>
@@ -267,24 +293,24 @@ export default function AdelantoPage() {
       <section className="space-y-4 rounded-[1.5rem] bg-card p-6 shadow-[0_8px_28px_rgba(0,0,0,0.14)]">
         <div className="grid gap-3 sm:grid-cols-2">
           <MiniStat
-            label="Capital base (MXN)"
+            label={t('stats.baseMxn')}
             value={formatMXN(simulation?.principal_mxn ?? (ledger?.constraints?.mxn_spendable ?? 0))}
           />
-          <MiniStat label="Tope permitido" value={`${(simulation?.max_advance_ratio_percent ?? 90).toFixed(0)}%`} />
+          <MiniStat label={t('stats.maxRatio')} value={`${(simulation?.max_advance_ratio_percent ?? 90).toFixed(0)}%`} />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <MiniStat
-            label="Tasa CETES real (anual)"
+            label={t('stats.cetesApy')}
             value={`${(simulation?.real_cetes_apy_percent ?? 0).toFixed(2)}%`}
           />
           <MiniStat
-            label="Tasa de adelanto (anual)"
+            label={t('stats.advanceApy')}
             value={`${(simulation?.advance_rate_percent ?? 0).toFixed(2)}%`}
           />
         </div>
         <div className="rounded-xl bg-secondary/40 px-3 py-3">
           <p className="text-[11px] text-muted-foreground">
-            Años de rendimiento a adelantar (máx. por tope 90%: {simulation?.years_max_allowed ?? 1})
+            {t('yearsSlider.label', { max: simulation?.years_max_allowed ?? 1 })}
           </p>
           <input
             type="range"
@@ -296,12 +322,12 @@ export default function AdelantoPage() {
             className="mt-2 w-full"
           />
           <p className="mt-2 text-center text-sm font-bold text-foreground">
-            {years} año(s){simLoading ? ' · actualizando...' : ''}
+            {t('yearsSlider.value', { count: years })}{simLoading ? t('yearsSlider.updating') : ''}
           </p>
         </div>
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Monto máximo disponible (MXN)
+            {t('maxAdvanceLabel')}
           </p>
           <p className="mt-1 text-3xl font-black tabular-nums tracking-tight text-foreground">
             {formatMXN(maxAdvanceBusiness)}
@@ -309,15 +335,15 @@ export default function AdelantoPage() {
         </div>
 
         <div className="space-y-3 pt-4 border-t border-border">
-          <SummaryRow label="Rendimiento neto a recibir" value={formatMXN(Math.max(0, (simulation?.net_to_user_mxn || 0) > 0 ? Math.min(simulation?.net_to_user_mxn || 0, maxAdvanceBusiness) : 0))} bold />
-          <SummaryRow label="Comisión al liquidar (1.5%)" value={formatMXN(simulation?.fee_mxn || 0)} dim />
-          <SummaryRow label="Fecha de liberación ciclo" value={fechaLiberacion} dim />
+          <SummaryRow label={t('summary.netLabel')} value={formatMXN(Math.max(0, (simulation?.net_to_user_mxn || 0) > 0 ? Math.min(simulation?.net_to_user_mxn || 0, maxAdvanceBusiness) : 0))} bold />
+          <SummaryRow label={t('summary.feeLabel')} value={formatMXN(simulation?.fee_mxn || 0)} dim />
+          <SummaryRow label={t('summary.dateLabel')} value={fechaLiberacion} dim />
         </div>
       </section>
 
       {readiness && !readiness.onrampEnabled ? (
         <div className="rounded-[1.25rem] border border-amber-500/25 bg-amber-500/10 p-4">
-          <p className="text-sm font-semibold text-amber-200">Faltan pasos para habilitar adelanto</p>
+          <p className="text-sm font-semibold text-amber-200">{t('missingSteps.title')}</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-amber-100/80">
             {readiness.reasons.slice(0, 4).map((r) => (
               <li key={r}>{r}</li>
@@ -325,10 +351,10 @@ export default function AdelantoPage() {
           </ul>
           <div className="mt-3 flex gap-2">
             <Button size="sm" variant="outline" className="rounded-full" onClick={() => router.push('/identidad')}>
-              Completar verificación
+              {t('missingSteps.btnVerify')}
             </Button>
             <Button size="sm" variant="outline" className="rounded-full" onClick={() => router.push('/anadir')}>
-              Revisar depósitos
+              {t('missingSteps.btnDeposit')}
             </Button>
           </div>
         </div>
@@ -341,10 +367,7 @@ export default function AdelantoPage() {
       ) : null}
 
       <div className="bg-secondary/30 rounded-[1.25rem] p-4 border border-border/50">
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          <strong>Nota:</strong> El adelanto usa el rendimiento proyectado como respaldo y el tope de seguridad es
-          90% de tu capital. Al liquidar, se aplica una comisión del 1.5%.
-        </p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: t.raw('noteHtml') }} />
       </div>
 
       <Button
@@ -352,25 +375,25 @@ export default function AdelantoPage() {
         disabled={confirming || !maxAdvanceBusiness || (readiness ? !readiness.onrampEnabled : false)}
         className="h-12 w-full rounded-full bg-foreground text-base font-bold text-background shadow-[0_10px_28px_rgba(255,255,255,0.12)] hover:bg-foreground/90 disabled:opacity-60"
       >
-        {confirming ? 'Confirmando operación…' : `Confirmar adelanto (${years} año${years === 1 ? '' : 's'})`}
+        {confirming ? t('confirming') : t('confirmButton', { count: years })}
       </Button>
 
       <section className="rounded-[1.5rem] bg-card p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-base font-bold text-foreground">Tus adelantos</h2>
+            <h2 className="text-base font-bold text-foreground">{t('history.title')}</h2>
             <p className="text-xs text-muted-foreground">
-              {advances.length > 0 ? `${advances.length} registro(s)` : 'Sin registros aún'}
+              {advances.length > 0 ? t('history.records', { count: advances.length }) : t('history.noRecords')}
             </p>
           </div>
           <Button asChild variant="outline" className="rounded-full">
-            <Link href="/adelantos">Ver detalle completo</Link>
+            <Link href="/adelantos">{t('history.detailsButton')}</Link>
           </Button>
         </div>
       </section>
 
       <p className="text-center text-[10px] text-muted-foreground">
-        Operación sujeta a validaciones de cuenta y disponibilidad.
+        {t('footerNote')}
       </p>
     </AppPageBody>
   )

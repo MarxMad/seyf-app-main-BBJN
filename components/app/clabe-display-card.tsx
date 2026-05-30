@@ -1,69 +1,77 @@
-'use client'
+"use client";
 
-import { useState, useTransition } from 'react'
-import { Check, Copy, RefreshCw, Landmark, AlertCircle, Sparkles, Wallet } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
+import { useState, useTransition } from "react";
+import {
+  Check,
+  Copy,
+  RefreshCw,
+  Landmark,
+  AlertCircle,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useSeyfWallet } from "@/lib/seyf/use-seyf-wallet";
 import {
   type ClabeRecord,
   formatCLABE,
   validateCLABE,
   createUserClabe,
   getOrCreateClabe,
-} from '@/lib/seyf/bitso-service'
+} from "@/lib/seyf/bitso-service";
 
 // ─── tipos ───────────────────────────────────────────────────────────────────
 
 type Props = {
   /** CLABE inicial pre-cargada desde servidor (puede ser null si el usuario aún no tiene). */
-  initialClabe?: ClabeRecord | null
-  className?: string
-}
+  initialClabe?: ClabeRecord | null;
+  className?: string;
+};
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function ClabeSegments({ clabe }: { clabe: string }) {
-  const formatted = formatCLABE(clabe)
-  const parts = formatted.split(' ')
+  const formatted = formatCLABE(clabe);
+  const parts = formatted.split(" ");
   return (
     <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1">
       {parts.map((segment, i) => (
         <span
           key={i}
           className={cn(
-            'font-mono font-black tabular-nums leading-none tracking-widest',
+            "font-mono font-black tabular-nums leading-none tracking-widest",
             i < parts.length - 1
-              ? 'text-[1.65rem] text-foreground sm:text-[1.9rem]'
-              : 'text-[1.65rem] text-foreground/80 sm:text-[1.9rem]',
+              ? "text-[1.65rem] text-foreground sm:text-[1.9rem]"
+              : "text-[1.65rem] text-foreground/80 sm:text-[1.9rem]",
           )}
         >
           {segment}
         </span>
       ))}
     </div>
-  )
+  );
 }
 
-function StatusBadge({ status }: { status: 'ENABLED' | 'DISABLED' }) {
+function StatusBadge({ status }: { status: "ENABLED" | "DISABLED" }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide',
-        status === 'ENABLED'
-          ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
-          : 'border-border bg-secondary text-muted-foreground',
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
+        status === "ENABLED"
+          ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+          : "border-border bg-secondary text-muted-foreground",
       )}
     >
       <span
         className={cn(
-          'size-1.5 rounded-full',
-          status === 'ENABLED' ? 'bg-emerald-400' : 'bg-muted-foreground',
+          "size-1.5 rounded-full",
+          status === "ENABLED" ? "bg-emerald-400" : "bg-muted-foreground",
         )}
       />
-      {status === 'ENABLED' ? 'Activa' : 'Inactiva'}
+      {status === "ENABLED" ? "Activa" : "Inactiva"}
     </span>
-  )
+  );
 }
 
 // ─── sub-card vacío (sin CLABE) ───────────────────────────────────────────────
@@ -72,10 +80,11 @@ function EmptyState({
   onCrear,
   creating,
   error,
+  t,
 }: {
-  onCrear: () => void
-  creating: boolean
-  error: string | null
+  onCrear: () => void;
+  creating: boolean;
+  error: string | null;
 }) {
   return (
     <div className="flex flex-col items-center gap-5 px-2 py-4 text-center">
@@ -83,9 +92,12 @@ function EmptyState({
         <Landmark className="size-6 text-muted-foreground" strokeWidth={1.75} />
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">Aún no tienes una CLABE</p>
+        <p className="text-sm font-semibold text-foreground">
+          Aún no tienes una CLABE
+        </p>
         <p className="text-[13px] leading-snug text-muted-foreground">
-          Crea tu cuenta CLABE para recibir depósitos SPEI desde cualquier banco mexicano.
+          Crea tu cuenta CLABE para recibir depósitos SPEI desde cualquier banco
+          mexicano.
         </p>
       </div>
       {error && (
@@ -102,38 +114,38 @@ function EmptyState({
         {creating ? (
           <>
             <RefreshCw className="size-4 animate-spin" />
-            Creando CLABE…
+            {t('creating')}
           </>
         ) : (
           <>
             <Sparkles className="size-4" />
-            Obtener mi CLABE
+            {t('create')}
           </>
         )}
       </Button>
     </div>
-  )
+  );
 }
 
 // ─── componente principal ─────────────────────────────────────────────────────
 
 export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
-  const { wallet } = useSeyfWallet()
-  const [clabe, setClabe] = useState<ClabeRecord | null>(initialClabe)
-  const [copied, setCopied] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const { wallet } = useSeyfWallet();
+  const [clabe, setClabe] = useState<ClabeRecord | null>(initialClabe);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  const stellarAddress = wallet?.stellarAddress ?? null
-  const isValid = clabe ? validateCLABE(clabe.clabe) : false
-  const maxAmounts = clabe?.deposit_maximum_amounts
+  const stellarAddress = wallet?.stellarAddress ?? null;
+  const isValid = clabe ? validateCLABE(clabe.clabe) : false;
+  const maxAmounts = clabe?.deposit_maximum_amounts;
 
   async function handleCopy() {
-    if (!clabe) return
+    if (!clabe) return;
     try {
-      await navigator.clipboard.writeText(clabe.clabe)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2200)
+      await navigator.clipboard.writeText(clabe.clabe);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
     } catch {
       // clipboard API no disponible — fallback silencioso
     }
@@ -141,27 +153,27 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
 
   function handleCrear() {
     if (!stellarAddress) {
-      setError('Conecta tu wallet Stellar antes de crear una CLABE.')
-      return
+      setError("Conecta tu cuenta antes de crear una CLABE.");
+      return;
     }
-    setError(null)
+    setError(null);
     startTransition(async () => {
       try {
-        const nueva = await getOrCreateClabe(stellarAddress)
-        setClabe(nueva)
+        const nueva = await getOrCreateClabe(stellarAddress);
+        setClabe(nueva);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Error creando CLABE')
+        setError(e instanceof Error ? e.message : "Error creando CLABE");
       }
-    })
+    });
   }
 
   return (
     <section
       className={cn(
-        'relative overflow-hidden rounded-[1.75rem] border border-border',
+        "relative overflow-hidden rounded-[1.75rem] border border-border",
         className,
       )}
-      aria-label="Tu CLABE para depósitos SPEI"
+      aria-label={t('ariaSection')}
     >
       {/* fondo degradado */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-950/80 via-card to-blue-950/60" />
@@ -175,7 +187,7 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
         className="pointer-events-none absolute inset-0 opacity-[0.08]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z' fill='none' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E")`,
-          backgroundSize: '48px 48px',
+          backgroundSize: "48px 48px",
         }}
       />
 
@@ -184,10 +196,13 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex size-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/15">
-              <Landmark className="size-4 text-foreground/80" strokeWidth={1.75} />
+              <Landmark
+                className="size-4 text-foreground/80"
+                strokeWidth={1.75}
+              />
             </div>
             <span className="text-[13px] font-semibold text-muted-foreground">
-              CLABE interbancaria
+              {t('interbank')}
             </span>
           </div>
           {clabe && <StatusBadge status={clabe.status} />}
@@ -199,14 +214,21 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
           {!stellarAddress && !clabe ? (
             <div className="flex flex-col items-center gap-4 py-2 text-center">
               <div className="flex size-12 items-center justify-center rounded-full bg-secondary/80 ring-1 ring-border">
-                <Wallet className="size-5 text-muted-foreground" strokeWidth={1.75} />
+                <Wallet
+                  className="size-5 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
               </div>
               <p className="text-[13px] leading-snug text-muted-foreground">
-                Conecta tu wallet Stellar para ver o crear tu CLABE.
+                Conecta tu cuenta para ver o crear tu CLABE.
               </p>
             </div>
           ) : !clabe ? (
-            <EmptyState onCrear={handleCrear} creating={isPending} error={error} />
+            <EmptyState
+              onCrear={handleCrear}
+              creating={isPending}
+              error={error}
+            />
           ) : (
             <div className="space-y-5">
               {/* CLABE grande */}
@@ -215,7 +237,7 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
                 {!isValid && (
                   <p className="flex items-center justify-center gap-1 text-[11px] text-amber-400/90">
                     <AlertCircle className="size-3" />
-                    Dígito verificador inválido
+                    {t('invalidDigit')}
                   </p>
                 )}
               </div>
@@ -227,17 +249,17 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
                   size="sm"
                   onClick={handleCopy}
                   className="h-10 gap-2 rounded-full px-5 ring-1 ring-border/60 transition-all"
-                  aria-label="Copiar CLABE"
+                  aria-label={t('copyCLABE')}
                 >
                   {copied ? (
                     <>
                       <Check className="size-3.5 text-emerald-400" />
-                      <span className="text-emerald-400">Copiada</span>
+                      <span className="text-emerald-400">{t('copied')}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="size-3.5" />
-                      Copiar CLABE
+                      {t('copyCLABE')}
                     </>
                   )}
                 </Button>
@@ -248,10 +270,12 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
                   onClick={handleCrear}
                   disabled={isPending}
                   className="size-10 rounded-full"
-                  title="Crear nueva CLABE"
-                  aria-label="Crear nueva CLABE"
+                  title={t('refreshCLABE')}
+                  aria-label={t('refreshCLABE')}
                 >
-                  <RefreshCw className={cn('size-4', isPending && 'animate-spin')} />
+                  <RefreshCw
+                    className={cn("size-4", isPending && "animate-spin")}
+                  />
                 </Button>
               </div>
 
@@ -261,29 +285,29 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
               {/* instrucciones SPEI */}
               <div className="space-y-3">
                 <p className="text-center text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  Instrucciones para transferir
+                  {t('instructions')}
                 </p>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <SpeiRow label="Banco receptor" value="Juno / Bitso" />
+                  <SpeiRow label={t('bank')} value={t('bankValue')} />
                   <SpeiRow
-                    label="Wallet vinculada"
+                    label="Cuenta vinculada"
                     value={
                       stellarAddress
                         ? `${stellarAddress.slice(0, 6)}…${stellarAddress.slice(-4)}`
-                        : 'Tu cuenta Seyf'
+                        : "Tu cuenta Seyf"
                     }
                   />
                   <SpeiRow
-                    label="Monto mínimo"
+                    label={t('minAmount')}
                     value={
                       clabe.deposit_minimum_amount != null
-                        ? `$${clabe.deposit_minimum_amount.toLocaleString('es-MX')} MXN`
-                        : 'Sin mínimo'
+                        ? `$${clabe.deposit_minimum_amount.toLocaleString("es-MX")} MXN`
+                        : "Sin mínimo"
                     }
                   />
                   <SpeiRow
-                    label="Disponible en"
-                    value="Inmediato (SPEI 24/7)"
+                    label={t('available')}
+                    value={t('availableValue')}
                   />
                 </div>
 
@@ -291,23 +315,23 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
                 {maxAmounts?.daily != null && (
                   <div className="rounded-xl border border-border/60 bg-secondary/40 px-3.5 py-2.5">
                     <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                      Límites de depósito
+                      {t('depositLimits')}
                     </p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[12px]">
                       {maxAmounts.operation != null && (
                         <LimitRow
-                          label="Por operación"
+                          label={t('limitByOp')}
                           value={maxAmounts.operation}
                         />
                       )}
                       {maxAmounts.daily != null && (
-                        <LimitRow label="Diario" value={maxAmounts.daily} />
+                        <LimitRow label={t('limitDaily')} value={maxAmounts.daily} />
                       )}
                       {maxAmounts.weekly != null && (
-                        <LimitRow label="Semanal" value={maxAmounts.weekly} />
+                        <LimitRow label={t('limitWeekly')} value={maxAmounts.weekly} />
                       )}
                       {maxAmounts.monthly != null && (
-                        <LimitRow label="Mensual" value={maxAmounts.monthly} />
+                        <LimitRow label={t('limitMonthly')} value={maxAmounts.monthly} />
                       )}
                     </div>
                   </div>
@@ -318,7 +342,7 @@ export function ClabeDisplayCard({ initialClabe = null, className }: Props) {
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 // ─── piezas pequeñas ─────────────────────────────────────────────────────────
@@ -331,7 +355,7 @@ function SpeiRow({ label, value }: { label: string; value: string }) {
       </span>
       <span className="text-[13px] font-semibold text-foreground">{value}</span>
     </div>
-  )
+  );
 }
 
 function LimitRow({ label, value }: { label: string; value: number }) {
@@ -339,8 +363,8 @@ function LimitRow({ label, value }: { label: string; value: number }) {
     <>
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right font-semibold tabular-nums text-foreground">
-        ${value.toLocaleString('es-MX')}
+        ${value.toLocaleString("es-MX")}
       </span>
     </>
-  )
+  );
 }

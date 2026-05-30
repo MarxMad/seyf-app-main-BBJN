@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Copy, LogOut, Settings2, ShieldCheck, UserRound } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useSeyfWallet } from '@/lib/seyf/use-seyf-wallet'
 import { Button } from '@/components/ui/button'
 import { NotificationSettingsCard } from '@/components/app/notification-settings-card'
@@ -36,6 +37,7 @@ type AppUserAccountPanelProps = {
 }
 
 export default function AppUserAccountPanel({ embedded = false }: AppUserAccountPanelProps) {
+  const t = useTranslations('components.accountPanel')
   const router = useRouter()
   const { wallet, balance, loading, balanceError, disconnect, refreshBalance } = useSeyfWallet()
   const [addressCopied, setAddressCopied] = useState(false)
@@ -127,12 +129,12 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
         className={`border border-border bg-card px-4 py-5 text-center ${embedded ? 'rounded-xl' : 'rounded-[1.5rem]'}`}
       >
         <UserRound className="mx-auto size-10 text-muted-foreground" strokeWidth={1.5} />
-        <p className="mt-3 text-sm font-semibold text-foreground">Sin sesión Pollar</p>
+        <p className="mt-3 text-sm font-semibold text-foreground">{t('noSession')}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Conecta tu wallet desde el inicio para ver tu cuenta aquí.
+          {t('noSessionBody')}
         </p>
         <Button asChild className="mt-4 h-11 w-full rounded-full font-bold">
-          <Link href="/">Ir a conectar</Link>
+          <Link href="/">{t('connectAction')}</Link>
         </Button>
       </section>
     )
@@ -147,22 +149,22 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
     /** Correos largos sin espacios: partir en cualquier carácter sin desbordar */
     breakAnywhere?: boolean
   }[] = [
-    { label: 'Correo', value: wallet.email?.trim() || '—', breakAnywhere: true },
-    { label: 'Red', value: formatNetwork() },
+    { label: t('rows.email'), value: wallet.email?.trim() || '—', breakAnywhere: true },
+    { label: t('rows.network'), value: formatNetwork() },
     {
-      label: 'Cuenta Stellar',
+      label: t('rows.stellarAccount'),
       value: maskAddress(wallet.stellarAddress),
       mono: true,
       copyFullText: wallet.stellarAddress,
     },
-    { label: 'Clave pública', value: shortKey(wallet.publicKey), mono: true },
+    { label: t('rows.publicKey'), value: shortKey(wallet.publicKey), mono: true },
     {
-      label: 'Contrato',
+      label: t('rows.contract'),
       value: wallet.contractId ? shortKey(wallet.contractId) : '—',
       mono: true,
     },
     {
-      label: 'Balance XLM',
+      label: t('rows.xlmBalance'),
       value: balance != null && balance !== '' ? `${balance} XLM` : '—',
       mono: true,
     },
@@ -177,7 +179,7 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
           dateStyle: 'medium',
         }).format(d)
         rows.push({
-          label: 'Cuenta desde',
+          label: t('rows.memberSince'),
           value: memberSince,
         })
       }
@@ -190,7 +192,7 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
     <section className={`overflow-hidden ${shell}`}>
       {balanceError ? (
         <div className="border-b border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-100">
-          <p className="font-semibold">No se pudieron cargar los saldos</p>
+          <p className="font-semibold">{t('loadError')}</p>
           <p className="mt-1 text-amber-800/85 dark:text-amber-100/85">
             {balanceError}. Si ves «Origin not allowed», añade en Pollar Dashboard la URL exacta de esta
             pestaña (p. ej. <code className="rounded bg-foreground/10 px-1">http://localhost:3000</code> y{' '}
@@ -206,21 +208,21 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
             {(wallet.email?.split('@')[0]?.slice(0, 2) ?? wallet.stellarAddress.slice(0, 2)).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-bold text-foreground dark:text-white">Tu perfil</h2>
-            <p className="truncate text-xs text-muted-foreground dark:text-[#d2e9df]">Pollar · Stellar</p>
+            <h2 className="text-sm font-bold text-foreground dark:text-white">{t('profileTitle')}</h2>
+            <p className="truncate text-xs text-muted-foreground dark:text-[#d2e9df]">{t('profileSubtitle')}</p>
           </div>
           <p className="inline-flex items-center gap-1 rounded-full border border-[#9ec7b3]/35 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#4f6b5f] dark:border-white/20 dark:bg-white/15 dark:text-[#d2e9df]">
             <ShieldCheck className="size-3" />
-            Activo
+            {t('active')}
           </p>
         </div>
         <div className="relative mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2 dark:border-white/20 dark:bg-white/10">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">Red</p>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">{t('networkLabel')}</p>
             <p className="mt-0.5 text-xs font-semibold text-foreground dark:text-white">{formatNetwork()}</p>
           </div>
           <div className="rounded-xl border border-[#9ec7b3]/25 bg-white/70 px-3 py-2 dark:border-white/20 dark:bg-white/10">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">Cuenta desde</p>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-[#cde5db]">{t('memberSinceLabel')}</p>
             <p className="mt-0.5 truncate text-xs font-semibold text-foreground dark:text-white">{memberSince}</p>
           </div>
         </div>
@@ -238,7 +240,7 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
               onClick={() => setShowSettings((v) => !v)}
             >
               <Settings2 className="mr-1.5 size-3.5" strokeWidth={2} />
-              Configuración
+              {t('configButton')}
             </Button>
           }
         />
@@ -271,8 +273,8 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
                   variant="ghost"
                   size="icon"
                   className="size-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
-                  aria-label={addressCopied ? 'Copiado' : 'Copiar dirección Stellar'}
-                  title={addressCopied ? 'Copiado' : 'Copiar dirección'}
+                  aria-label={addressCopied ? t('copied') : t('copyAddress')}
+                  title={addressCopied ? t('copied') : t('copyAddress')}
                   onClick={() => void copyStellarAddress(copyFullText)}
                 >
                   {addressCopied ? (
@@ -289,7 +291,7 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
 
       {showSettings ? (
         <div className="border-t border-border px-3 py-3">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">Configuración</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground">{t('configSection')}</p>
           <NotificationSettingsCard />
         </div>
       ) : null}
@@ -302,7 +304,7 @@ export default function AppUserAccountPanel({ embedded = false }: AppUserAccount
           onClick={handleLogout}
         >
           <LogOut className="size-4 shrink-0" strokeWidth={2} />
-          Cerrar sesión
+          {t('logout')}
         </Button>
       </div>
     </section>

@@ -1,6 +1,13 @@
 import type { InvestmentRun } from "@/lib/seyf/investment-mvp";
-import { listRunsForUser, MOCK_ANNUAL_RATE_PERCENT, getLedgerMeta } from "@/lib/seyf/investment-mvp";
-import { fetchDashboardCetesSaldo, type DashboardCetesSaldo } from "@/lib/seyf/dashboard-cetes-saldo";
+import {
+  listRunsForUser,
+  MOCK_ANNUAL_RATE_PERCENT,
+  getLedgerMeta,
+} from "@/lib/seyf/investment-mvp";
+import {
+  fetchDashboardCetesSaldo,
+  type DashboardCetesSaldo,
+} from "@/lib/seyf/dashboard-cetes-saldo";
 import { resolveEtherfuseRampContext } from "@/lib/seyf/etherfuse-ramp-context";
 import { fetchUserMovements } from "@/lib/seyf/user-movements";
 import {
@@ -11,9 +18,16 @@ import {
 export type { DashboardViewModel } from "@/lib/seyf/dashboard-view-model-types";
 export { DASHBOARD_MOVEMENTS_PREVIEW_LIMIT } from "@/lib/seyf/dashboard-view-model-types";
 
+function envVar(name: string): string | undefined {
+  const p = (globalThis as unknown as { process?: { env?: Record<string, string | undefined> } })
+    .process;
+  return p?.env?.[name];
+}
+
 function investAllowed(): boolean {
-  if (process.env.NODE_ENV !== "production") return true;
-  return process.env.SEYF_ALLOW_MOCK_INVEST === "true";
+  const nodeEnv = envVar("NODE_ENV");
+  if (nodeEnv !== "production") return true;
+  return envVar("SEYF_ALLOW_MOCK_INVEST") === "true";
 }
 
 function ledgerPrincipalMxn(runs: InvestmentRun[]): number {
@@ -25,8 +39,9 @@ function ledgerPrincipalMxn(runs: InvestmentRun[]): number {
 function oldestCompletedRun(runs: InvestmentRun[]): InvestmentRun | null {
   const done = runs.filter((r) => r.status === "completed");
   if (done.length === 0) return null;
-  return done.reduce((a, r) =>
-    new Date(r.createdAt) < new Date(a.createdAt) ? r : a,
+  return done.reduce(
+    (a, r) => (new Date(r.createdAt) < new Date(a.createdAt) ? r : a),
+    done[0],
   );
 }
 
@@ -78,12 +93,15 @@ export async function buildDashboardViewModel(options?: {
   ]);
 
   const ledgerPrincipal = ledgerPrincipalMxn(investRuns);
-  const principalMxn =
-    cetesSaldo.kind === "ok" ? cetesSaldo.principalMxn : ledgerPrincipal;
+  const cyclePrincipal = activeCycle?.principalMxn ?? 0;
+  let principalMxn: number;
+  if (cetesSaldo.kind === "ok") principalMxn = cetesSaldo.principalMxn;
+  else if (cyclePrincipal > 0) principalMxn = cyclePrincipal;
+  else principalMxn = ledgerPrincipal;
 
   const lastRate =
     investRuns[0]?.rateSnapshotAnnualPercent ?? MOCK_ANNUAL_RATE_PERCENT;
-  const tasaAnual = lastRate;
+  const tasaAnual = activeCycle?.referenceRateAnnualPercent ?? lastRate;
 
   const oldest = oldestCompletedRun(investRuns);
   const dias = oldest ? daysSince(oldest.createdAt) : 1;
@@ -105,10 +123,14 @@ export async function buildDashboardViewModel(options?: {
       "Saldo según tus depósitos de prueba. Identidad te da el valor en vivo en pesos.";
   }
   if (cetesSaldo.kind === "error") {
-    saldoNote = `${saldoNote ?? ""} El carrusel usa tu saldo CETES en la wallet (Pollar); la nota en MXN vía Etherfuse falló.`.trim();
+    saldoNote =
+      `${saldoNote ?? ""} El carrusel usa tu saldo CETES en la wallet (Pollar); la nota en MXN vía Etherfuse falló.`.trim();
   }
 
-  const movementsRecent = movementsAll.slice(0, DASHBOARD_MOVEMENTS_PREVIEW_LIMIT);
+  const movementsRecent = movementsAll.slice(
+    0,
+    DASHBOARD_MOVEMENTS_PREVIEW_LIMIT,
+  );
 
   // advanceUsed: Etherfuse loan-status endpoint not yet available.
   // Returns false until the ledger exposes an active-advance flag.
@@ -142,6 +164,7 @@ export async function buildDashboardApiResponse(options?: {
       cycle_end_date: string;
       advance_used: boolean;
       available_balance_mxn: number;
+      yield_series?: Array<{ date: string; accrued_mxn: number }>;
     }
   | { no_active_cycle: true }
 > {
@@ -168,59 +191,79 @@ export async function buildDashboardApiResponse(options?: {
   }
 
   const principalMxn = ledgerPrincipalMxn(investRuns);
-  
+
   if (principalMxn <= 0) {
     return { no_active_cycle: true };
   }
 
   // Get the latest rate (use stored reference_rate from cycle record)
-  const lastRate = investRuns[0]?.rateSnapshotAnnualPercent ?? MOCK_ANNUAL_RATE_PERCENT;
-  
+  const lastRate =
+    investRuns[0]?.rateSnapshotAnnualPercent ?? MOCK_ANNUAL_RATE_PERCENT;
+
   // Calculate days elapsed in current cycle (simplified: assume cycle started with oldest run)
   const oldest = oldestCompletedRun(investRuns);
   if (!oldest) {
     return { no_active_cycle: true };
   }
-  
+
   const daysElapsed = daysSince(oldest.createdAt);
   const DEFAULT_CYCLE_DAYS = 28;
   const daysTotal = DEFAULT_CYCLE_DAYS;
-  
+
   // Cap daysElapsed at daysTotal to avoid showing accrued yield beyond cycle end
   const effectiveDaysElapsed = Math.min(daysElapsed, daysTotal);
-  
+
   // Calculate daily rate from annual rate
   const dailyRate = lastRate / 100 / 365;
-  
+
   // Calculate yield accrued: principal × daily_rate × days_elapsed
   const yieldAccruedMxn = principalMxn * dailyRate * effectiveDaysElapsed;
-  
+
   // Calculate projected yield for full cycle: principal × daily_rate × days_total
   const yieldProjectedMxn = principalMxn * dailyRate * daysTotal;
-  
+
   // Calculate max advance: (projected_yield × 0.90) − fee_mxn
   // Using fee_mxn = 50 (consistent with contract examples), configurable via env var
-  const FEE_MXN = process.env.SEYF_ADVANCE_FEE_MXN ? 
-    parseInt(process.env.SEYF_ADVANCE_FEE_MXN, 10) : 50;
-  const maxAdvanceMxn = Math.max(0, (yieldProjectedMxn * 0.90) - FEE_MXN);
-  
+  const FEE_MXN = process.env.SEYF_ADVANCE_FEE_MXN
+    ? parseInt(process.env.SEYF_ADVANCE_FEE_MXN, 10)
+    : 50;
+  const maxAdvanceMxn = Math.max(0, yieldProjectedMxn * 0.9 - FEE_MXN);
+
   // Calculate cycle end date (today + remaining days)
   const cycleEndDate = new Date();
-  cycleEndDate.setDate(cycleEndDate.getDate() + (daysTotal - effectiveDaysElapsed));
-  
+  cycleEndDate.setDate(
+    cycleEndDate.getDate() + (daysTotal - effectiveDaysElapsed),
+  );
+
   // For MVP, assume no advance has been used yet
   const advanceUsed = false;
-  
+
   // Available balance is 0 for now (to be calculated based on actual available funds)
   const availableBalanceMxn = 0;
+
+  // Generate yield_series: one data point per day from cycle start to today
+  // Formula: accrued(day_i) = principal × daily_rate × i
+  const cycleStartDate = new Date(oldest.createdAt);
+  const yieldSeries: Array<{ date: string; accrued_mxn: number }> = [];
+
+  for (let i = 0; i <= effectiveDaysElapsed; i++) {
+    const dayDate = new Date(cycleStartDate);
+    dayDate.setDate(dayDate.getDate() + i);
+    const accrued = Math.round(principalMxn * dailyRate * i * 100) / 100;
+    yieldSeries.push({
+      date: dayDate.toISOString().split("T")[0], // YYYY-MM-DD format
+      accrued_mxn: accrued,
+    });
+  }
 
   return {
     capital_working_mxn: Math.round(principalMxn * 100) / 100,
     yield_accrued_mxn: Math.round(yieldAccruedMxn * 100) / 100,
     yield_projected_mxn: Math.round(yieldProjectedMxn * 100) / 100,
     max_advance_mxn: Math.round(maxAdvanceMxn * 100) / 100,
-    cycle_end_date: cycleEndDate.toISOString().split('T')[0], // YYYY-MM-DD format
+    cycle_end_date: cycleEndDate.toISOString().split("T")[0], // YYYY-MM-DD format
     advance_used: advanceUsed,
     available_balance_mxn: availableBalanceMxn,
+    yield_series: yieldSeries,
   };
 }

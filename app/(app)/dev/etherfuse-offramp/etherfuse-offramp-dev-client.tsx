@@ -11,6 +11,7 @@ import {
   type WithdrawDestinationSelection,
 } from '@/components/app/withdraw-spei-destination'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -368,94 +369,119 @@ export default function EtherfuseOfframpDevClient() {
       ) : null}
 
       {canOperate ? (
-        <>
-          <WithdrawSpeiDestination
-            abbrClabeHint={abbrClabeHint}
-            bankAccountLabel={bankAccountLabel}
-            disabled={!!busy}
-            onSelectionChange={onDestinationSelectionChange}
-            onValidityChange={onDestinationValidity}
-          />
-
-          <section className="space-y-3 rounded-[1.5rem] border border-[#bfd6ca] bg-[#f4faf7] p-5 dark:border-border dark:bg-card/80">
-            <div>
-              <h2 className="text-base font-bold text-foreground">¿Cuánto quieres retirar?</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Cantidad del activo en tu wallet (el cotizador convierte a pesos para el SPEI).
-              </p>
-            </div>
-            <Input
-              inputMode="decimal"
-              value={sourceAmountTokens}
-              onChange={(e) => setSourceAmountTokens(e.target.value)}
-              placeholder="Ej. 10"
-              className="h-14 rounded-2xl border-[#c6dccf] bg-background px-4 text-lg tabular-nums font-semibold"
-              aria-label="Cantidad del activo a retirar"
-            />
-            <details className="rounded-xl border border-border/60 bg-background/50 px-3 py-2 text-xs text-muted-foreground">
-              <summary className="cursor-pointer font-medium text-foreground">
-                Opciones avanzadas (sandbox)
-              </summary>
-              <div className="mt-3 space-y-3">
-                <div>
-                  <Label htmlFor="source-asset-offramp" className="text-[11px] text-muted-foreground">
-                    Activo fuente (opcional)
-                  </Label>
-                  <Input
-                    id="source-asset-offramp"
-                    value={sourceAssetOverride}
-                    onChange={(e) => setSourceAssetOverride(e.target.value)}
-                    placeholder="Identificador del activo"
-                    className="mt-1 h-11 rounded-xl border-border bg-background px-3 font-mono text-xs"
-                    aria-label="Identificador de activo opcional"
-                  />
+        (kycLoading || readiness == null) ? (
+          <>
+            <div className="mx-auto w-full max-w-lg px-3 pb-1 pt-3 sm:px-6 sm:pt-4">
+              <div className="rounded-[1.25rem] border border-border bg-card p-3 sm:p-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-9 h-9 w-9 rounded-full" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-48 rounded-md mb-2" />
+                    <Skeleton className="h-3 w-64 rounded-md" />
+                  </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="use-anchor"
-                    checked={useAnchor}
-                    onCheckedChange={(v) => setUseAnchor(v === true)}
-                    className="mt-0.5"
-                  />
-                  <Label
-                    htmlFor="use-anchor"
-                    className="cursor-pointer leading-relaxed font-normal"
-                  >
-                    Modo anchor en Stellar (solo pruebas).{' '}
-                    <a
-                      href="https://docs.etherfuse.com/guides/testing-offramps#anchor-mode-stellar-only"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-foreground underline underline-offset-2"
-                    >
-                      Documentación
-                    </a>
-                  </Label>
+                <div className="mt-4 space-y-3">
+                  <Skeleton className="h-12 rounded-xl" />
                 </div>
               </div>
-            </details>
-            {destinationReason ? (
-              <p className="rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                {destinationReason}
-              </p>
-            ) : null}
-            <Button
-              type="button"
-              className="h-14 w-full rounded-2xl bg-foreground text-base font-bold text-background shadow-md"
-              disabled={!!busy || !destinationValid}
-              onClick={() => void continueOfframp()}
-            >
-              {continueBusy ? (
-                <>
-                  <Spinner className="size-4 text-background" />
-                  Preparando retiro…
-                </>
-              ) : (
-                'Continuar con el retiro'
-              )}
-            </Button>
-          </section>
-        </>
+            </div>
+
+            <div className="space-y-3 rounded-[1.5rem] border border-[#bfd6ca] bg-[#f4faf7] p-5 dark:border-border dark:bg-card/80">
+              <Skeleton className="h-6 w-64 rounded-md" />
+              <Skeleton className="h-14 rounded-2xl" />
+              <Skeleton className="h-12 rounded-full" />
+            </div>
+          </>
+        ) : (
+          <>
+            <WithdrawSpeiDestination
+              abbrClabeHint={abbrClabeHint}
+              bankAccountLabel={bankAccountLabel}
+              disabled={!!busy}
+              onSelectionChange={onDestinationSelectionChange}
+              onValidityChange={onDestinationValidity}
+            />
+
+            <section className="space-y-3 rounded-[1.5rem] border border-[#bfd6ca] bg-[#f4faf7] p-5 dark:border-border dark:bg-card/80">
+              <div>
+                <h2 className="text-base font-bold text-foreground">¿Cuánto quieres retirar?</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Cantidad del activo en tu wallet (el cotizador convierte a pesos para el SPEI).
+                </p>
+              </div>
+              <Input
+                inputMode="decimal"
+                value={sourceAmountTokens}
+                onChange={(e) => setSourceAmountTokens(e.target.value)}
+                placeholder="Ej. 10"
+                className="h-14 rounded-2xl border-[#c6dccf] bg-background px-4 text-lg tabular-nums font-semibold"
+                aria-label="Cantidad del activo a retirar"
+              />
+              <details className="rounded-xl border border-border/60 bg-background/50 px-3 py-2 text-xs text-muted-foreground">
+                <summary className="cursor-pointer font-medium text-foreground">
+                  Opciones avanzadas (sandbox)
+                </summary>
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <Label htmlFor="source-asset-offramp" className="text-[11px] text-muted-foreground">
+                      Activo fuente (opcional)
+                    </Label>
+                    <Input
+                      id="source-asset-offramp"
+                      value={sourceAssetOverride}
+                      onChange={(e) => setSourceAssetOverride(e.target.value)}
+                      placeholder="Identificador del activo"
+                      className="mt-1 h-11 rounded-xl border-border bg-background px-3 font-mono text-xs"
+                      aria-label="Identificador de activo opcional"
+                    />
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="use-anchor"
+                      checked={useAnchor}
+                      onCheckedChange={(v) => setUseAnchor(v === true)}
+                      className="mt-0.5"
+                    />
+                    <Label
+                      htmlFor="use-anchor"
+                      className="cursor-pointer leading-relaxed font-normal"
+                    >
+                      Modo anchor en Stellar (solo pruebas).{' '}
+                      <a
+                        href="https://docs.etherfuse.com/guides/testing-offramps#anchor-mode-stellar-only"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-foreground underline underline-offset-2"
+                      >
+                        Documentación
+                      </a>
+                    </Label>
+                  </div>
+                </div>
+              </details>
+              {destinationReason ? (
+                <p className="rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {destinationReason}
+                </p>
+              ) : null}
+              <Button
+                type="button"
+                className="h-14 w-full rounded-2xl bg-foreground text-base font-bold text-background shadow-md"
+                disabled={!!busy || !destinationValid}
+                onClick={() => void continueOfframp()}
+              >
+                {continueBusy ? (
+                  <>
+                    <Spinner className="size-4 text-background" />
+                    Preparando retiro…
+                  </>
+                ) : (
+                  'Continuar con el retiro'
+                )}
+              </Button>
+            </section>
+          </>
+        )
       ) : null}
 
       {canOperate || orderJson.trim() ? (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import type { UserMovement } from '@/lib/seyf/user-movements-types'
 import { formatMovementFechaHora } from '@/lib/seyf/user-movements-types'
 import { stellarTxExplorerUrl } from '@/lib/etherfuse/stellar-tx-url'
@@ -44,6 +45,7 @@ export function MovementDetailSheet({
   onClose: () => void
   icon: ReactNode
 }) {
+  const t = useTranslations('components.movementSheet')
   const [resolvedSig, setResolvedSig] = useState<string | null>(null)
   const [txLoading, setTxLoading] = useState(false)
   const [txError, setTxError] = useState<string | null>(null)
@@ -115,24 +117,24 @@ export function MovementDetailSheet({
               {movement.titulo}
             </p>
             <p className="text-sm text-muted-foreground">
-              {fecha} a las {hora}
+              {fecha} {t('fecha')} {hora}
             </p>
           </div>
         </div>
         <div className="mb-6 space-y-3">
-          <DetailRow label="Monto" value={formatMovementAmountLabel(movement)} />
+          <DetailRow label={t('amount')} value={formatMovementAmountLabel(movement)} />
           <DetailRow
-            label="Estado"
+            label={t('status')}
             value={movement.estado.charAt(0).toUpperCase() + movement.estado.slice(1)}
           />
-          <DetailRow label="Notas" value={movement.detalle} />
+          <DetailRow label={t('notes')} value={movement.detalle} />
           {movement.orderId ? (
-            <DetailRow label="Folio" value={movement.orderId} mono />
+            <DetailRow label={t('folio')} value={movement.orderId} mono />
           ) : null}
           <div className="flex flex-col gap-2 border-t border-border pt-3">
-            <p className="text-sm font-medium text-foreground">Comprobante público</p>
+            <p className="text-sm font-medium text-foreground">{t('publicProof')}</p>
             {txLoading ? (
-              <p className="text-xs text-muted-foreground">Obteniendo enlace…</p>
+              <p className="text-xs text-muted-foreground">{t('loadingProof')}</p>
             ) : null}
             {txError ? <p className="text-xs text-amber-600">{txError}</p> : null}
             {stellarUrl ? (
@@ -142,18 +144,18 @@ export function MovementDetailSheet({
                 rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center rounded-full bg-foreground py-3 text-sm font-bold text-background hover:bg-foreground/90"
               >
-                Ver comprobante
+                {t('viewProof')}
               </a>
             ) : !txLoading && movement.source === 'etherfuse' ? (
               <p className="text-xs text-muted-foreground">
-                El comprobante aparece cuando la operación queda confirmada.
+                {t('proofPendingEtherfuse')}
               </p>
             ) : !txLoading && movement.source === 'ledger' ? (
               <p className="text-xs text-muted-foreground">
-                El comprobante aparece cuando ya quedó guardado en tu historial.
+                {t('proofPendingLedger')}
               </p>
             ) : !txLoading && movement.source === 'stellar' && !stellarUrl ? (
-              <p className="text-xs text-muted-foreground">No hay hash de transacción para enlazar.</p>
+              <p className="text-xs text-muted-foreground">{t('proofNoHash')}</p>
             ) : null}
             {sig ? (
               <p className="break-all font-mono text-[10px] text-muted-foreground">{sig}</p>
@@ -165,7 +167,7 @@ export function MovementDetailSheet({
           onClick={onClose}
           className="h-12 w-full rounded-full bg-secondary text-sm font-bold text-foreground ring-1 ring-border hover:bg-secondary/80"
         >
-          Cerrar
+          {t('close')}
         </button>
       </div>
     </div>

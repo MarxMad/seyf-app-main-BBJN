@@ -1,9 +1,13 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Geist, Geist_Mono, Fraunces } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages } from 'next-intl/server'
 import { ThemeProvider } from '@/components/theme-provider'
 import { PublicMobileHistorySeed } from '@/components/app/public-mobile-history-seed'
 import PollarProviderClient from '@/components/providers/pollar-provider-client'
+import { InstallPrompt } from '@/components/app/install-prompt'
+import { ServiceWorkerRegistration } from '@/components/app/service-worker-registration'
 import { getSiteUrl } from '@/app/site-config'
 import './globals.css'
 
@@ -49,7 +53,7 @@ export const metadata: Metadata = {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     apple: [{ url: '/icon.svg', type: 'image/svg+xml' }],
   },
-  manifest: '/site.webmanifest',
+  manifest: '/manifest.webmanifest',
   openGraph: {
     type: 'website',
     locale: 'es_MX',
@@ -80,28 +84,74 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+}
+
+export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#e8f5f1' },
     { media: '(prefers-color-scheme: dark)', color: '#0d3531' },
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const messages = await getMessages()
   return (
     <html
       lang="es-MX"
       suppressHydrationWarning
       className={`${inter.variable} ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}
     >
+      <head>
+        {/* iOS PWA */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Seyf" />
+        <link rel="apple-touch-icon" href="/SEYF.png" />
+        {/* iOS splash screens — portrait only, covers common device sizes */}
+        <link
+          rel="apple-touch-startup-image"
+          media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
+          href="/splashes/splash-1290x2796.png"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
+          href="/splashes/splash-1179x2556.png"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
+          href="/splashes/splash-1170x2532.png"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
+          href="/splashes/splash-1125x2436.png"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)"
+          href="/splashes/splash-828x1792.png"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+          href="/splashes/splash-750x1334.png"
+        />
+      </head>
       <body className="min-h-dvh font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <PublicMobileHistorySeed />
-          <PollarProviderClient>{children}</PollarProviderClient>
+          <NextIntlClientProvider messages={messages}>
+            <PublicMobileHistorySeed />
+            <PollarProviderClient>{children}</PollarProviderClient>
+          </NextIntlClientProvider>
         </ThemeProvider>
+        <InstallPrompt />
+        <ServiceWorkerRegistration />
         <Analytics />
       </body>
     </html>

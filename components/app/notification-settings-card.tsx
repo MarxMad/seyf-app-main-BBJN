@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { BellRing } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -16,6 +17,7 @@ type SettingsResponse = {
 }
 
 export function NotificationSettingsCard() {
+  const t = useTranslations('components.notificationSettings')
   const [pending, startTransition] = useTransition()
   const [loading, setLoading] = useState(true)
   const [phoneNumber, setPhoneNumber] = useState('')
@@ -29,7 +31,7 @@ export function NotificationSettingsCard() {
       .then(async (response) => {
         const data = (await response.json()) as SettingsResponse
         if (!response.ok) {
-          throw new Error('No se pudo cargar tu preferencia de notificaciones.')
+          throw new Error(t('errors.loadFailed'))
         }
         if (cancelled) return
         setPhoneNumber(data.settings.phoneNumber ?? '')
@@ -37,7 +39,7 @@ export function NotificationSettingsCard() {
       })
       .catch((err: unknown) => {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : 'No se pudo cargar la preferencia.')
+        setError(err instanceof Error ? err.message : t('errors.loadFailedFallback'))
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -46,7 +48,7 @@ export function NotificationSettingsCard() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [t])
 
   function handleSave() {
     setError(null)
@@ -71,7 +73,7 @@ export function NotificationSettingsCard() {
           const msg =
             typeof data === 'object' && data && 'error' in data && typeof data.error === 'string'
               ? data.error
-              : 'No se pudo guardar.'
+              : t('errors.saveFailed')
           throw new Error(msg)
         }
 
@@ -79,9 +81,9 @@ export function NotificationSettingsCard() {
           setPhoneNumber(data.settings.phoneNumber ?? '')
           setSmsEnabled(data.settings.smsEnabled)
         }
-        setMessage('Preferencia guardada.')
+        setMessage(t('saved'))
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'No se pudo guardar.')
+        setError(err instanceof Error ? err.message : t('errors.saveFailedFallback'))
       }
     })
   }
@@ -93,22 +95,21 @@ export function NotificationSettingsCard() {
           <BellRing className="size-4 text-foreground" strokeWidth={2} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-foreground">Avisos por SMS</p>
+          <p className="text-sm font-bold text-foreground">{t('title')}</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Recibe avances de tu capital, retiros y validacion de identidad. Puedes apagar estos
-            avisos cuando quieras.
+            {t('body')}
           </p>
         </div>
       </div>
 
       <div className="mt-4 space-y-3">
         <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">Telefono para SMS</span>
+          <span className="text-xs font-medium text-muted-foreground">{t('phoneLabel')}</span>
           <Input
             type="tel"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="5512345678 o +525512345678"
+            placeholder={t('phonePlaceholder')}
             className="mt-2 h-11 rounded-xl border-border bg-background"
             disabled={loading || pending}
           />
@@ -116,16 +117,16 @@ export function NotificationSettingsCard() {
 
         <div className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3.5">
           <div className="pr-1">
-            <p className="text-sm font-semibold text-foreground">Notificaciones activas</p>
+            <p className="text-sm font-semibold text-foreground">{t('notificationsActive')}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Si apagas esta opcion, seguiremos registrando el intento pero no enviaremos SMS.
+              {t('notificationsBody')}
             </p>
           </div>
           <Switch
             checked={smsEnabled}
             onCheckedChange={setSmsEnabled}
             disabled={loading || pending}
-            aria-label="Activar notificaciones SMS"
+            aria-label={t('ariaToggle')}
           />
         </div>
 
@@ -135,7 +136,7 @@ export function NotificationSettingsCard() {
           disabled={loading || pending}
           className="h-11 w-full rounded-full font-bold"
         >
-          {pending ? 'Guardando...' : 'Guardar ajustes'}
+          {pending ? t('savePending') : t('save')}
         </Button>
 
         {error ? <p className="text-xs text-destructive">{error}</p> : null}

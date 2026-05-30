@@ -8,7 +8,7 @@
  * @license: MIT
  * @website: https://emerald-ui.com
  */
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 interface ThreeDMarqueeProps {
@@ -60,6 +60,7 @@ const ThreeDMarquee = ({
   className,
 }: ThreeDMarqueeProps) => {
   const chunks = splitImagesIntoColumns(images, 3)
+  const shouldReduce = useReducedMotion()
 
   return (
     <div
@@ -89,11 +90,10 @@ const ThreeDMarquee = ({
           >
             {chunks.map((subarray, colIndex) => {
               const loop = [...subarray, ...subarray]
-              const goesDown = colIndex % 2 === 1
               const column = (
                 <motion.figure
                   className="flex flex-col items-start gap-3 sm:gap-4 md:gap-6"
-                  animate={{ y: ['0%', '-50%'] }}
+                  animate={shouldReduce ? {} : { y: ['0%', '-50%'] }}
                   transition={{
                     duration: 48 + colIndex * 10,
                     repeat: Infinity,

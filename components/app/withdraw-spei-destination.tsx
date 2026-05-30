@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChevronDown, Trash2, UserPlus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,6 +45,7 @@ export function WithdrawSpeiDestination({
   onSelectionChange,
   onValidityChange,
 }: Props) {
+  const t = useTranslations('components.withdrawSpei')
   const [contacts, setContacts] = useState<SpeiWithdrawContact[]>([])
   const [selectValue, setSelectValue] = useState<string>(VERIFIED_VALUE)
   const [manageOpen, setManageOpen] = useState(false)
@@ -80,16 +82,13 @@ export function WithdrawSpeiDestination({
     }
     const c = contacts.find((x) => x.id === selectValue)
     if (!c) {
-      onValidityChange(false, 'Elige un contacto o la membretada verificada.')
+      onValidityChange(false, t('errors.invalidContact'))
       return
     }
     onSelectionChange({ mode: 'contact', contact: c })
     const match = contactClabeMatchesAbbrHint(c.clabe, abbrClabeHint)
     if (!match) {
-      onValidityChange(
-        false,
-        'La CLABE del contacto no coincide con la cuenta registrada en Identidad. El dinero solo puede ir a esa cuenta.',
-      )
+      onValidityChange(false, t('errors.clabeNoMatch'))
       return
     }
     onValidityChange(true, null)
@@ -99,6 +98,7 @@ export function WithdrawSpeiDestination({
     onSelectionChange,
     onValidityChange,
     selectValue,
+    t,
   ])
 
   const onAddContact = () => {
@@ -109,7 +109,7 @@ export function WithdrawSpeiDestination({
       clabeDigits: newClabe,
     })
     if (!created) {
-      setFormErr('Revisa alias, titular y CLABE (18 dígitos).')
+      setFormErr(t('errors.invalidForm'))
       return
     }
     refreshContacts()
@@ -128,20 +128,18 @@ export function WithdrawSpeiDestination({
   return (
     <section
       className="space-y-4 rounded-[1.5rem] border border-[#bfd6ca] bg-[#f4faf7] p-5 dark:border-border dark:bg-card/80"
-      aria-label="Destino del retiro SPEI"
+      aria-label={t('ariaSection')}
     >
       <div>
-        <h2 className="text-base font-bold text-foreground">Destino del SPEI</h2>
+        <h2 className="text-base font-bold text-foreground">{t('title')}</h2>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          El retiro se abona a la cuenta bancaria que quedó validada con Etherfuse (flujo de
-          Identidad). Aquí eliges con qué etiqueta quieres confirmarla o registras un contacto de
-          referencia con la misma CLABE.
+          {t('body')}
         </p>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="withdraw-dest-select" className="text-xs font-semibold">
-          Enviar pesos a
+          {t('sendLabel')}
         </Label>
         <Select
           value={selectValue}
@@ -152,11 +150,11 @@ export function WithdrawSpeiDestination({
             id="withdraw-dest-select"
             className="h-12 rounded-2xl border-[#c6dccf] bg-background"
           >
-            <SelectValue placeholder="Elige destino" />
+            <SelectValue placeholder={t('selectPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={VERIFIED_VALUE}>
-              Cuenta verificada (Identidad)
+              {t('verifiedAccount')}
               {bankAccountLabel ? ` — ${bankAccountLabel}` : ''}
             </SelectItem>
             {contacts.map((c) => (
@@ -172,20 +170,19 @@ export function WithdrawSpeiDestination({
       {selectValue === VERIFIED_VALUE ? (
         <div className="rounded-xl border border-border bg-background/70 px-3 py-3 text-sm">
           <p className="text-xs font-semibold text-muted-foreground">
-            Cuenta registrada para abonos
+            {t('registeredAccount')}
           </p>
           {abbrClabeHint ? (
             <p className="mt-1 font-mono text-sm font-medium text-foreground">{abbrClabeHint}</p>
           ) : (
             <p className="mt-1 text-xs text-muted-foreground">
-              No pudimos cargar la vista abreviada de tu CLABE. El abono sigue yendo a la cuenta
-              vinculada en Identidad.
+              {t('noClabeHint')}
             </p>
           )}
         </div>
       ) : selectedContact ? (
         <div className="rounded-xl border border-border bg-background/70 px-3 py-3 text-sm">
-          <p className="text-xs font-semibold text-muted-foreground">Contacto seleccionado</p>
+          <p className="text-xs font-semibold text-muted-foreground">{t('selectedContact')}</p>
           <p className="mt-1 font-medium text-foreground">{selectedContact.label}</p>
           {selectedContact.beneficiaryName ? (
             <p className="text-xs text-muted-foreground">{selectedContact.beneficiaryName}</p>
@@ -195,12 +192,11 @@ export function WithdrawSpeiDestination({
           </p>
           {!contactClabeMatchesAbbrHint(selectedContact.clabe, abbrClabeHint) ? (
             <p className="mt-2 text-xs font-medium text-destructive">
-              Esta CLABE no coincide con la registrada: corrige el contacto o actualiza tu cuenta en
-              Identidad.
+              {t('clabeNoMatch')}
             </p>
           ) : (
             <p className="mt-2 text-xs text-[#2d6a4f] dark:text-[#95d5b2]">
-              Coincide con la cuenta verificada.
+              {t('clabeMatch')}
             </p>
           )}
         </div>
@@ -215,7 +211,7 @@ export function WithdrawSpeiDestination({
         >
           <span className="inline-flex items-center gap-2">
             <UserPlus className="size-4 opacity-80" aria-hidden />
-            Contactos guardados en este dispositivo
+            {t('manageContacts')}
           </span>
           <ChevronDown
             className={cn('size-4 transition-transform', manageOpen && 'rotate-180')}
@@ -248,7 +244,7 @@ export function WithdrawSpeiDestination({
                         refreshContacts()
                         if (selectValue === c.id) setSelectValue(VERIFIED_VALUE)
                       }}
-                      aria-label={`Eliminar contacto ${c.label}`}
+                      aria-label={t('ariaDelete', { label: c.label })}
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -256,20 +252,20 @@ export function WithdrawSpeiDestination({
                 ))}
               </ul>
             ) : (
-              <p className="text-xs text-muted-foreground">Aún no tienes contactos guardados.</p>
+              <p className="text-xs text-muted-foreground">{t('noContacts')}</p>
             )}
 
             <div className="rounded-xl border border-dashed border-border bg-background/40 p-3 space-y-3">
-              <p className="text-xs font-bold text-foreground">Registrar contacto</p>
+              <p className="text-xs font-bold text-foreground">{t('registerContact')}</p>
               <Input
-                placeholder="Alias (ej. Mi cuenta BBVA)"
+                placeholder={t('aliasPlaceholder')}
                 value={newLabel}
                 onChange={(e) => setNewLabel(e.target.value)}
                 className="rounded-xl"
                 disabled={disabled}
               />
               <Input
-                placeholder="Titular de la cuenta (opcional)"
+                placeholder={t('beneficiaryPlaceholder')}
                 value={newBeneficiary}
                 onChange={(e) => setNewBeneficiary(e.target.value)}
                 className="rounded-xl"
@@ -277,7 +273,7 @@ export function WithdrawSpeiDestination({
               />
               <Input
                 inputMode="numeric"
-                placeholder="CLABE (18 dígitos)"
+                placeholder={t('clabePlaceholder')}
                 value={newClabe}
                 onChange={(e) => setNewClabe(normalizeClabeDigits(e.target.value))}
                 maxLength={18}
@@ -298,7 +294,7 @@ export function WithdrawSpeiDestination({
                 }
                 onClick={() => onAddContact()}
               >
-                Guardar contacto
+                {t('saveContact')}
               </Button>
             </div>
           </div>

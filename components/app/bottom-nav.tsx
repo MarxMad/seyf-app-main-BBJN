@@ -2,29 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { LayoutGrid, ArrowDownToLine, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const navItems = [
-  {
-    href: '/dashboard',
-    label: 'Inicio',
-    icon: LayoutGrid,
-  },
-  {
-    href: '/anadir',
-    label: 'Depositar',
-    icon: ArrowDownToLine,
-  },
-  {
-    href: '/historial',
-    label: 'Historial',
-    icon: Clock,
-  },
-]
-
 export default function BottomNav() {
+  const t = useTranslations('components.bottomNav')
   const pathname = usePathname()
+
+  const navItems = [
+    { href: '/dashboard', label: t('home'), icon: LayoutGrid },
+    { href: '/anadir', label: t('deposit'), icon: ArrowDownToLine },
+    { href: '/historial', label: t('history'), icon: Clock },
+  ]
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center pb-4 pt-2">
